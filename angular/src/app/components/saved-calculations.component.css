@@ -76,6 +76,91 @@
   margin: 0;
 }
 
+/* Portfolio section styles */
+.portfolio-section {
+  margin-bottom: 30px;
+}
+
+.portfolio-controls h3 {
+  margin-bottom: 16px;
+  color: #1976d2;
+}
+
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.selection-count {
+  font-size: 14px;
+  color: #666;
+  margin-left: auto;
+}
+
+.portfolio-summary-card {
+  margin-top: 20px;
+  border-left: 4px solid #1976d2;
+}
+
+.portfolio-results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.result-item:last-child {
+  border-bottom: none;
+}
+
+.result-item .value {
+  font-weight: 600;
+}
+
+.result-item .value.highlight {
+  font-size: 1.1em;
+  font-weight: 700;
+}
+
+/* Card header with checkbox */
+.card-header-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+.property-checkbox {
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.header-text {
+  flex: 1;
+}
+
+/* Card actions layout */
+.calculation-card mat-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+}
+
+.calculation-card mat-card-actions button {
+  flex: 1;
+  min-width: fit-content;
+}
+
 @media (max-width: 768px) {
   .saved-calculations-container {
     padding: 10px;
@@ -83,5 +168,28 @@
   
   .calculations-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .controls-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .selection-count {
+    margin-left: 0;
+    text-align: center;
+  }
+  
+  .portfolio-results-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .calculation-card mat-card-actions {
+    flex-direction: column;
+  }
+  
+  .calculation-card mat-card-actions button {
+    width: 100%;
+    justify-content: flex-start;
   }
 }

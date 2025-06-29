@@ -8,8 +8,8 @@
         </div>
         <div class="navigation-buttons">
           <button mat-stroked-button routerLink="/saved">
-            <mat-icon>history</mat-icon>
-            Saved Calculations
+            <mat-icon>business</mat-icon>
+            Portfolio
           </button>
           <button mat-stroked-button routerLink="/settings">
             <mat-icon>settings</mat-icon>
@@ -197,7 +197,10 @@
                 Calculate
               </button>
               <button mat-raised-button color="accent" type="button" (click)="onSave()" [disabled]="!results">
-                Save Calculation
+                {{ currentCalculationId ? 'Update in Portfolio' : 'Save to Portfolio' }}
+              </button>
+              <button mat-stroked-button type="button" (click)="onNewCalculation()">
+                New Calculation
               </button>
             </div>
           </form>

@@ -43,6 +43,7 @@ export class CalculatorComponent implements OnInit, OnDestroy {
   calculatorForm: FormGroup;
   results: CalculationResults | null = null;
   currentSettings: Settings | null = null;
+  currentCalculationId: number | null = null; // Track currently loaded calculation
   private loadedCalculationSubscription?: Subscription;
   private settingsSubscription?: Subscription;
 
@@ -180,6 +181,9 @@ export class CalculatorComponent implements OnInit, OnDestroy {
   }
 
   private loadCalculationIntoForm(calculation: SavedCalculation): void {
+    // Track the current calculation ID for potential overwrite
+    this.currentCalculationId = calculation.id || null;
+    
     this.calculatorForm.patchValue({
       purchasePrice: calculation.purchasePrice,
       rehabCosts: calculation.rehabCosts,
@@ -247,28 +251,67 @@ export class CalculatorComponent implements OnInit, OnDestroy {
 
   onSave(): void {
     if (this.results && this.calculatorForm.valid) {
-      const calculationName = prompt('Enter a name for this calculation:');
-      if (calculationName) {
-        const savedCalculation: SavedCalculation = {
-          ...this.calculatorForm.value,
-          name: calculationName,
-          results: this.results
-        };
+      if (this.currentCalculationId) {
+        // Overwrite existing calculation
+        const calculationName = prompt('Update calculation name:', 'Current Calculation');
+        if (calculationName) {
+          const savedCalculation: SavedCalculation = {
+            ...this.calculatorForm.value,
+            id: this.currentCalculationId,
+            name: calculationName,
+            results: this.results
+          };
 
-        this.dbService.saveCalculation(savedCalculation).subscribe({
-          next: (saved) => {
-            this.snackBar.open('Calculation saved successfully!', 'Close', {
-              duration: 3000
-            });
-          },
-          error: (error) => {
-            console.error('Error saving calculation:', error);
-            this.snackBar.open('Error saving calculation', 'Close', {
-              duration: 3000
-            });
-          }
-        });
+          this.dbService.saveCalculation(savedCalculation).subscribe({
+            next: (saved) => {
+              this.snackBar.open('Calculation updated successfully!', 'Close', {
+                duration: 3000
+              });
+            },
+            error: (error) => {
+              console.error('Error updating calculation:', error);
+              this.snackBar.open('Error updating calculation', 'Close', {
+                duration: 3000
+              });
+            }
+          });
+        }
+      } else {
+        // Create new calculation
+        const calculationName = prompt('Enter a name for this calculation:');
+        if (calculationName) {
+          const savedCalculation: SavedCalculation = {
+            ...this.calculatorForm.value,
+            name: calculationName,
+            results: this.results
+          };
+
+          this.dbService.saveCalculation(savedCalculation).subscribe({
+            next: (saved) => {
+              this.currentCalculationId = saved.id || null; // Track the new ID
+              this.snackBar.open('Calculation saved successfully!', 'Close', {
+                duration: 3000
+              });
+            },
+            error: (error) => {
+              console.error('Error saving calculation:', error);
+              this.snackBar.open('Error saving calculation', 'Close', {
+                duration: 3000
+              });
+            }
+          });
+        }
       }
     }
+  }
+
+  onNewCalculation(): void {
+    this.currentCalculationId = null;
+    this.results = null;
+    this.calculatorForm.reset();
+    this.setFormDefaults();
+    this.snackBar.open('New calculation started', 'Close', {
+      duration: 2000
+    });
   }
 }
