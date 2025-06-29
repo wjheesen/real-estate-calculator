@@ -1,0 +1,178 @@
+<div class="settings-container">
+  <mat-card class="settings-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>settings</mat-icon>
+        Calculator Settings
+      </mat-card-title>
+      <mat-card-subtitle>
+        Configure default values for the real estate calculator
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="settingsForm" (ngSubmit)="onSave()" class="settings-form">
+        
+        <!-- Interest Rate -->
+        <mat-form-field appearance="outline">
+          <mat-label>Interest Rate</mat-label>
+          <input matInput
+                 type="number"
+                 step="0.1"
+                 formControlName="interestRate"
+                 placeholder="6.5">
+          <span matSuffix>%</span>
+          <mat-error *ngIf="settingsForm.get('interestRate')?.hasError('required')">
+            Interest rate is required
+          </mat-error>
+          <mat-error *ngIf="settingsForm.get('interestRate')?.hasError('min') || settingsForm.get('interestRate')?.hasError('max')">
+            Interest rate must be between 0% and 100%
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Down Payment Percentage -->
+        <mat-form-field appearance="outline">
+          <mat-label>Down Payment</mat-label>
+          <input matInput
+                 type="number"
+                 step="1"
+                 formControlName="downPaymentPercentage"
+                 placeholder="20">
+          <span matSuffix>%</span>
+          <mat-error *ngIf="settingsForm.get('downPaymentPercentage')?.hasError('required')">
+            Down payment percentage is required
+          </mat-error>
+          <mat-error *ngIf="settingsForm.get('downPaymentPercentage')?.hasError('min') || settingsForm.get('downPaymentPercentage')?.hasError('max')">
+            Down payment must be between 0% and 100%
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Loan Term -->
+        <mat-form-field appearance="outline">
+          <mat-label>Loan Term</mat-label>
+          <input matInput
+                 type="number"
+                 step="1"
+                 formControlName="termInYears"
+                 placeholder="30">
+          <span matSuffix>years</span>
+          <mat-error *ngIf="settingsForm.get('termInYears')?.hasError('required')">
+            Loan term is required
+          </mat-error>
+          <mat-error *ngIf="settingsForm.get('termInYears')?.hasError('min') || settingsForm.get('termInYears')?.hasError('max')">
+            Loan term must be between 1 and 50 years
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Payments Per Year -->
+        <mat-form-field appearance="outline">
+          <mat-label>Payments Per Year</mat-label>
+          <input matInput
+                 type="number"
+                 step="1"
+                 formControlName="paymentsPerYear"
+                 placeholder="12">
+          <mat-error *ngIf="settingsForm.get('paymentsPerYear')?.hasError('required')">
+            Payments per year is required
+          </mat-error>
+          <mat-error *ngIf="settingsForm.get('paymentsPerYear')?.hasError('min') || settingsForm.get('paymentsPerYear')?.hasError('max')">
+            Payments per year must be between 1 and 365
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Operating Expenses -->
+        <mat-form-field appearance="outline">
+          <mat-label>Operating Expenses</mat-label>
+          <input matInput
+                 type="number"
+                 step="0.1"
+                 formControlName="operatingExpensesPercentage"
+                 placeholder="10">
+          <span matSuffix>%</span>
+          <mat-error *ngIf="settingsForm.get('operatingExpensesPercentage')?.hasError('required')">
+            Operating expenses percentage is required
+          </mat-error>
+          <mat-error *ngIf="settingsForm.get('operatingExpensesPercentage')?.hasError('min') || settingsForm.get('operatingExpensesPercentage')?.hasError('max')">
+            Operating expenses must be between 0% and 100%
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Capital Expenditures -->
+        <mat-form-field appearance="outline">
+          <mat-label>Capital Expenditures</mat-label>
+          <input matInput
+                 type="number"
+                 step="0.1"
+                 formControlName="capitalExpendituresPercentage"
+                 placeholder="5">
+          <span matSuffix>%</span>
+          <mat-error *ngIf="settingsForm.get('capitalExpendituresPercentage')?.hasError('required')">
+            Capital expenditures percentage is required
+          </mat-error>
+          <mat-error *ngIf="settingsForm.get('capitalExpendituresPercentage')?.hasError('min') || settingsForm.get('capitalExpendituresPercentage')?.hasError('max')">
+            Capital expenditures must be between 0% and 100%
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Mortgage Insurance Rate -->
+        <mat-form-field appearance="outline">
+          <mat-label>Mortgage Insurance Rate</mat-label>
+          <input matInput
+                 type="number"
+                 step="0.1"
+                 formControlName="mortgageInsuranceRatePercentage"
+                 placeholder="0.5">
+          <span matSuffix>%</span>
+          <mat-hint>Applied only when down payment is less than 20%</mat-hint>
+          <mat-error *ngIf="settingsForm.get('mortgageInsuranceRatePercentage')?.hasError('required')">
+            Mortgage insurance rate is required
+          </mat-error>
+          <mat-error *ngIf="settingsForm.get('mortgageInsuranceRatePercentage')?.hasError('min') || settingsForm.get('mortgageInsuranceRatePercentage')?.hasError('max')">
+            Mortgage insurance rate must be between 0% and 10%
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Appreciation Rate -->
+        <mat-form-field appearance="outline">
+          <mat-label>Annual Appreciation</mat-label>
+          <input matInput
+                 type="number"
+                 step="0.1"
+                 formControlName="appreciationPercentage"
+                 placeholder="3">
+          <span matSuffix>%</span>
+          <mat-error *ngIf="settingsForm.get('appreciationPercentage')?.hasError('required')">
+            Appreciation percentage is required
+          </mat-error>
+          <mat-error *ngIf="settingsForm.get('appreciationPercentage')?.hasError('min') || settingsForm.get('appreciationPercentage')?.hasError('max')">
+            Appreciation must be between -50% and 50%
+          </mat-error>
+        </mat-form-field>
+
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions class="settings-actions">
+      <button mat-raised-button 
+              color="primary" 
+              (click)="onSave()" 
+              [disabled]="!settingsForm.valid">
+        <mat-icon>save</mat-icon>
+        Save Settings
+      </button>
+      
+      <button mat-stroked-button 
+              color="warn" 
+              (click)="onReset()">
+        <mat-icon>restore</mat-icon>
+        Reset to Defaults
+      </button>
+      
+      <button mat-stroked-button 
+              routerLink="/calculator">
+        <mat-icon>arrow_back</mat-icon>
+        Back to Calculator
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

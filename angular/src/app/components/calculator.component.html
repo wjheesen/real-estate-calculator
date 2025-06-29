@@ -1,0 +1,427 @@
+<div class="calculator-container">
+  <mat-card class="calculator-card">
+    <mat-card-header>
+      <div class="header-content">
+        <div class="title-section">
+          <mat-card-title>Real Estate Investment Calculator</mat-card-title>
+          <mat-card-subtitle>Calculate your real estate investment returns</mat-card-subtitle>
+        </div>
+        <div class="navigation-buttons">
+          <button mat-stroked-button routerLink="/saved">
+            <mat-icon>history</mat-icon>
+            Saved Calculations
+          </button>
+          <button mat-stroked-button routerLink="/settings">
+            <mat-icon>settings</mat-icon>
+            Settings
+          </button>
+        </div>
+      </div>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <mat-tab-group>
+        <mat-tab label="Calculator">
+          <form [formGroup]="calculatorForm" (ngSubmit)="onCalculate()" class="calculator-form">
+            
+            <!-- Purchase Information -->
+            <div class="form-section">
+              <h3>Purchase Information</h3>
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Purchase Price</mat-label>
+                  <input matInput type="number" formControlName="purchasePrice">
+                  <span matPrefix>$</span>
+                </mat-form-field>
+                
+                <mat-form-field appearance="outline">
+                  <mat-label>Rehab Costs</mat-label>
+                  <input matInput type="number" formControlName="rehabCosts">
+                  <span matPrefix>$</span>
+                </mat-form-field>
+                
+                <mat-form-field appearance="outline">
+                  <mat-label>Closing Costs</mat-label>
+                  <input matInput type="number" formControlName="closingCosts">
+                  <span matPrefix>$</span>
+                </mat-form-field>
+              </div>
+            </div>
+
+            <!-- Financing -->
+            <div class="form-section">
+              <h3>Financing</h3>
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Down Payment</mat-label>
+                  <input matInput type="number" formControlName="downPayment">
+                  <span matPrefix *ngIf="!calculatorForm.get('usePercentageForDownPayment')?.value">$</span>
+                  <span matSuffix *ngIf="calculatorForm.get('usePercentageForDownPayment')?.value">%</span>
+                </mat-form-field>
+                
+                <mat-checkbox formControlName="usePercentageForDownPayment">
+                  Use percentage for down payment
+                </mat-checkbox>
+              </div>
+              
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Interest Rate</mat-label>
+                  <input matInput type="number" step="0.01" formControlName="interestRate" placeholder="4.5">
+                  <span matSuffix>%</span>
+                </mat-form-field>
+                
+                <mat-form-field appearance="outline">
+                  <mat-label>Term (Years)</mat-label>
+                  <input matInput type="number" formControlName="termYears" placeholder="30">
+                </mat-form-field>
+                
+                <mat-form-field appearance="outline">
+                  <mat-label>Payments Per Year</mat-label>
+                  <input matInput type="number" formControlName="paymentsPerYear" placeholder="12">
+                </mat-form-field>
+              </div>
+            </div>
+
+            <!-- Property Expenses -->
+            <div class="form-section">
+              <h3>Property Expenses</h3>
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Insurance Cost (Annual)</mat-label>
+                  <input matInput type="number" formControlName="insuranceCost">
+                  <span matPrefix>$</span>
+                </mat-form-field>
+                
+                <mat-form-field appearance="outline" [class.disabled-field]="!isDownPaymentLessThan20Percent">
+                  <mat-label>Mortgage Insurance (Annual)</mat-label>
+                  <input matInput 
+                         type="number" 
+                         formControlName="mortgageInsurance" 
+                         placeholder="600"
+                         [disabled]="!isDownPaymentLessThan20Percent">
+                  <span matPrefix *ngIf="!calculatorForm.get('usePercentageForMortgageInsurance')?.value">$</span>
+                  <span matSuffix *ngIf="calculatorForm.get('usePercentageForMortgageInsurance')?.value">% of loan</span>
+                  <mat-hint *ngIf="!isDownPaymentLessThan20Percent">
+                    Mortgage insurance not required with 20%+ down payment
+                  </mat-hint>
+                </mat-form-field>
+                
+                <mat-checkbox formControlName="usePercentageForMortgageInsurance" 
+                              [disabled]="!isDownPaymentLessThan20Percent">
+                  Use percentage of loan amount
+                </mat-checkbox>
+              </div>
+              
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Property Taxes (Annual)</mat-label>
+                  <input matInput type="number" formControlName="propertyTaxes">
+                  <span matPrefix>$</span>
+                </mat-form-field>
+              </div>
+            </div>
+
+            <!-- Income & Operating Expenses -->
+            <div class="form-section">
+              <h3>Income & Operating Expenses</h3>
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Expected Rental Income (Monthly)</mat-label>
+                  <input matInput type="number" formControlName="expectedRentalIncome">
+                  <span matPrefix>$</span>
+                </mat-form-field>
+              </div>
+              
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Operating Expenses</mat-label>
+                  <input matInput type="number" formControlName="operatingExpenses" placeholder="300">
+                  <span matPrefix *ngIf="!calculatorForm.get('usePercentageForOpex')?.value">$</span>
+                  <span matSuffix *ngIf="calculatorForm.get('usePercentageForOpex')?.value">% of rent</span>
+                </mat-form-field>
+                
+                <mat-checkbox formControlName="usePercentageForOpex">
+                  Use percentage of rental income
+                </mat-checkbox>
+              </div>
+              
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Capital Expenditures</mat-label>
+                  <input matInput type="number" formControlName="capitalExpenditures" placeholder="100">
+                  <span matPrefix *ngIf="!calculatorForm.get('usePercentageForCapex')?.value">$</span>
+                  <span matSuffix *ngIf="calculatorForm.get('usePercentageForCapex')?.value">% of rent</span>
+                </mat-form-field>
+                
+                <mat-checkbox formControlName="usePercentageForCapex">
+                  Use percentage of rental income
+                </mat-checkbox>
+              </div>
+            </div>
+
+            <!-- Appreciation -->
+            <div class="form-section">
+              <h3>Appreciation</h3>
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Appreciation Rate (Annual)</mat-label>
+                  <input matInput type="number" step="0.01" formControlName="appreciationRate" placeholder="3">
+                  <span matSuffix>%</span>
+                </mat-form-field>
+              </div>
+            </div>
+
+            <!-- Tax Information (Schedule E) -->
+            <div class="form-section">
+              <h3>Tax Information (Schedule E)</h3>
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Schedule E Deductible Amount</mat-label>
+                  <input matInput type="number" formControlName="scheduleEDeductibleAmount">
+                  <span matPrefix>$</span>
+                  <mat-hint>Building value (excluding land) eligible for depreciation</mat-hint>
+                </mat-form-field>
+                
+                <mat-form-field appearance="outline">
+                  <mat-label>Rental Use Percentage</mat-label>
+                  <input matInput type="number" step="1" formControlName="rentalUsePercentage">
+                  <span matSuffix>%</span>
+                  <mat-hint>Percentage of property used for rental income</mat-hint>
+                </mat-form-field>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button mat-raised-button color="primary" type="submit" [disabled]="calculatorForm.invalid">
+                Calculate
+              </button>
+              <button mat-raised-button color="accent" type="button" (click)="onSave()" [disabled]="!results">
+                Save Calculation
+              </button>
+            </div>
+          </form>
+        </mat-tab>
+        
+        <mat-tab label="Results" [disabled]="!results">
+          <div class="results" *ngIf="results">
+            <div class="results-grid">
+              <mat-card class="result-card">
+                <mat-card-header>
+                  <mat-card-title>Investment Summary</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  <div class="result-item">
+                    <span>Total Acquisition Cost:</span>
+                    <span class="value">{{ results.totalAcquisitionCost | currency }}</span>
+                  </div>
+                  <div class="result-item">
+                    <span>Down Payment Amount:</span>
+                    <span class="value">{{ results.downPaymentAmount | currency }}</span>
+                  </div>
+                  <div class="result-item">
+                    <span>Loan Amount:</span>
+                    <span class="value">{{ results.loanAmount | currency }}</span>
+                  </div>
+                  <div class="result-item">
+                    <span>Total Cash Invested:</span>
+                    <span class="value highlight">{{ results.totalCashInvested | currency }}</span>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+
+              <mat-card class="result-card">
+                <mat-card-header>
+                  <mat-card-title>Monthly Cash Flow</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  <div class="result-item">
+                    <span>Rental Income:</span>
+                    <span class="value positive">{{ calculatorForm.get('expectedRentalIncome')?.value | currency }}</span>
+                  </div>
+                  <div class="result-item">
+                    <span>Mortgage Payment:</span>
+                    <span class="value negative">-{{ results.monthlyMortgagePayment | currency }}</span>
+                  </div>
+                  <div class="result-item">
+                    <span>Operating Expenses:</span>
+                    <span class="value negative">-{{ results.monthlyOperatingExpenses | currency }}</span>
+                  </div>
+                  <div class="result-item">
+                    <span>Capital Expenditures:</span>
+                    <span class="value negative">-{{ results.monthlyCapitalExpenditures | currency }}</span>
+                  </div>
+                  <div class="result-item">
+                    <span>Insurance:</span>
+                    <span class="value negative">-{{ results.monthlyInsurance | currency }}</span>
+                  </div>
+                  <div class="result-item">
+                    <span>Mortgage Insurance:</span>
+                    <span class="value negative">-{{ results.monthlyMortgageInsurance | currency }}</span>
+                  </div>
+                  <div class="result-item">
+                    <span>Property Taxes:</span>
+                    <span class="value negative">-{{ results.monthlyPropertyTaxes | currency }}</span>
+                  </div>
+                  <div class="result-item total">
+                    <span>Monthly Cash Flow:</span>
+                    <span class="value" [class.positive]="results.monthlyCashFlow > 0" [class.negative]="results.monthlyCashFlow < 0">
+                      {{ results.monthlyCashFlow | currency }}
+                    </span>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+
+              <mat-card class="result-card">
+                <mat-card-header>
+                  <mat-card-title>Return on Investment</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  <div class="result-item">
+                    <span>Annual Cash Flow:</span>
+                    <span class="value" [class.positive]="results.annualCashFlow > 0" [class.negative]="results.annualCashFlow < 0">
+                      {{ results.annualCashFlow | currency }}
+                    </span>
+                  </div>
+                  <div class="result-item">
+                    <span>Cash-on-Cash Return:</span>
+                    <span class="value highlight" [class.positive]="results.cashOnCashReturn > 0" [class.negative]="results.cashOnCashReturn < 0">
+                      {{ results.cashOnCashReturn | number:'1.2-2' }}%
+                    </span>
+                  </div>
+                  <div class="result-item">
+                    <span>Total ROI ({{ calculatorForm.get('termYears')?.value }} years):</span>
+                    <span class="value highlight" [class.positive]="results.totalROI > 0" [class.negative]="results.totalROI < 0">
+                      {{ results.totalROI | number:'1.2-2' }}%
+                    </span>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+
+              <mat-card class="result-card">
+                <mat-card-header>
+                  <mat-card-title>Monthly & Yearly Returns</mat-card-title>
+                  <mat-card-subtitle>Cash Flow + Equity Growth</mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content>
+                  <div class="return-section">
+                    <h4>Monthly Returns</h4>
+                    <div class="result-item">
+                      <span>Cash Flow:</span>
+                      <span class="value" [class.positive]="results.monthlyCashFlow > 0" [class.negative]="results.monthlyCashFlow < 0">
+                        {{ results.monthlyCashFlow | currency }}
+                      </span>
+                    </div>
+                    <div class="result-item">
+                      <span>Equity Gain (avg):</span>
+                      <span class="value positive">{{ results.monthlyEquityGain | currency }}</span>
+                    </div>
+                    <div class="result-item total">
+                      <span>Total Monthly Return:</span>
+                      <span class="value highlight" [class.positive]="results.monthlyTotalReturn > 0" [class.negative]="results.monthlyTotalReturn < 0">
+                        {{ results.monthlyTotalReturn | currency }}
+                      </span>
+                    </div>
+                    <div class="result-item">
+                      <span>Monthly Return %:</span>
+                      <span class="value highlight" [class.positive]="results.monthlyReturnPercentage > 0" [class.negative]="results.monthlyReturnPercentage < 0">
+                        {{ results.monthlyReturnPercentage | number:'1.2-2' }}%
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div class="return-section">
+                    <h4>Yearly Returns</h4>
+                    <div class="result-item">
+                      <span>Cash Flow:</span>
+                      <span class="value" [class.positive]="results.annualCashFlow > 0" [class.negative]="results.annualCashFlow < 0">
+                        {{ results.annualCashFlow | currency }}
+                      </span>
+                    </div>
+                    <div class="result-item">
+                      <span>Equity Gain (avg):</span>
+                      <span class="value positive">{{ results.yearlyEquityGain | currency }}</span>
+                    </div>
+                    <div class="result-item total">
+                      <span>Total Yearly Return:</span>
+                      <span class="value highlight" [class.positive]="results.yearlyTotalReturn > 0" [class.negative]="results.yearlyTotalReturn < 0">
+                        {{ results.yearlyTotalReturn | currency }}
+                      </span>
+                    </div>
+                    <div class="result-item">
+                      <span>Yearly Return %:</span>
+                      <span class="value highlight" [class.positive]="results.yearlyReturnPercentage > 0" [class.negative]="results.yearlyReturnPercentage < 0">
+                        {{ results.yearlyReturnPercentage | number:'1.2-2' }}%
+                      </span>
+                    </div>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+
+              <mat-card class="result-card">
+                <mat-card-header>
+                  <mat-card-title>Future Value</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  <div class="result-item">
+                    <span>Current Property Value:</span>
+                    <span class="value">{{ calculatorForm.get('purchasePrice')?.value | currency }}</span>
+                  </div>
+                  <div class="result-item">
+                    <span>Future Property Value:</span>
+                    <span class="value">{{ results.futurePropertyValue | currency }}</span>
+                  </div>
+                  <div class="result-item">
+                    <span>Selling Costs (6%):</span>
+                    <span class="value negative">-{{ results.sellingCosts | currency }}</span>
+                  </div>
+                  <div class="result-item">
+                    <span>Net Proceeds from Sale:</span>
+                    <span class="value">{{ results.netProceedsFromSale | currency }}</span>
+                  </div>
+                  <div class="result-item total">
+                    <span>Total Profit:</span>
+                    <span class="value highlight" [class.positive]="results.totalProfit > 0" [class.negative]="results.totalProfit < 0">
+                      {{ results.totalProfit | currency }}
+                    </span>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+
+              <mat-card class="result-card">
+                <mat-card-header>
+                  <mat-card-title>Tax Information (Schedule E)</mat-card-title>
+                  <mat-card-subtitle>Annual Tax Calculations</mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content>
+                  <div class="result-item">
+                    <span>Pre-tax Income:</span>
+                    <span class="value" [class.positive]="results.pretaxIncome > 0" [class.negative]="results.pretaxIncome < 0">
+                      {{ results.pretaxIncome | currency }}
+                    </span>
+                  </div>
+                  <div class="result-item">
+                    <span>Annual Depreciation:</span>
+                    <span class="value positive">{{ results.annualDepreciation | currency }}</span>
+                  </div>
+                  <div class="result-item total">
+                    <span>Taxable Income:</span>
+                    <span class="value highlight" [class.positive]="results.taxableIncome > 0" [class.negative]="results.taxableIncome < 0">
+                      {{ results.taxableIncome | currency }}
+                    </span>
+                  </div>
+                  <div class="tax-note">
+                    <small>
+                      <strong>Note:</strong> Depreciation is calculated as Schedule E deductible amount ÷ 27.5 years × rental use percentage.
+                      Consult a tax professional for accurate tax planning.
+                    </small>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-card-content>
+  </mat-card>
+</div>

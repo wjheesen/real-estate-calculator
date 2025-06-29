@@ -1,0 +1,11 @@
+import { Routes } from '@angular/router';
+import { CalculatorComponent } from './components/calculator.component';
+import { SavedCalculationsComponent } from './components/saved-calculations.component';
+import { SettingsComponent } from './components/settings.component';
+
+export const routes: Routes = [
+  { path: '', redirectTo: '/calculator', pathMatch: 'full' },
+  { path: 'calculator', component: CalculatorComponent },
+  { path: 'saved', component: SavedCalculationsComponent },
+  { path: 'settings', component: SettingsComponent }
+];
