@@ -235,3 +235,35 @@
   color: #666;
   line-height: 1.4;
 }
+
+/* Save section styling */
+.save-section {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px solid #e0e0e0;
+}
+
+.save-card {
+  background-color: #f8f9fa;
+  border-left: 4px solid #28a745;
+}
+
+.save-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.calculation-name-field {
+  width: 100%;
+}
+
+.save-card mat-card-actions {
+  padding-top: 16px;
+}
+
+@media (max-width: 768px) {
+  .save-section {
+    margin-top: 20px;
+  }
+}

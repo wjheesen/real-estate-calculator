@@ -126,7 +126,11 @@ import { SavedCalculation, CalculationResults } from '../models/real-estate.inte
                     class="property-checkbox">
                   </mat-checkbox>
                   <div class="header-text">
-                    <mat-card-title>{{ calculation.name }}</mat-card-title>
+                    <mat-card-title>
+                      <a class="calculation-name-link" (click)="loadCalculation(calculation)">
+                        {{ calculation.name }}
+                      </a>
+                    </mat-card-title>
                     <mat-card-subtitle>{{ calculation.createdAt | date:'medium' }}</mat-card-subtitle>
                   </div>
                 </div>
@@ -184,10 +188,6 @@ import { SavedCalculation, CalculationResults } from '../models/real-estate.inte
               </mat-card-content>
               
               <mat-card-actions>
-                <button mat-button color="primary" (click)="loadCalculation(calculation)">
-                  <mat-icon>edit</mat-icon>
-                  Load
-                </button>
                 <button mat-button (click)="renameCalculation(calculation)">
                   <mat-icon>edit_note</mat-icon>
                   Rename

@@ -20,7 +20,7 @@
     </mat-card-header>
     
     <mat-card-content>
-      <mat-tab-group>
+      <mat-tab-group #tabGroup>
         <mat-tab label="Calculator">
           <form [formGroup]="calculatorForm" (ngSubmit)="onCalculate()" class="calculator-form">
             
@@ -195,9 +195,6 @@
             <div class="form-actions">
               <button mat-raised-button color="primary" type="submit" [disabled]="calculatorForm.invalid">
                 Calculate
-              </button>
-              <button mat-raised-button color="accent" type="button" (click)="onSave()" [disabled]="!results">
-                {{ currentCalculationId ? 'Update in Portfolio' : 'Save to Portfolio' }}
               </button>
               <button mat-stroked-button type="button" (click)="onNewCalculation()">
                 New Calculation
@@ -420,6 +417,30 @@
                     </small>
                   </div>
                 </mat-card-content>
+              </mat-card>
+            </div>
+            
+            <!-- Save to Portfolio Section -->
+            <div class="save-section">
+              <mat-card class="save-card">
+                <mat-card-header>
+                  <mat-card-title>Save to Portfolio</mat-card-title>
+                  <mat-card-subtitle>Save this calculation to your investment portfolio</mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content>
+                  <div class="save-form">
+                    <mat-form-field appearance="outline" class="calculation-name-field">
+                      <mat-label>Calculation Name</mat-label>
+                      <input matInput [(ngModel)]="calculationName" placeholder="Enter a name for this property">
+                      <mat-hint>Give this calculation a descriptive name (e.g., "123 Main St Duplex")</mat-hint>
+                    </mat-form-field>
+                  </div>
+                </mat-card-content>
+                <mat-card-actions>
+                  <button mat-raised-button color="accent" (click)="onSave()" [disabled]="!calculationName?.trim()">
+                    {{ currentCalculationId ? 'Update in Portfolio' : 'Save to Portfolio' }}
+                  </button>
+                </mat-card-actions>
               </mat-card>
             </div>
           </div>

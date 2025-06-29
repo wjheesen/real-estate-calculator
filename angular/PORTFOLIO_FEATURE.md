@@ -41,6 +41,18 @@ Combines selected properties to show:
 - **Results Grid**: Clean layout showing all portfolio metrics
 - **Mobile Responsive**: Works well on all screen sizes
 
+### 7. **Improved Calculation Flow**
+- **Calculate-Only Button**: Calculator tab now only shows Calculate button (no save)
+- **Auto-Navigate to Results**: Calculate button automatically switches to Results tab
+- **Inline Save Interface**: Save functionality moved to Results tab with input field
+- **No More Popups**: Replaced prompt-based naming with clean input field
+- **Seamless Experience**: More intuitive workflow from calculate → review → save
+
+### 8. **Enhanced Portfolio Navigation**
+- **Clickable Property Names**: Click directly on calculation names to load them
+- **Removed Load Button**: Cleaner card interface with fewer buttons
+- **Intuitive Interaction**: Follows common UX patterns (names as links)
+
 ## ✅ Technical Implementation
 
 ### Data Structure Updates
@@ -58,6 +70,10 @@ Combines selected properties to show:
 - Dynamic button states based on context
 - Clear visual feedback for portfolio composition
 - Professional styling consistent with existing design
+- **Streamlined Calculation Flow**: Calculate → Auto-navigate to Results → Save with inline form
+- **Eliminated Popups**: Clean input field interface instead of browser prompts
+- **Clickable Property Names**: Blue linked text for loading calculations (follows web conventions)
+- **Reduced Button Clutter**: Removed redundant Load button for cleaner card design
 
 ## 🚀 Usage Scenarios
 
@@ -94,5 +110,7 @@ This now perfectly supports your use case:
 - **Duplicate Button**: Error in duplicate functionality resolved
 - **Overwrite Logic**: Smart save/update based on loaded calculation state
 - **Form State Management**: Proper tracking of new vs. existing calculations
+- **Improved User Flow**: Calculate button now auto-navigates to results for immediate feedback
+- **Clean Save Interface**: Replaced popup dialogs with integrated input field in results tab
 
 The portfolio feature successfully transforms the calculator from a single-property tool into a comprehensive real estate investment portfolio analyzer, perfectly suited for complex scenarios like house hacking and multi-property analysis!

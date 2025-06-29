@@ -161,6 +161,24 @@
   min-width: fit-content;
 }
 
+/* Clickable calculation name styling */
+.calculation-name-link {
+  color: #1976d2;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.2s ease, text-decoration 0.2s ease;
+  display: inline-block;
+}
+
+.calculation-name-link:hover {
+  color: #1565c0;
+  text-decoration: underline;
+}
+
+.calculation-name-link:active {
+  color: #0d47a1;
+}
+
 @media (max-width: 768px) {
   .saved-calculations-container {
     padding: 10px;
