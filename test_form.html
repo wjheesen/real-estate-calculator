@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Form Submission</title>
+</head>
+<body>
+    <form action="http://localhost:8000/" method="POST">
+        <input type="hidden" name="real_estate_calculation_form[_token]" value="">
+        <input type="text" name="real_estate_calculation_form[purchasePrice]" value="300000" placeholder="Purchase Price">
+        <input type="text" name="real_estate_calculation_form[downPayment]" value="60000" placeholder="Down Payment">
+        <input type="text" name="real_estate_calculation_form[rehabCosts]" value="0" placeholder="Rehab Costs">
+        <input type="text" name="real_estate_calculation_form[closingCosts]" value="5000" placeholder="Closing Costs">
+        <input type="text" name="real_estate_calculation_form[interestRate]" value="6.5" placeholder="Interest Rate">
+        <input type="number" name="real_estate_calculation_form[termYears]" value="30" placeholder="Term Years">
+        <input type="number" name="real_estate_calculation_form[paymentsPerYear]" value="12" placeholder="Payments Per Year">
+        <input type="text" name="real_estate_calculation_form[insuranceCost]" value="1200" placeholder="Insurance Cost">
+        <input type="text" name="real_estate_calculation_form[propertyTaxes]" value="3600" placeholder="Property Taxes">
+        <input type="text" name="real_estate_calculation_form[expectedRentalIncome]" value="2500" placeholder="Rental Income">
+        <input type="text" name="real_estate_calculation_form[operatingExpenses]" value="300" placeholder="Operating Expenses">
+        <input type="text" name="real_estate_calculation_form[capitalExpenditures]" value="150" placeholder="Capital Expenditures">
+        <input type="text" name="real_estate_calculation_form[appreciationRate]" value="3" placeholder="Appreciation Rate">
+        <input type="checkbox" name="real_estate_calculation_form[usePercentageForOpex]" value="0">
+        <input type="checkbox" name="real_estate_calculation_form[usePercentageForCapex]" value="0">
+        <button type="submit" name="real_estate_calculation_form[calculate]">Calculate</button>
+    </form>
+</body>
+</html>
