@@ -66,7 +66,77 @@ import { SavedCalculation, CalculationResults, Scenario } from '../models/real-e
                   <mat-icon>add</mat-icon>
                   New Scenario
                 </button>
+                <button mat-stroked-button color="accent" (click)="toggleScenarioComparison()" class="compare-btn">
+                  <mat-icon>compare_arrows</mat-icon>
+                  {{ showScenarioComparison ? 'Hide' : 'Compare' }} Scenarios
+                </button>
               </div>
+            </div>
+            
+            <!-- Scenario Comparison Section -->
+            <div class="scenario-comparison-section" *ngIf="showScenarioComparison && scenarios.length > 1">
+              <mat-card class="comparison-card">
+                <mat-card-header>
+                  <mat-card-title>Scenario Comparison</mat-card-title>
+                  <mat-card-subtitle>Select scenarios to compare their performance</mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content>
+                  <div class="scenario-selection">
+                    <h4>Select Scenarios to Compare:</h4>
+                    <div class="scenario-checkboxes">
+                      <mat-checkbox 
+                        *ngFor="let scenario of scenarios" 
+                        [checked]="selectedScenariosForComparison.has(scenario.id!)"
+                        (change)="toggleScenarioForComparison(scenario)"
+                        class="scenario-checkbox">
+                        {{ scenario.name }} ({{ getCalculationsForScenario(scenario.id!).length }} properties)
+                      </mat-checkbox>
+                    </div>
+                  </div>
+                  
+                  <!-- Comparison Results -->                    <div class="comparison-results" *ngIf="selectedScenariosForComparison.size >= 2">
+                      <h4>Comparison Results:</h4>
+                      <div class="comparison-table-wrapper">
+                        <table class="comparison-table">
+                          <thead>
+                            <tr>
+                              <th class="metric-header">Metric</th>
+                              <th class="scenario-header" *ngFor="let scenarioId of getSelectedScenarioIds()">
+                                {{ getScenarioName(scenarioId) }}
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr *ngFor="let metric of comparisonMetrics">
+                              <td class="metric-name">{{ metric.label }}</td>
+                              <td class="metric-value" *ngFor="let scenarioId of getSelectedScenarioIds()"
+                                   [class.positive]="getScenarioMetricValue(scenarioId, metric.key) > 0"
+                                   [class.negative]="getScenarioMetricValue(scenarioId, metric.key) < 0">
+                                {{ formatMetricValue(getScenarioMetricValue(scenarioId, metric.key), metric.format) }}
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    
+                    <!-- Best Performance Highlights -->
+                    <div class="performance-highlights">
+                      <h4>Performance Highlights:</h4>
+                      <div class="highlights-grid">
+                        <div class="highlight-item" *ngFor="let highlight of getPerformanceHighlights()">
+                          <div class="highlight-metric">{{ highlight.metric }}</div>
+                          <div class="highlight-scenario">{{ highlight.scenarioName }}</div>
+                          <div class="highlight-value">{{ highlight.value }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="comparison-hint" *ngIf="selectedScenariosForComparison.size < 2">
+                    <p>Select at least 2 scenarios to see the comparison.</p>
+                  </div>
+                </mat-card-content>
+              </mat-card>
             </div>
             
             <!-- Portfolio Summary Results -->
@@ -289,6 +359,23 @@ export class SavedCalculationsComponent implements OnInit {
   scenarioCalculations: { [scenarioId: number]: SavedCalculation[] } = {};
   selectedCalculations = new Set<number>();
   portfolioSummary: any = {};
+  
+  // Scenario comparison properties
+  showScenarioComparison = false;
+  selectedScenariosForComparison = new Set<number>();
+  scenarioSummaries: { [scenarioId: number]: any } = {};
+  
+  comparisonMetrics = [
+    { key: 'totalProperties', label: 'Total Properties', format: 'number' },
+    { key: 'totalCashInvested', label: 'Total Cash Invested', format: 'currency' },
+    { key: 'monthlyCashFlow', label: 'Monthly Cash Flow', format: 'currency' },
+    { key: 'annualCashFlow', label: 'Annual Cash Flow', format: 'currency' },
+    { key: 'monthlyTotalReturn', label: 'Monthly Total Return', format: 'currency' },
+    { key: 'yearlyTotalReturn', label: 'Yearly Total Return', format: 'currency' },
+    { key: 'cashOnCashReturn', label: 'Cash-on-Cash Return', format: 'percentage' },
+    { key: 'taxableIncome', label: 'Annual Taxable Income', format: 'currency' },
+    { key: 'annualDepreciation', label: 'Annual Depreciation', format: 'currency' }
+  ];
 
   private dbService = inject(IndexedDbService);
   private calculatorDataService = inject(CalculatorDataService);
@@ -351,6 +438,9 @@ export class SavedCalculationsComponent implements OnInit {
           });
         
         console.log('Organized calculations by scenario:', this.scenarioCalculations);
+        
+        // Calculate scenario summaries for comparison
+        this.calculateScenarioSummaries();
       },
       error: (error) => {
         console.error('Error loading calculations:', error);
@@ -720,5 +810,141 @@ export class SavedCalculationsComponent implements OnInit {
         }
       });
     }
+  }
+
+  // Scenario comparison methods
+  toggleScenarioComparison(): void {
+    this.showScenarioComparison = !this.showScenarioComparison;
+    if (this.showScenarioComparison) {
+      this.calculateScenarioSummaries();
+    }
+  }
+
+  toggleScenarioForComparison(scenario: Scenario): void {
+    if (this.selectedScenariosForComparison.has(scenario.id!)) {
+      this.selectedScenariosForComparison.delete(scenario.id!);
+    } else {
+      this.selectedScenariosForComparison.add(scenario.id!);
+    }
+  }
+
+  getSelectedScenarioIds(): number[] {
+    return Array.from(this.selectedScenariosForComparison);
+  }
+
+  private calculateScenarioSummaries(): void {
+    this.scenarioSummaries = {};
+    
+    this.scenarios.forEach(scenario => {
+      const calculations = this.getCalculationsForScenario(scenario.id!);
+      const validCalculations = calculations.filter(calc => calc.results);
+      
+      if (validCalculations.length === 0) {
+        this.scenarioSummaries[scenario.id!] = {
+          totalProperties: 0,
+          totalCashInvested: 0,
+          monthlyCashFlow: 0,
+          annualCashFlow: 0,
+          monthlyTotalReturn: 0,
+          yearlyTotalReturn: 0,
+          cashOnCashReturn: 0,
+          taxableIncome: 0,
+          annualDepreciation: 0
+        };
+        return;
+      }
+
+      const summary = validCalculations.reduce((acc, calc) => {
+        const results = calc.results!;
+        return {
+          totalCashInvested: acc.totalCashInvested + (results.totalCashInvested || 0),
+          monthlyCashFlow: acc.monthlyCashFlow + (results.monthlyCashFlow || 0),
+          annualCashFlow: acc.annualCashFlow + (results.annualCashFlow || 0),
+          monthlyTotalReturn: acc.monthlyTotalReturn + (results.monthlyTotalReturn || 0),
+          yearlyTotalReturn: acc.yearlyTotalReturn + (results.yearlyTotalReturn || 0),
+          taxableIncome: acc.taxableIncome + (results.taxableIncome || 0),
+          annualDepreciation: acc.annualDepreciation + (results.annualDepreciation || 0)
+        };
+      }, {
+        totalCashInvested: 0,
+        monthlyCashFlow: 0,
+        annualCashFlow: 0,
+        monthlyTotalReturn: 0,
+        yearlyTotalReturn: 0,
+        taxableIncome: 0,
+        annualDepreciation: 0
+      });
+
+      // Calculate cash-on-cash return
+      const cashOnCashReturn = summary.totalCashInvested > 0 
+        ? (summary.annualCashFlow / summary.totalCashInvested) * 100 
+        : 0;
+
+      this.scenarioSummaries[scenario.id!] = {
+        totalProperties: validCalculations.length,
+        ...summary,
+        cashOnCashReturn
+      };
+    });
+  }
+
+  getScenarioMetricValue(scenarioId: number, metricKey: string): number {
+    return this.scenarioSummaries[scenarioId]?.[metricKey] || 0;
+  }
+
+  formatMetricValue(value: number, format: string): string {
+    switch (format) {
+      case 'currency':
+        return new Intl.NumberFormat('en-US', { 
+          style: 'currency', 
+          currency: 'USD',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        }).format(value);
+      case 'percentage':
+        return `${value.toFixed(2)}%`;
+      case 'number':
+        return value.toString();
+      default:
+        return value.toString();
+    }
+  }
+
+  getPerformanceHighlights(): any[] {
+    if (this.selectedScenariosForComparison.size < 2) return [];
+
+    const highlights: any[] = [];
+    const selectedIds = this.getSelectedScenarioIds();
+    
+    // Find best performers for key metrics
+    const keyMetrics = [
+      { key: 'cashOnCashReturn', label: 'Best Cash-on-Cash Return', format: 'percentage' },
+      { key: 'monthlyTotalReturn', label: 'Highest Monthly Return', format: 'currency' },
+      { key: 'yearlyTotalReturn', label: 'Highest Yearly Return', format: 'currency' },
+      { key: 'annualCashFlow', label: 'Best Annual Cash Flow', format: 'currency' }
+    ];
+
+    keyMetrics.forEach(metric => {
+      let bestValue = Number.NEGATIVE_INFINITY;
+      let bestScenarioId = 0;
+
+      selectedIds.forEach(scenarioId => {
+        const value = this.getScenarioMetricValue(scenarioId, metric.key);
+        if (value > bestValue) {
+          bestValue = value;
+          bestScenarioId = scenarioId;
+        }
+      });
+
+      if (bestScenarioId > 0) {
+        highlights.push({
+          metric: metric.label,
+          scenarioName: this.getScenarioName(bestScenarioId),
+          value: this.formatMetricValue(bestValue, metric.format)
+        });
+      }
+    });
+
+    return highlights;
   }
 }
