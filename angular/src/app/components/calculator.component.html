@@ -7,7 +7,7 @@
           <mat-card-subtitle>Calculate your real estate investment returns</mat-card-subtitle>
         </div>
         <div class="navigation-buttons">
-          <button mat-stroked-button routerLink="/portfolio">
+          <button mat-stroked-button routerLink="/portfolios">
             <mat-icon>business</mat-icon>
             Portfolio
           </button>
@@ -462,7 +462,7 @@
                           <mat-label>New Scenario Name</mat-label>
                           <input matInput [(ngModel)]="newScenarioName" placeholder="Enter scenario name">
                         </mat-form-field>
-                        <button mat-stroked-button color="primary" (click)="createNewScenario()" [disabled]="!newScenarioName?.trim()">
+                        <button mat-stroked-button color="primary" (click)="createNewScenario()" [disabled]="!newScenarioName.trim()">
                           Create Scenario
                         </button>
                       </div>
@@ -470,7 +470,7 @@
                   </div>
                 </mat-card-content>
                 <mat-card-actions>
-                  <button mat-raised-button color="accent" (click)="onSave()" [disabled]="!calculationName?.trim()">
+                  <button mat-raised-button color="accent" (click)="onSave()" [disabled]="!calculationName.trim()">
                     {{ currentCalculationId ? 'Update in Portfolio' : 'Save to Portfolio' }}
                   </button>
                 </mat-card-actions>

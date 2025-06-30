@@ -6,8 +6,8 @@ import { SettingsComponent } from './components/settings.component';
 export const routes: Routes = [
   { path: '', redirectTo: '/calculator', pathMatch: 'full' },
   { path: 'calculator', component: CalculatorComponent },
-  { path: 'portfolio', component: SavedCalculationsComponent },
-  { path: 'portfolio/scenario/:id', component: SavedCalculationsComponent },
-  { path: 'portfolio/organize', component: SavedCalculationsComponent },
+  { path: 'portfolios', component: SavedCalculationsComponent },
+  { path: 'portfolio/:id', component: SavedCalculationsComponent },
+  { path: 'portfolios/organize', component: SavedCalculationsComponent },
   { path: 'settings', component: SettingsComponent }
 ];

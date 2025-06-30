@@ -42,8 +42,8 @@ import { SavedCalculation, CalculationResults, Scenario } from '../models/real-e
     <div class="saved-calculations-container">
       <mat-card class="saved-calculations-card">
         <mat-card-header>
-          <mat-card-title>Portfolio</mat-card-title>
-          <mat-card-subtitle>Manage your real estate investment portfolio by scenario</mat-card-subtitle>
+          <mat-card-title>Portfolios</mat-card-title>
+          <mat-card-subtitle>Manage your real estate investment portfolios</mat-card-subtitle>
         </mat-card-header>
         
         <mat-card-content>
@@ -52,17 +52,17 @@ import { SavedCalculation, CalculationResults, Scenario } from '../models/real-e
             <div class="portfolio-controls">
               <h3>Portfolio Management</h3>
               <div class="controls-row">
-                <button mat-stroked-button color="primary" (click)="createNewScenario()" class="new-scenario-btn">
+                <button mat-stroked-button color="primary" (click)="createNewPortfolio()" class="new-portfolio-btn">
                   <mat-icon>add</mat-icon>
-                  New Scenario
+                  New Portfolio
                 </button>
                 <button mat-stroked-button color="accent" (click)="toggleOrganizeView()" class="organize-btn">
                   <mat-icon>sort</mat-icon>
                   {{ showOrganizeView ? 'Exit' : 'Organize' }} Properties
                 </button>
-                <button mat-stroked-button color="accent" (click)="goBackToScenarios()" *ngIf="selectedScenarioId" class="back-btn">
+                <button mat-stroked-button color="accent" (click)="goBackToPortfolios()" *ngIf="selectedPortfolioId" class="back-btn">
                   <mat-icon>arrow_back</mat-icon>
-                  Back to Scenarios
+                  Back to Portfolios
                 </button>
               </div>
             </div>
@@ -70,34 +70,34 @@ import { SavedCalculation, CalculationResults, Scenario } from '../models/real-e
             <!-- Organize Properties View -->
             <div class="organize-view" *ngIf="showOrganizeView">
               <div class="organize-header">
-                <h4>Organize Properties by Scenario</h4>
-                <p>Drag and drop properties between scenarios to organize your portfolio</p>
+                <h4>Organize Properties by Portfolio</h4>
+                <p>Drag and drop properties between portfolios to organize your investments</p>
               </div>
               
-              <div class="organize-scenarios-container">
-                <div class="organize-scenario-section" *ngFor="let scenario of scenarios">
-                  <mat-card class="organize-scenario-card">
+              <div class="organize-portfolios-container">
+                <div class="organize-portfolio-section" *ngFor="let portfolio of portfolios">
+                  <mat-card class="organize-portfolio-card">
                     <mat-card-header>
-                      <div class="organize-scenario-header">
+                      <div class="organize-portfolio-header">
                         <mat-card-title>
-                          {{ scenario.name }}
-                          <span class="calculation-count">({{ getCalculationsForScenario(scenario.id!).length }})</span>
+                          {{ portfolio.name }}
+                          <span class="calculation-count">({{ getCalculationsForPortfolio(portfolio.id!).length }})</span>
                         </mat-card-title>
-                        <mat-card-subtitle>{{ scenario.description }}</mat-card-subtitle>
+                        <mat-card-subtitle>{{ portfolio.description }}</mat-card-subtitle>
                       </div>
                     </mat-card-header>
                     
                     <mat-card-content>
                       <div class="organize-scenario-calculations" 
                            cdkDropList 
-                           [id]="'organize-scenario-' + scenario.id"
-                           [cdkDropListData]="getCalculationsForScenario(scenario.id!)"
+                           [id]="'organize-portfolio-' + portfolio.id"
+                           [cdkDropListData]="getCalculationsForPortfolio(portfolio.id!)"
                            [cdkDropListConnectedTo]="getOrganizeDropListIds()"
-                           (cdkDropListDropped)="onDrop($event, scenario.id!)">
+                           (cdkDropListDropped)="onDrop($event, portfolio.id!)">
                         
                         <div class="organize-calculation-card" 
                              cdkDrag
-                             *ngFor="let calculation of getCalculationsForScenario(scenario.id!)">
+                             *ngFor="let calculation of getCalculationsForPortfolio(portfolio.id!)">
                           
                           <div class="drag-placeholder" *cdkDragPlaceholder></div>
                           
@@ -134,7 +134,7 @@ import { SavedCalculation, CalculationResults, Scenario } from '../models/real-e
                         </div>
                         
                         <!-- Empty scenario placeholder -->
-                        <div class="organize-empty-scenario" *ngIf="getCalculationsForScenario(scenario.id!).length === 0">
+                        <div class="organize-empty-scenario" *ngIf="getCalculationsForPortfolio(portfolio.id!).length === 0">
                           <mat-icon class="empty-icon">folder_open</mat-icon>
                           <p>No properties in this scenario</p>
                           <p class="hint">Drag properties here to organize them</p>
@@ -146,43 +146,43 @@ import { SavedCalculation, CalculationResults, Scenario } from '../models/real-e
               </div>
             </div>
             
-            <!-- Scenario Selection View -->
-            <div class="scenario-selection-view" *ngIf="!selectedScenarioId && !showOrganizeView">
-              <h4>Select a Scenario to View Details</h4>
-              <div class="scenario-selection-grid">
-                <mat-card class="scenario-selection-card" *ngFor="let scenario of scenarios" (click)="selectScenario(scenario.id!)">
+            <!-- Portfolio Selection View -->
+            <div class="portfolio-selection-view" *ngIf="!selectedPortfolioId && !showOrganizeView">
+              <h4>Select a Portfolio to View Details</h4>
+              <div class="portfolio-selection-grid">
+                <mat-card class="portfolio-selection-card" *ngFor="let portfolio of portfolios" (click)="selectPortfolio(portfolio.id!)">
                   <mat-card-header>
-                    <mat-card-title>{{ scenario.name }}</mat-card-title>
-                    <mat-card-subtitle>{{ getCalculationsForScenario(scenario.id!).length }} Properties</mat-card-subtitle>
+                    <mat-card-title>{{ portfolio.name }}</mat-card-title>
+                    <mat-card-subtitle>{{ getCalculationsForPortfolio(portfolio.id!).length }} Properties</mat-card-subtitle>
                   </mat-card-header>
                   <mat-card-content>
-                    <div class="scenario-preview">
-                      <div class="preview-metric" *ngIf="getCalculationsForScenario(scenario.id!).length > 0">
+                    <div class="portfolio-preview">
+                      <div class="preview-metric" *ngIf="getCalculationsForPortfolio(portfolio.id!).length > 0">
                         <span>Monthly Cash Flow:</span>
-                        <span class="value" [class.positive]="getScenarioMetricValue(scenario.id!, 'monthlyCashFlow') > 0" 
-                              [class.negative]="getScenarioMetricValue(scenario.id!, 'monthlyCashFlow') < 0">
-                          {{ formatMetricValue(getScenarioMetricValue(scenario.id!, 'monthlyCashFlow'), 'currency') }}
+                        <span class="value" [class.positive]="getPortfolioMetricValue(portfolio.id!, 'monthlyCashFlow') > 0" 
+                              [class.negative]="getPortfolioMetricValue(portfolio.id!, 'monthlyCashFlow') < 0">
+                          {{ formatMetricValue(getPortfolioMetricValue(portfolio.id!, 'monthlyCashFlow'), 'currency') }}
                         </span>
                       </div>
-                      <div class="preview-metric" *ngIf="getCalculationsForScenario(scenario.id!).length > 0">
+                      <div class="preview-metric" *ngIf="getCalculationsForPortfolio(portfolio.id!).length > 0">
                         <span>Cash-on-Cash Return:</span>
-                        <span class="value" [class.positive]="getScenarioMetricValue(scenario.id!, 'cashOnCashReturn') > 0" 
-                              [class.negative]="getScenarioMetricValue(scenario.id!, 'cashOnCashReturn') < 0">
-                          {{ formatMetricValue(getScenarioMetricValue(scenario.id!, 'cashOnCashReturn'), 'percentage') }}
+                        <span class="value" [class.positive]="getPortfolioMetricValue(portfolio.id!, 'cashOnCashReturn') > 0" 
+                              [class.negative]="getPortfolioMetricValue(portfolio.id!, 'cashOnCashReturn') < 0">
+                          {{ formatMetricValue(getPortfolioMetricValue(portfolio.id!, 'cashOnCashReturn'), 'percentage') }}
                         </span>
                       </div>
-                      <div class="empty-scenario-preview" *ngIf="getCalculationsForScenario(scenario.id!).length === 0">
+                      <div class="empty-portfolio-preview" *ngIf="getCalculationsForPortfolio(portfolio.id!).length === 0">
                         <mat-icon>folder_open</mat-icon>
                         <p>No properties</p>
                       </div>
                     </div>
                   </mat-card-content>
                   <mat-card-actions>
-                    <button mat-icon-button (click)="renameScenario(scenario); $event.stopPropagation()" matTooltip="Rename scenario">
+                    <button mat-icon-button (click)="renamePortfolio(portfolio); $event.stopPropagation()" matTooltip="Rename portfolio">
                       <mat-icon>edit</mat-icon>
                     </button>
-                    <button mat-icon-button (click)="deleteScenario(scenario); $event.stopPropagation()" matTooltip="Delete scenario" 
-                            [disabled]="scenarios.length <= 1">
+                    <button mat-icon-button (click)="deletePortfolio(portfolio); $event.stopPropagation()" matTooltip="Delete portfolio" 
+                            [disabled]="portfolios.length <= 1">
                       <mat-icon>delete</mat-icon>
                     </button>
                   </mat-card-actions>
@@ -471,15 +471,22 @@ import { SavedCalculation, CalculationResults, Scenario } from '../models/real-e
   styleUrls: ['./saved-calculations.component.css']
 })
 export class SavedCalculationsComponent implements OnInit {
-  scenarios: Scenario[] = [];
-  scenarioCalculations: { [scenarioId: number]: SavedCalculation[] } = {};
+  portfolios: Scenario[] = [];
+  portfolioCalculations: { [portfolioId: number]: SavedCalculation[] } = {};
   
-  // Scenario selection and comparison properties
-  selectedScenarioId: number | null = null;
-  comparisonScenarioId: number | null = null;
+  // Portfolio selection and comparison properties
+  selectedPortfolioId: number | null = null;
+  comparisonPortfolioId: number | null = null;
   showComparison = false;
   showOrganizeView = false;
-  scenarioSummaries: { [scenarioId: number]: any } = {};
+  portfolioSummaries: { [portfolioId: number]: any } = {};
+  
+  // Legacy aliases for template compatibility
+  scenarios = this.portfolios;
+  scenarioCalculations = this.portfolioCalculations;
+  selectedScenarioId = this.selectedPortfolioId;
+  comparisonScenarioId = this.comparisonPortfolioId;
+  scenarioSummaries = this.portfolioSummaries;
   
   comparisonMetrics = [
     { key: 'totalProperties', label: 'Total Properties', format: 'number' },
@@ -503,7 +510,7 @@ export class SavedCalculationsComponent implements OnInit {
   private dialog = inject(MatDialog);
 
   ngOnInit(): void {
-    this.loadScenariosAndCalculations();
+    this.loadPortfoliosAndCalculations();
     
     // Handle URL routing for different views
     this.route.url.subscribe(urlSegments => {
@@ -511,113 +518,113 @@ export class SavedCalculationsComponent implements OnInit {
       
       if (path === 'organize') {
         this.showOrganizeView = true;
-        this.selectedScenarioId = null;
+        this.selectedPortfolioId = null;
         this.showComparison = false;
-        this.comparisonScenarioId = null;
+        this.comparisonPortfolioId = null;
       } else if (path === '') {
         // Default portfolio view
-        this.selectedScenarioId = null;
+        this.selectedPortfolioId = null;
         this.showOrganizeView = false;
         this.showComparison = false;
-        this.comparisonScenarioId = null;
+        this.comparisonPortfolioId = null;
       }
     });
     
-    // Handle route parameters for scenario selection
+    // Handle route parameters for portfolio selection
     this.route.paramMap.subscribe(params => {
-      const scenarioId = params.get('id');
-      if (scenarioId) {
-        const parsedId = parseInt(scenarioId, 10);
+      const portfolioId = params.get('id');
+      if (portfolioId) {
+        const parsedId = parseInt(portfolioId, 10);
         
-        // Check if scenarios are loaded and the scenario exists
-        if (this.scenarios.length > 0) {
-          const scenarioExists = this.scenarios.some(s => s.id === parsedId);
-          if (scenarioExists) {
-            this.selectedScenarioId = parsedId;
+        // Check if portfolios are loaded and the portfolio exists
+        if (this.portfolios.length > 0) {
+          const portfolioExists = this.portfolios.some(p => p.id === parsedId);
+          if (portfolioExists) {
+            this.selectedPortfolioId = parsedId;
             this.showOrganizeView = false;
             this.showComparison = false;
-            this.comparisonScenarioId = null;
+            this.comparisonPortfolioId = null;
           } else {
-            this.router.navigate(['/portfolio']);
+            this.router.navigate(['/portfolios']);
           }
         } else {
-          // Scenarios not loaded yet, store the ID for later
-          this.selectedScenarioId = parsedId;
+          // Portfolios not loaded yet, store the ID for later
+          this.selectedPortfolioId = parsedId;
         }
       } else {
-        // No scenario ID in URL, reset to portfolio view
-        this.selectedScenarioId = null;
+        // No portfolio ID in URL, reset to portfolio view
+        this.selectedPortfolioId = null;
       }
     });
   }
 
-  private loadScenariosAndCalculations(): void {
-    // Load scenarios first
+  private loadPortfoliosAndCalculations(): void {
+    // Load portfolios first
     this.scenarioService.getAllScenarios().subscribe({
-      next: (scenarios) => {
-        this.scenarios = scenarios;
+      next: (portfolios) => {
+        this.portfolios = portfolios;
         
-        // Check if we have a pending scenario selection from URL
-        if (this.selectedScenarioId !== null) {
-          const scenarioExists = scenarios.some(s => s.id === this.selectedScenarioId);
-          if (!scenarioExists) {
-            this.selectedScenarioId = null;
-            this.router.navigate(['/portfolio']);
+        // Check if we have a pending portfolio selection from URL
+        if (this.selectedPortfolioId !== null) {
+          const portfolioExists = portfolios.some(p => p.id === this.selectedPortfolioId);
+          if (!portfolioExists) {
+            this.selectedPortfolioId = null;
+            this.router.navigate(['/portfolios']);
           }
         }
         
-        // Ensure default scenario exists
-        if (scenarios.length === 0) {
-          this.scenarioService.createNewScenario('My Portfolio', 'Default portfolio scenario').subscribe({
-            next: (defaultScenario) => {
-              this.scenarios = [defaultScenario];
-              this.loadCalculationsForScenarios();
+        // Ensure default portfolio exists
+        if (portfolios.length === 0) {
+          this.scenarioService.createNewScenario('My Portfolio', 'Default investment portfolio').subscribe({
+            next: (defaultPortfolio) => {
+              this.portfolios = [defaultPortfolio];
+              this.loadCalculationsForPortfolios();
             }
           });
         } else {
-          this.loadCalculationsForScenarios();
+          this.loadCalculationsForPortfolios();
         }
       },
       error: (error) => {
-        console.error('Error loading scenarios:', error);
+        console.error('Error loading portfolios:', error);
       }
     });
   }
 
-  private loadCalculationsForScenarios(): void {
+  private loadCalculationsForPortfolios(): void {
     this.dbService.getAllCalculations().subscribe({
       next: (calculations) => {
         console.log('Loaded calculations:', calculations);
-        // Organize calculations by scenario
-        this.scenarioCalculations = {};
+        // Organize calculations by portfolio
+        this.portfolioCalculations = {};
         
-        // Initialize empty arrays for each scenario
-        this.scenarios.forEach(scenario => {
-          this.scenarioCalculations[scenario.id || 1] = [];
+        // Initialize empty arrays for each portfolio
+        this.portfolios.forEach(portfolio => {
+          this.portfolioCalculations[portfolio.id || 1] = [];
         });
         
-        // Sort calculations into scenarios
+        // Sort calculations into portfolios
         calculations
           .sort((a, b) => (b.updatedAt?.getTime() || 0) - (a.updatedAt?.getTime() || 0))
           .forEach(calc => {
-            const scenarioId = calc.scenarioId || 1;
-            if (!this.scenarioCalculations[scenarioId]) {
-              this.scenarioCalculations[scenarioId] = [];
+            const portfolioId = calc.scenarioId || 1;
+            if (!this.portfolioCalculations[portfolioId]) {
+              this.portfolioCalculations[portfolioId] = [];
             }
-            this.scenarioCalculations[scenarioId].push(calc);
+            this.portfolioCalculations[portfolioId].push(calc);
           });
         
-        console.log('Organized calculations by scenario:', this.scenarioCalculations);
+        console.log('Organized calculations by portfolio:', this.portfolioCalculations);
         
-        // Calculate scenario summaries for comparison
-        this.calculateScenarioSummaries();
+        // Calculate portfolio summaries for comparison
+        this.calculatePortfolioSummaries();
         
-        // If we have a selected scenario from URL, make sure it's valid
-        if (this.selectedScenarioId) {
-          const scenarioExists = this.scenarios.some(s => s.id === this.selectedScenarioId);
-          if (!scenarioExists) {
-            // Scenario doesn't exist, redirect to portfolio home
-            this.router.navigate(['/portfolio']);
+        // If we have a selected portfolio from URL, make sure it's valid
+        if (this.selectedPortfolioId) {
+          const portfolioExists = this.portfolios.some(p => p.id === this.selectedPortfolioId);
+          if (!portfolioExists) {
+            // Portfolio doesn't exist, redirect to portfolio home
+            this.router.navigate(['/portfolios']);
           }
         }
       },
@@ -714,21 +721,12 @@ export class SavedCalculationsComponent implements OnInit {
     }
   }
 
-  getScenarioName(scenarioId: number): string {
-    const scenario = this.scenarios.find(s => s.id === scenarioId);
-    return scenario ? scenario.name : 'Unknown Scenario';
-  }
-
   getAllCalculations(): SavedCalculation[] {
     const allCalculations: SavedCalculation[] = [];
     Object.values(this.scenarioCalculations).forEach(calculations => {
       allCalculations.push(...calculations);
     });
     return allCalculations;
-  }
-
-  getCalculationsForScenario(scenarioId: number): SavedCalculation[] {
-    return this.scenarioCalculations[scenarioId] || [];
   }
 
   getDropListIds(): string[] {
@@ -746,69 +744,61 @@ export class SavedCalculationsComponent implements OnInit {
     return connectedIds;
   }
 
-  getScenarioById(scenarioId: number): Scenario | undefined {
-    return this.scenarios.find(s => s.id === scenarioId);
+  // Navigation methods
+  selectPortfolio(portfolioId: number): void {
+    this.router.navigate(['/portfolio', portfolioId]);
   }
 
-  createNewScenario(): void {
-    const name = prompt('Enter scenario name:');
-    if (name && name.trim()) {
-      const description = prompt('Enter scenario description (optional):') || '';
-      
-      this.scenarioService.createNewScenario(name.trim(), description.trim()).subscribe({
-        next: (newScenario) => {
-          this.scenarios.push(newScenario);
-          this.scenarioCalculations[newScenario.id!] = [];
-          this.snackBar.open(`Scenario "${newScenario.name}" created successfully!`, 'Close', {
-            duration: 3000
-          });
-        },
-        error: (error) => {
-          console.error('Error creating scenario:', error);
-          this.snackBar.open('Error creating scenario', 'Close', {
-            duration: 3000
-          });
-        }
-      });
+  goBackToPortfolios(): void {
+    this.router.navigate(['/portfolios']);
+  }
+
+  toggleOrganizeView(): void {
+    if (this.showOrganizeView) {
+      // Exit organize mode, go back to portfolios
+      this.router.navigate(['/portfolios']);
+    } else {
+      // Enter organize mode
+      this.router.navigate(['/portfolios/organize']);
     }
   }
 
-  renameScenario(scenario: Scenario): void {
-    const newName = prompt('Enter new scenario name:', scenario.name);
-    if (newName && newName.trim() && newName.trim() !== scenario.name) {
+  renamePortfolio(portfolio: Scenario): void {
+    const newName = prompt('Enter new portfolio name:', portfolio.name);
+    if (newName && newName.trim() && newName.trim() !== portfolio.name) {
       const trimmedName = newName.trim();
       
       // Check if name already exists
-      const nameExists = this.scenarios.some(s => 
-        s.id !== scenario.id && s.name.toLowerCase() === trimmedName.toLowerCase()
+      const nameExists = this.portfolios.some(p => 
+        p.id !== portfolio.id && p.name.toLowerCase() === trimmedName.toLowerCase()
       );
       
       if (nameExists) {
-        this.snackBar.open('A scenario with this name already exists', 'Close', {
+        this.snackBar.open('A portfolio with this name already exists', 'Close', {
           duration: 3000
         });
         return;
       }
 
-      const updatedScenario: Scenario = {
-        ...scenario,
+      const updatedPortfolio: Scenario = {
+        ...portfolio,
         name: trimmedName,
         updatedAt: new Date()
       };
 
-      this.scenarioService.saveScenario(updatedScenario).subscribe({
+      this.scenarioService.saveScenario(updatedPortfolio).subscribe({
         next: () => {
-          const index = this.scenarios.findIndex(s => s.id === scenario.id);
+          const index = this.portfolios.findIndex(p => p.id === portfolio.id);
           if (index !== -1) {
-            this.scenarios[index] = updatedScenario;
+            this.portfolios[index] = updatedPortfolio;
           }
-          this.snackBar.open(`Scenario renamed to "${trimmedName}"`, 'Close', {
+          this.snackBar.open(`Portfolio renamed to "${trimmedName}"`, 'Close', {
             duration: 3000
           });
         },
         error: (error: any) => {
-          console.error('Error renaming scenario:', error);
-          this.snackBar.open('Error renaming scenario', 'Close', {
+          console.error('Error renaming portfolio:', error);
+          this.snackBar.open('Error renaming portfolio', 'Close', {
             duration: 3000
           });
         }
@@ -816,196 +806,144 @@ export class SavedCalculationsComponent implements OnInit {
     }
   }
 
-  deleteScenario(scenario: Scenario): void {
-    if (this.scenarios.length <= 1) {
-      this.snackBar.open('Cannot delete the last scenario', 'Close', {
+  deletePortfolio(portfolio: Scenario): void {
+    if (this.portfolios.length <= 1) {
+      this.snackBar.open('Cannot delete the last portfolio', 'Close', {
         duration: 3000
       });
       return;
     }
 
-    const calculationsCount = this.getCalculationsForScenario(scenario.id!).length;
-    let confirmMessage = `Are you sure you want to delete scenario "${scenario.name}"?`;
+    const calculationsCount = this.getCalculationsForPortfolio(portfolio.id!).length;
+    let confirmMessage = `Are you sure you want to delete portfolio "${portfolio.name}"?`;
     
     if (calculationsCount > 0) {
-      confirmMessage += ` This will move ${calculationsCount} calculation(s) to the first scenario.`;
+      confirmMessage += ` This will move ${calculationsCount} calculation(s) to the first portfolio.`;
     }
 
     if (confirm(confirmMessage)) {
-      const firstScenario = this.scenarios.find(s => s.id !== scenario.id);
-      const calculationsToMove = this.getCalculationsForScenario(scenario.id!);
+      const firstPortfolio = this.portfolios.find(p => p.id !== portfolio.id);
+      const calculationsToMove = this.getCalculationsForPortfolio(portfolio.id!);
 
-      // Move calculations to the first remaining scenario
-      if (calculationsToMove.length > 0 && firstScenario) {
+      // Move calculations to the first remaining portfolio
+      if (calculationsToMove.length > 0 && firstPortfolio) {
         const updatePromises = calculationsToMove.map(calc => {
           const updatedCalc: SavedCalculation = {
             ...calc,
-            scenarioId: firstScenario.id!,
+            scenarioId: firstPortfolio.id!,
             updatedAt: new Date()
           };
           return this.dbService.saveCalculation(updatedCalc).toPromise();
         });
 
         Promise.all(updatePromises).then(() => {
-          this.deleteScenarioFromDb(scenario);
+          this.deletePortfolioFromDb(portfolio);
         }).catch(error => {
           console.error('Error moving calculations:', error);
-          this.snackBar.open('Error moving calculations to another scenario', 'Close', {
+          this.snackBar.open('Error moving calculations to another portfolio', 'Close', {
             duration: 3000
           });
         });
       } else {
-        this.deleteScenarioFromDb(scenario);
+        this.deletePortfolioFromDb(portfolio);
       }
     }
   }
 
-  private deleteScenarioFromDb(scenario: Scenario): void {
-    this.scenarioService.deleteScenario(scenario.id!).subscribe({
+  private deletePortfolioFromDb(portfolio: Scenario): void {
+    this.scenarioService.deleteScenario(portfolio.id!).subscribe({
       next: () => {
-        this.scenarios = this.scenarios.filter(s => s.id !== scenario.id);
-        delete this.scenarioCalculations[scenario.id!];
-        this.loadCalculationsForScenarios(); // Refresh to show moved calculations
-        this.snackBar.open(`Scenario "${scenario.name}" deleted successfully!`, 'Close', {
+        this.portfolios = this.portfolios.filter(p => p.id !== portfolio.id);
+        delete this.portfolioCalculations[portfolio.id!];
+        this.loadCalculationsForPortfolios();
+        this.snackBar.open(`Portfolio "${portfolio.name}" deleted successfully!`, 'Close', {
           duration: 3000
         });
       },
       error: (error) => {
-        console.error('Error deleting scenario:', error);
-        this.snackBar.open('Error deleting scenario', 'Close', {
+        console.error('Error deleting portfolio:', error);
+        this.snackBar.open('Error deleting portfolio', 'Close', {
           duration: 3000
         });
       }
     });
   }
 
-  renameCalculation(calculation: SavedCalculation): void {
-    const newName = prompt('Enter new name for this property:', calculation.name);
-    if (newName && newName.trim() && newName.trim() !== calculation.name) {
-      const trimmedName = newName.trim();
-      
-      // Check if name already exists
-      const nameExists = this.getAllCalculations().some(calc => 
-        calc.id !== calculation.id && calc.name.toLowerCase() === trimmedName.toLowerCase()
-      );
-      
-      if (nameExists) {
-        this.snackBar.open('A property with this name already exists', 'Close', {
-          duration: 3000
-        });
-        return;
-      }
+  // Essential portfolio methods
+  getPortfolioName(portfolioId: number): string {
+    const portfolio = this.portfolios.find(p => p.id === portfolioId);
+    return portfolio ? portfolio.name : 'Unknown Portfolio';
+  }
 
-      const updatedCalculation: SavedCalculation = {
-        ...calculation,
-        name: trimmedName,
-        updatedAt: new Date()
-      };
+  getCalculationsForPortfolio(portfolioId: number): SavedCalculation[] {
+    return this.portfolioCalculations[portfolioId] || [];
+  }
 
-      this.dbService.saveCalculation(updatedCalculation).subscribe({
-        next: () => {
-          this.loadCalculationsForScenarios();
-          this.snackBar.open(`Property renamed to "${trimmedName}"`, 'Close', {
+  getPortfolioById(portfolioId: number): Scenario | undefined {
+    return this.portfolios.find(p => p.id === portfolioId);
+  }
+
+  getPortfolioMetricValue(portfolioId: number, metricKey: string): number {
+    return this.portfolioSummaries[portfolioId]?.[metricKey] || 0;
+  }
+
+  createNewPortfolio(): void {
+    const name = prompt('Enter portfolio name:');
+    if (name && name.trim()) {
+      const description = prompt('Enter portfolio description (optional):') || '';
+      
+      this.scenarioService.createNewScenario(name.trim(), description.trim()).subscribe({
+        next: (newPortfolio) => {
+          this.portfolios.push(newPortfolio);
+          this.portfolioCalculations[newPortfolio.id!] = [];
+          this.snackBar.open(`Portfolio "${newPortfolio.name}" created successfully!`, 'Close', {
             duration: 3000
           });
         },
         error: (error) => {
-          console.error('Error renaming calculation:', error);
-          this.snackBar.open('Error renaming property', 'Close', {
+          console.error('Error creating portfolio:', error);
+          this.snackBar.open('Error creating portfolio', 'Close', {
             duration: 3000
           });
         }
       });
     }
-  }
-
-  deleteCalculation(calculation: SavedCalculation): void {
-    if (calculation.id && confirm(`Are you sure you want to delete "${calculation.name}"?`)) {
-      this.dbService.deleteCalculation(calculation.id).subscribe({
-        next: () => {
-          this.loadScenariosAndCalculations();
-          this.snackBar.open('Calculation deleted successfully!', 'Close', {
-            duration: 3000
-          });
-        },
-        error: (error: any) => {
-          console.error('Error deleting calculation:', error);
-          this.snackBar.open('Error deleting calculation', 'Close', {
-            duration: 3000
-          });
-        }
-      });
-    }
-  }
-
-  // Scenario selection and comparison methods
-  selectScenario(scenarioId: number): void {
-    this.router.navigate(['/portfolio/scenario', scenarioId]);
-  }
-
-  goBackToScenarios(): void {
-    this.router.navigate(['/portfolio']);
   }
 
   toggleComparison(): void {
     this.showComparison = !this.showComparison;
     if (!this.showComparison) {
-      this.comparisonScenarioId = null;
+      this.comparisonPortfolioId = null;
     }
   }
 
-  toggleOrganizeView(): void {
-    if (this.showOrganizeView) {
-      // Exit organize mode, go back to portfolio
-      this.router.navigate(['/portfolio']);
-    } else {
-      // Enter organize mode
-      this.router.navigate(['/portfolio/organize']);
-    }
-  }
-
-  getOrganizeDropListIds(): string[] {
-    const allIds = this.scenarios.map(scenario => `organize-scenario-${scenario.id}`);
-    console.log('All organize drop list IDs:', allIds);
-    return allIds;
-  }
-
-  getMetricDifference(scenario1Id: number, scenario2Id: number, metricKey: string): number {
-    const value1 = this.getScenarioMetricValue(scenario1Id, metricKey);
-    const value2 = this.getScenarioMetricValue(scenario2Id, metricKey);
-    return value1 - value2;
-  }
-
-  formatDifference(difference: number, format: string): string {
-    const prefix = difference > 0 ? '+' : '';
-    const absValue = Math.abs(difference);
-    
+  formatMetricValue(value: number, format: string): string {
     switch (format) {
       case 'currency':
-        return `${prefix}${new Intl.NumberFormat('en-US', { 
+        return new Intl.NumberFormat('en-US', { 
           style: 'currency', 
           currency: 'USD',
           minimumFractionDigits: 0,
           maximumFractionDigits: 0
-        }).format(difference)}`;
+        }).format(value);
       case 'percentage':
-        return `${prefix}${difference.toFixed(2)}%`;
+        return `${value.toFixed(2)}%`;
       case 'number':
-        return `${prefix}${difference}`;
+        return value.toString();
       default:
-        return `${prefix}${difference}`;
+        return value.toString();
     }
   }
 
-  private calculateScenarioSummaries(): void {
-    this.scenarioSummaries = {};
+  private calculatePortfolioSummaries(): void {
+    this.portfolioSummaries = {};
     
-    this.scenarios.forEach(scenario => {
-      const calculations = this.getCalculationsForScenario(scenario.id!);
+    this.portfolios.forEach(portfolio => {
+      const calculations = this.getCalculationsForPortfolio(portfolio.id!);
       const validCalculations = calculations.filter(calc => calc.results);
       
       if (validCalculations.length === 0) {
-        this.scenarioSummaries[scenario.id!] = {
+        this.portfolioSummaries[portfolio.id!] = {
           totalProperties: 0,
           totalCashInvested: 0,
           monthlyCashFlow: 0,
@@ -1040,12 +978,11 @@ export class SavedCalculationsComponent implements OnInit {
         annualDepreciation: 0
       });
 
-      // Calculate cash-on-cash return
       const cashOnCashReturn = summary.totalCashInvested > 0 
         ? (summary.annualCashFlow / summary.totalCashInvested) * 100 
         : 0;
 
-      this.scenarioSummaries[scenario.id!] = {
+      this.portfolioSummaries[portfolio.id!] = {
         totalProperties: validCalculations.length,
         ...summary,
         cashOnCashReturn
@@ -1053,25 +990,104 @@ export class SavedCalculationsComponent implements OnInit {
     });
   }
 
-  getScenarioMetricValue(scenarioId: number, metricKey: string): number {
-    return this.scenarioSummaries[scenarioId]?.[metricKey] || 0;
+  // Legacy method aliases for template compatibility
+  getScenarioName = this.getPortfolioName;
+  getCalculationsForScenario = this.getCalculationsForPortfolio;
+  getScenarioById = this.getPortfolioById;
+  getScenarioMetricValue = this.getPortfolioMetricValue;
+  
+  selectScenario(id: number) { this.selectPortfolio(id); }
+  renameScenario(portfolio: Scenario) { this.renamePortfolio(portfolio); }
+  deleteScenario(portfolio: Scenario) { this.deletePortfolio(portfolio); }
+  createNewScenario() { this.createNewPortfolio(); }
+
+  // Missing methods for calculations
+  renameCalculation(calculation: SavedCalculation): void {
+    const newName = prompt('Enter new name for this property:', calculation.name);
+    if (newName && newName.trim() && newName.trim() !== calculation.name) {
+      const trimmedName = newName.trim();
+      
+      // Check if name already exists
+      const nameExists = this.getAllCalculations().some(calc => 
+        calc.id !== calculation.id && calc.name.toLowerCase() === trimmedName.toLowerCase()
+      );
+      
+      if (nameExists) {
+        this.snackBar.open('A property with this name already exists', 'Close', {
+          duration: 3000
+        });
+        return;
+      }
+
+      const updatedCalculation: SavedCalculation = {
+        ...calculation,
+        name: trimmedName,
+        updatedAt: new Date()
+      };
+
+      this.dbService.saveCalculation(updatedCalculation).subscribe({
+        next: () => {
+          this.loadCalculationsForPortfolios();
+          this.snackBar.open(`Property renamed to "${trimmedName}"`, 'Close', {
+            duration: 3000
+          });
+        },
+        error: (error) => {
+          console.error('Error renaming calculation:', error);
+          this.snackBar.open('Error renaming property', 'Close', {
+            duration: 3000
+          });
+        }
+      });
+    }
   }
 
-  formatMetricValue(value: number, format: string): string {
+  deleteCalculation(calculation: SavedCalculation): void {
+    if (calculation.id && confirm(`Are you sure you want to delete "${calculation.name}"?`)) {
+      this.dbService.deleteCalculation(calculation.id).subscribe({
+        next: () => {
+          this.loadPortfoliosAndCalculations();
+          this.snackBar.open('Calculation deleted successfully!', 'Close', {
+            duration: 3000
+          });
+        },
+        error: (error: any) => {
+          console.error('Error deleting calculation:', error);
+          this.snackBar.open('Error deleting calculation', 'Close', {
+            duration: 3000
+          });
+        }
+      });
+    }
+  }
+
+  getMetricDifference(portfolio1Id: number, portfolio2Id: number, metricKey: string): number {
+    const value1 = this.getPortfolioMetricValue(portfolio1Id, metricKey);
+    const value2 = this.getPortfolioMetricValue(portfolio2Id, metricKey);
+    return value1 - value2;
+  }
+
+  formatDifference(difference: number, format: string): string {
+    const prefix = difference > 0 ? '+' : '';
+    
     switch (format) {
       case 'currency':
-        return new Intl.NumberFormat('en-US', { 
+        return `${prefix}${new Intl.NumberFormat('en-US', { 
           style: 'currency', 
           currency: 'USD',
           minimumFractionDigits: 0,
           maximumFractionDigits: 0
-        }).format(value);
+        }).format(difference)}`;
       case 'percentage':
-        return `${value.toFixed(2)}%`;
+        return `${prefix}${difference.toFixed(2)}%`;
       case 'number':
-        return value.toString();
+        return `${prefix}${difference}`;
       default:
-        return value.toString();
+        return `${prefix}${difference}`;
     }
+  }
+
+  getOrganizeDropListIds(): string[] {
+    return this.portfolios.map(portfolio => `organize-portfolio-${portfolio.id}`);
   }
 }
