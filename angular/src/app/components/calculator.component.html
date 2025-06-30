@@ -215,8 +215,12 @@
                 </mat-card-header>
                 <mat-card-content>
                   <div class="result-item">
-                    <span>Total Acquisition Cost:</span>
-                    <span class="value">{{ results.totalAcquisitionCost | currency }}</span>
+                    <span>Purchase Price:</span>
+                    <span class="value">{{ calculatorForm.get('purchasePrice')?.value | currency }}</span>
+                  </div>
+                  <div class="result-item">
+                    <span>Closing Costs and Rehab:</span>
+                    <span class="value">{{ (calculatorForm.get('closingCosts')?.value + calculatorForm.get('rehabCosts')?.value) | currency }}</span>
                   </div>
                   <div class="result-item">
                     <span>Down Payment Amount:</span>

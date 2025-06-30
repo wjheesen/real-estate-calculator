@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,6 +9,7 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
 import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
@@ -32,6 +33,7 @@ import { SavedCalculation, CalculationResults, Scenario } from '../models/real-e
     MatCheckboxModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     MatTooltipModule,
     ReactiveFormsModule,
     DragDropModule
@@ -48,171 +50,290 @@ import { SavedCalculation, CalculationResults, Scenario } from '../models/real-e
           <!-- Portfolio Summary Section -->
           <div class="portfolio-section" *ngIf="getAllCalculations().length > 0">
             <div class="portfolio-controls">
-              <h3>Portfolio Summary</h3>
+              <h3>Portfolio Management</h3>
               <div class="controls-row">
-                <button mat-raised-button 
-                        color="primary" 
-                        (click)="selectAll()"
-                        [disabled]="selectedCalculations.size === getAllCalculations().length">
-                  Select All
-                </button>
-                <button mat-stroked-button 
-                        (click)="clearSelection()"
-                        [disabled]="selectedCalculations.size === 0">
-                  Clear Selection
-                </button>
-                <span class="selection-count">{{ selectedCalculations.size }} of {{ getAllCalculations().length }} selected</span>
                 <button mat-stroked-button color="primary" (click)="createNewScenario()" class="new-scenario-btn">
                   <mat-icon>add</mat-icon>
                   New Scenario
                 </button>
-                <button mat-stroked-button color="accent" (click)="toggleScenarioComparison()" class="compare-btn">
-                  <mat-icon>compare_arrows</mat-icon>
-                  {{ showScenarioComparison ? 'Hide' : 'Compare' }} Scenarios
+                <button mat-stroked-button color="accent" (click)="toggleOrganizeView()" class="organize-btn">
+                  <mat-icon>sort</mat-icon>
+                  {{ showOrganizeView ? 'Exit' : 'Organize' }} Properties
+                </button>
+                <button mat-stroked-button color="accent" (click)="goBackToScenarios()" *ngIf="selectedScenarioId" class="back-btn">
+                  <mat-icon>arrow_back</mat-icon>
+                  Back to Scenarios
                 </button>
               </div>
             </div>
             
-            <!-- Scenario Comparison Section -->
-            <div class="scenario-comparison-section" *ngIf="showScenarioComparison && scenarios.length > 1">
-              <mat-card class="comparison-card">
-                <mat-card-header>
-                  <mat-card-title>Scenario Comparison</mat-card-title>
-                  <mat-card-subtitle>Select scenarios to compare their performance</mat-card-subtitle>
-                </mat-card-header>
-                <mat-card-content>
-                  <div class="scenario-selection">
-                    <h4>Select Scenarios to Compare:</h4>
-                    <div class="scenario-checkboxes">
-                      <mat-checkbox 
-                        *ngFor="let scenario of scenarios" 
-                        [checked]="selectedScenariosForComparison.has(scenario.id!)"
-                        (change)="toggleScenarioForComparison(scenario)"
-                        class="scenario-checkbox">
-                        {{ scenario.name }} ({{ getCalculationsForScenario(scenario.id!).length }} properties)
-                      </mat-checkbox>
+            <!-- Organize Properties View -->
+            <div class="organize-view" *ngIf="showOrganizeView">
+              <div class="organize-header">
+                <h4>Organize Properties by Scenario</h4>
+                <p>Drag and drop properties between scenarios to organize your portfolio</p>
+              </div>
+              
+              <div class="organize-scenarios-container">
+                <div class="organize-scenario-section" *ngFor="let scenario of scenarios">
+                  <mat-card class="organize-scenario-card">
+                    <mat-card-header>
+                      <div class="organize-scenario-header">
+                        <mat-card-title>
+                          {{ scenario.name }}
+                          <span class="calculation-count">({{ getCalculationsForScenario(scenario.id!).length }})</span>
+                        </mat-card-title>
+                        <mat-card-subtitle>{{ scenario.description }}</mat-card-subtitle>
+                      </div>
+                    </mat-card-header>
+                    
+                    <mat-card-content>
+                      <div class="organize-scenario-calculations" 
+                           cdkDropList 
+                           [id]="'organize-scenario-' + scenario.id"
+                           [cdkDropListData]="getCalculationsForScenario(scenario.id!)"
+                           [cdkDropListConnectedTo]="getOrganizeDropListIds()"
+                           (cdkDropListDropped)="onDrop($event, scenario.id!)">
+                        
+                        <div class="organize-calculation-card" 
+                             cdkDrag
+                             *ngFor="let calculation of getCalculationsForScenario(scenario.id!)">
+                          
+                          <div class="drag-placeholder" *cdkDragPlaceholder></div>
+                          
+                          <mat-card class="organize-property-card">
+                            <mat-card-header>
+                              <div class="organize-card-header-content">
+                                <div class="organize-header-text">
+                                  <mat-card-title>{{ calculation.name }}</mat-card-title>
+                                  <mat-card-subtitle>{{ calculation.purchasePrice | currency }}</mat-card-subtitle>
+                                </div>
+                                <mat-icon class="drag-handle" cdkDragHandle>drag_handle</mat-icon>
+                              </div>
+                            </mat-card-header>
+                            
+                            <mat-card-content>
+                              <div class="organize-calculation-summary">
+                                <div class="organize-summary-item">
+                                  <span>Monthly Cash Flow:</span>
+                                  <span [class.positive]="calculation.results && calculation.results.monthlyCashFlow > 0" 
+                                        [class.negative]="calculation.results && calculation.results.monthlyCashFlow < 0">
+                                    {{ calculation.results?.monthlyCashFlow | currency }}
+                                  </span>
+                                </div>
+                                <div class="organize-summary-item">
+                                  <span>Cash-on-Cash Return:</span>
+                                  <span [class.positive]="calculation.results && calculation.results.cashOnCashReturn > 0" 
+                                        [class.negative]="calculation.results && calculation.results.cashOnCashReturn < 0">
+                                    {{ calculation.results?.cashOnCashReturn | number:'1.2-2' }}%
+                                  </span>
+                                </div>
+                              </div>
+                            </mat-card-content>
+                          </mat-card>
+                        </div>
+                        
+                        <!-- Empty scenario placeholder -->
+                        <div class="organize-empty-scenario" *ngIf="getCalculationsForScenario(scenario.id!).length === 0">
+                          <mat-icon class="empty-icon">folder_open</mat-icon>
+                          <p>No properties in this scenario</p>
+                          <p class="hint">Drag properties here to organize them</p>
+                        </div>
+                      </div>
+                    </mat-card-content>
+                  </mat-card>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Scenario Selection View -->
+            <div class="scenario-selection-view" *ngIf="!selectedScenarioId && !showOrganizeView">
+              <h4>Select a Scenario to View Details</h4>
+              <div class="scenario-selection-grid">
+                <mat-card class="scenario-selection-card" *ngFor="let scenario of scenarios" (click)="selectScenario(scenario.id!)">
+                  <mat-card-header>
+                    <mat-card-title>{{ scenario.name }}</mat-card-title>
+                    <mat-card-subtitle>{{ getCalculationsForScenario(scenario.id!).length }} Properties</mat-card-subtitle>
+                  </mat-card-header>
+                  <mat-card-content>
+                    <div class="scenario-preview">
+                      <div class="preview-metric" *ngIf="getCalculationsForScenario(scenario.id!).length > 0">
+                        <span>Monthly Cash Flow:</span>
+                        <span class="value" [class.positive]="getScenarioMetricValue(scenario.id!, 'monthlyCashFlow') > 0" 
+                              [class.negative]="getScenarioMetricValue(scenario.id!, 'monthlyCashFlow') < 0">
+                          {{ formatMetricValue(getScenarioMetricValue(scenario.id!, 'monthlyCashFlow'), 'currency') }}
+                        </span>
+                      </div>
+                      <div class="preview-metric" *ngIf="getCalculationsForScenario(scenario.id!).length > 0">
+                        <span>Cash-on-Cash Return:</span>
+                        <span class="value" [class.positive]="getScenarioMetricValue(scenario.id!, 'cashOnCashReturn') > 0" 
+                              [class.negative]="getScenarioMetricValue(scenario.id!, 'cashOnCashReturn') < 0">
+                          {{ formatMetricValue(getScenarioMetricValue(scenario.id!, 'cashOnCashReturn'), 'percentage') }}
+                        </span>
+                      </div>
+                      <div class="empty-scenario-preview" *ngIf="getCalculationsForScenario(scenario.id!).length === 0">
+                        <mat-icon>folder_open</mat-icon>
+                        <p>No properties</p>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <!-- Comparison Results -->                    <div class="comparison-results" *ngIf="selectedScenariosForComparison.size >= 2">
-                      <h4>Comparison Results:</h4>
+                  </mat-card-content>
+                  <mat-card-actions>
+                    <button mat-icon-button (click)="renameScenario(scenario); $event.stopPropagation()" matTooltip="Rename scenario">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="deleteScenario(scenario); $event.stopPropagation()" matTooltip="Delete scenario" 
+                            [disabled]="scenarios.length <= 1">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </mat-card-actions>
+                </mat-card>
+              </div>
+            </div>
+            
+            <!-- Selected Scenario Details View -->
+            <div class="scenario-details-view" *ngIf="selectedScenarioId && !showOrganizeView">
+              <div class="scenario-header-section">
+                <h3>{{ getScenarioName(selectedScenarioId) }}</h3>
+                <div class="scenario-controls">
+                  <button mat-stroked-button color="accent" (click)="toggleComparison()" [disabled]="scenarios.length < 2">
+                    <mat-icon>compare_arrows</mat-icon>
+                    {{ showComparison ? 'Hide' : 'Compare' }} Scenarios
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Scenario Summary -->
+              <div class="scenario-summary-section">
+                <h4>Scenario Summary</h4>
+                <mat-card class="summary-card">
+                  <mat-card-content>
+                    <div class="summary-metrics" *ngIf="getCalculationsForScenario(selectedScenarioId).length > 0; else emptyScenario">
+                      <div class="metric-row">
+                        <span>Total Properties:</span>
+                        <span class="value">{{ getScenarioMetricValue(selectedScenarioId, 'totalProperties') }}</span>
+                      </div>
+                      <div class="metric-row">
+                        <span>Total Invested:</span>
+                        <span class="value">{{ formatMetricValue(getScenarioMetricValue(selectedScenarioId, 'totalCashInvested'), 'currency') }}</span>
+                      </div>
+                      <div class="metric-row">
+                        <span>Monthly Cash Flow:</span>
+                        <span class="value" [class.positive]="getScenarioMetricValue(selectedScenarioId, 'monthlyCashFlow') > 0" 
+                              [class.negative]="getScenarioMetricValue(selectedScenarioId, 'monthlyCashFlow') < 0">
+                          {{ formatMetricValue(getScenarioMetricValue(selectedScenarioId, 'monthlyCashFlow'), 'currency') }}
+                        </span>
+                      </div>
+                      <div class="metric-row">
+                        <span>Annual Cash Flow:</span>
+                        <span class="value" [class.positive]="getScenarioMetricValue(selectedScenarioId, 'annualCashFlow') > 0" 
+                              [class.negative]="getScenarioMetricValue(selectedScenarioId, 'annualCashFlow') < 0">
+                          {{ formatMetricValue(getScenarioMetricValue(selectedScenarioId, 'annualCashFlow'), 'currency') }}
+                        </span>
+                      </div>
+                      <div class="metric-row highlight">
+                        <span>Cash-on-Cash Return:</span>
+                        <span class="value" [class.positive]="getScenarioMetricValue(selectedScenarioId, 'cashOnCashReturn') > 0" 
+                              [class.negative]="getScenarioMetricValue(selectedScenarioId, 'cashOnCashReturn') < 0">
+                          {{ formatMetricValue(getScenarioMetricValue(selectedScenarioId, 'cashOnCashReturn'), 'percentage') }}
+                        </span>
+                      </div>
+                      <div class="metric-row">
+                        <span>Yearly Total Return:</span>
+                        <span class="value" [class.positive]="getScenarioMetricValue(selectedScenarioId, 'yearlyTotalReturn') > 0" 
+                              [class.negative]="getScenarioMetricValue(selectedScenarioId, 'yearlyTotalReturn') < 0">
+                          {{ formatMetricValue(getScenarioMetricValue(selectedScenarioId, 'yearlyTotalReturn'), 'currency') }}
+                        </span>
+                      </div>
+                    </div>
+                    <ng-template #emptyScenario>
+                      <div class="empty-scenario-summary">
+                        <mat-icon>folder_open</mat-icon>
+                        <p>No properties in this scenario</p>
+                      </div>
+                    </ng-template>
+                  </mat-card-content>
+                </mat-card>
+              </div>
+              
+              <!-- Scenario Comparison Section -->
+              <div class="scenario-comparison-section" *ngIf="showComparison">
+                <mat-card class="comparison-card">
+                  <mat-card-header>
+                    <mat-card-title>Compare Scenarios</mat-card-title>
+                    <mat-card-subtitle>Select another scenario to compare with {{ getScenarioName(selectedScenarioId) }}</mat-card-subtitle>
+                  </mat-card-header>
+                  <mat-card-content>
+                    <div class="comparison-scenario-selection">
+                      <mat-form-field>
+                        <mat-label>Select scenario to compare</mat-label>
+                        <mat-select [(value)]="comparisonScenarioId">
+                          <mat-option *ngFor="let scenario of scenarios" 
+                                      [value]="scenario.id" 
+                                      [disabled]="scenario.id === selectedScenarioId">
+                            {{ scenario.name }}
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                    
+                    <!-- Comparison Results -->
+                    <div class="comparison-results" *ngIf="comparisonScenarioId">
+                      <h4>Comparison Results</h4>
                       <div class="comparison-table-wrapper">
                         <table class="comparison-table">
                           <thead>
                             <tr>
                               <th class="metric-header">Metric</th>
-                              <th class="scenario-header" *ngFor="let scenarioId of getSelectedScenarioIds()">
-                                {{ getScenarioName(scenarioId) }}
-                              </th>
+                              <th class="scenario-header">{{ getScenarioName(selectedScenarioId) }}</th>
+                              <th class="scenario-header">{{ getScenarioName(comparisonScenarioId) }}</th>
+                              <th class="difference-header">Difference</th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr *ngFor="let metric of comparisonMetrics">
                               <td class="metric-name">{{ metric.label }}</td>
-                              <td class="metric-value" *ngFor="let scenarioId of getSelectedScenarioIds()"
-                                   [class.positive]="getScenarioMetricValue(scenarioId, metric.key) > 0"
-                                   [class.negative]="getScenarioMetricValue(scenarioId, metric.key) < 0">
-                                {{ formatMetricValue(getScenarioMetricValue(scenarioId, metric.key), metric.format) }}
+                              <td class="metric-value" 
+                                   [class.positive]="getScenarioMetricValue(selectedScenarioId, metric.key) > 0"
+                                   [class.negative]="getScenarioMetricValue(selectedScenarioId, metric.key) < 0">
+                                {{ formatMetricValue(getScenarioMetricValue(selectedScenarioId, metric.key), metric.format) }}
+                              </td>
+                              <td class="metric-value"
+                                   [class.positive]="getScenarioMetricValue(comparisonScenarioId, metric.key) > 0"
+                                   [class.negative]="getScenarioMetricValue(comparisonScenarioId, metric.key) < 0">
+                                {{ formatMetricValue(getScenarioMetricValue(comparisonScenarioId, metric.key), metric.format) }}
+                              </td>
+                              <td class="difference-value"
+                                   [class.better]="getMetricDifference(selectedScenarioId, comparisonScenarioId, metric.key) > 0"
+                                   [class.worse]="getMetricDifference(selectedScenarioId, comparisonScenarioId, metric.key) < 0">
+                                {{ formatDifference(getMetricDifference(selectedScenarioId, comparisonScenarioId, metric.key), metric.format) }}
                               </td>
                             </tr>
                           </tbody>
                         </table>
                       </div>
-                    
-                    <!-- Best Performance Highlights -->
-                    <div class="performance-highlights">
-                      <h4>Performance Highlights:</h4>
-                      <div class="highlights-grid">
-                        <div class="highlight-item" *ngFor="let highlight of getPerformanceHighlights()">
-                          <div class="highlight-metric">{{ highlight.metric }}</div>
-                          <div class="highlight-scenario">{{ highlight.scenarioName }}</div>
-                          <div class="highlight-value">{{ highlight.value }}</div>
-                        </div>
-                      </div>
                     </div>
-                  </div>
-                  
-                  <div class="comparison-hint" *ngIf="selectedScenariosForComparison.size < 2">
-                    <p>Select at least 2 scenarios to see the comparison.</p>
-                  </div>
-                </mat-card-content>
-              </mat-card>
+                  </mat-card-content>
+                </mat-card>
+              </div>
             </div>
-            
-            <!-- Portfolio Summary Results -->
-            <mat-card class="portfolio-summary-card" *ngIf="selectedCalculations.size > 0">
-              <mat-card-header>
-                <mat-card-title>Combined Portfolio Analysis</mat-card-title>
-                <mat-card-subtitle>{{ selectedCalculations.size }} Properties Selected</mat-card-subtitle>
-              </mat-card-header>
-              <mat-card-content>
-                <div class="portfolio-results-grid">
-                  <div class="result-item">
-                    <span>Total Cash Invested:</span>
-                    <span class="value highlight">{{ portfolioSummary.totalCashInvested | currency }}</span>
-                  </div>
-                  <div class="result-item">
-                    <span>Combined Monthly Cash Flow:</span>
-                    <span class="value" [class.positive]="portfolioSummary.monthlyCashFlow > 0" [class.negative]="portfolioSummary.monthlyCashFlow < 0">
-                      {{ portfolioSummary.monthlyCashFlow | currency }}
-                    </span>
-                  </div>
-                  <div class="result-item">
-                    <span>Combined Annual Cash Flow:</span>
-                    <span class="value" [class.positive]="portfolioSummary.annualCashFlow > 0" [class.negative]="portfolioSummary.annualCashFlow < 0">
-                      {{ portfolioSummary.annualCashFlow | currency }}
-                    </span>
-                  </div>
-                  <div class="result-item">
-                    <span>Portfolio Cash-on-Cash Return:</span>
-                    <span class="value highlight" [class.positive]="portfolioSummary.cashOnCashReturn > 0" [class.negative]="portfolioSummary.cashOnCashReturn < 0">
-                      {{ portfolioSummary.cashOnCashReturn | number:'1.2-2' }}%
-                    </span>
-                  </div>
-                  <div class="result-item">
-                    <span>Combined Monthly Total Return:</span>
-                    <span class="value highlight" [class.positive]="portfolioSummary.monthlyTotalReturn > 0" [class.negative]="portfolioSummary.monthlyTotalReturn < 0">
-                      {{ portfolioSummary.monthlyTotalReturn | currency }}
-                    </span>
-                  </div>
-                  <div class="result-item">
-                    <span>Combined Yearly Total Return:</span>
-                    <span class="value highlight" [class.positive]="portfolioSummary.yearlyTotalReturn > 0" [class.negative]="portfolioSummary.yearlyTotalReturn < 0">
-                      {{ portfolioSummary.yearlyTotalReturn | currency }}
-                    </span>
-                  </div>
-                  <div class="result-item">
-                    <span>Combined Annual Taxable Income:</span>
-                    <span class="value" [class.positive]="portfolioSummary.taxableIncome > 0" [class.negative]="portfolioSummary.taxableIncome < 0">
-                      {{ portfolioSummary.taxableIncome | currency }}
-                    </span>
-                  </div>
-                  <div class="result-item">
-                    <span>Total Annual Depreciation:</span>
-                    <span class="value positive">{{ portfolioSummary.annualDepreciation | currency }}</span>
-                  </div>
-                </div>
-              </mat-card-content>
-            </mat-card>
           </div>
 
           <!-- Scenarios with drag and drop -->
-          <div class="scenarios-container" *ngIf="scenarios.length > 0 && getAllCalculations().length > 0">
-            <div class="scenario-section" *ngFor="let scenario of scenarios">
+          <div class="scenarios-container" *ngIf="selectedScenarioId">
+            <div class="scenario-section">
               <mat-card class="scenario-card">
                 <mat-card-header>
                   <div class="scenario-header">
                     <mat-card-title>
-                      {{ scenario.name }}
-                      <span class="calculation-count">({{ getCalculationsForScenario(scenario.id!).length }})</span>
+                      {{ getScenarioName(selectedScenarioId) }} Properties
+                      <span class="calculation-count">({{ getCalculationsForScenario(selectedScenarioId).length }})</span>
                     </mat-card-title>
-                    <mat-card-subtitle>{{ scenario.description }}</mat-card-subtitle>
                   </div>
                   <div class="scenario-actions">
-                    <button mat-icon-button (click)="renameScenario(scenario)" matTooltip="Rename scenario">
+                    <button mat-icon-button (click)="renameScenario(getScenarioById(selectedScenarioId)!)" matTooltip="Rename scenario">
                       <mat-icon>edit</mat-icon>
                     </button>
-                    <button mat-icon-button (click)="deleteScenario(scenario)" matTooltip="Delete scenario" 
+                    <button mat-icon-button (click)="deleteScenario(getScenarioById(selectedScenarioId)!)" matTooltip="Delete scenario" 
                             [disabled]="scenarios.length <= 1">
                       <mat-icon>delete</mat-icon>
                     </button>
@@ -222,25 +343,20 @@ import { SavedCalculation, CalculationResults, Scenario } from '../models/real-e
                 <mat-card-content>
                   <div class="scenario-calculations" 
                        cdkDropList 
-                       [id]="'scenario-' + scenario.id"
-                       [cdkDropListData]="getCalculationsForScenario(scenario.id!)"
+                       [id]="'scenario-' + selectedScenarioId"
+                       [cdkDropListData]="getCalculationsForScenario(selectedScenarioId)"
                        [cdkDropListConnectedTo]="getDropListIds()"
-                       (cdkDropListDropped)="onDrop($event, scenario.id!)">
+                       (cdkDropListDropped)="onDrop($event, selectedScenarioId)">
                     
                     <div class="calculation-card" 
                          cdkDrag
-                         *ngFor="let calculation of getCalculationsForScenario(scenario.id!)">
+                         *ngFor="let calculation of getCalculationsForScenario(selectedScenarioId)">
                       
                       <div class="drag-placeholder" *cdkDragPlaceholder></div>
                       
                       <mat-card class="property-card">
                         <mat-card-header>
                           <div class="card-header-content">
-                            <mat-checkbox 
-                              [checked]="selectedCalculations.has(calculation.id!)"
-                              (change)="toggleSelection(calculation)"
-                              class="property-checkbox">
-                            </mat-checkbox>
                             <div class="header-text">
                               <mat-card-title>
                                 <a class="calculation-name-link" (click)="loadCalculation(calculation)">
@@ -322,10 +438,10 @@ import { SavedCalculation, CalculationResults, Scenario } from '../models/real-e
                     </div>
                     
                     <!-- Empty scenario placeholder -->
-                    <div class="empty-scenario" *ngIf="getCalculationsForScenario(scenario.id!).length === 0">
+                    <div class="empty-scenario" *ngIf="getCalculationsForScenario(selectedScenarioId).length === 0">
                       <mat-icon class="empty-icon">folder_open</mat-icon>
                       <p>No properties in this scenario</p>
-                      <p class="hint">Drag calculations here or create new ones</p>
+                      <p class="hint">Create new calculations and assign them to this scenario</p>
                     </div>
                   </div>
                 </mat-card-content>
@@ -357,12 +473,12 @@ import { SavedCalculation, CalculationResults, Scenario } from '../models/real-e
 export class SavedCalculationsComponent implements OnInit {
   scenarios: Scenario[] = [];
   scenarioCalculations: { [scenarioId: number]: SavedCalculation[] } = {};
-  selectedCalculations = new Set<number>();
-  portfolioSummary: any = {};
   
-  // Scenario comparison properties
-  showScenarioComparison = false;
-  selectedScenariosForComparison = new Set<number>();
+  // Scenario selection and comparison properties
+  selectedScenarioId: number | null = null;
+  comparisonScenarioId: number | null = null;
+  showComparison = false;
+  showOrganizeView = false;
   scenarioSummaries: { [scenarioId: number]: any } = {};
   
   comparisonMetrics = [
@@ -382,24 +498,78 @@ export class SavedCalculationsComponent implements OnInit {
   private calculatorService = inject(RealEstateCalculatorService);
   private scenarioService = inject(ScenarioService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
 
   ngOnInit(): void {
     this.loadScenariosAndCalculations();
+    
+    // Handle URL routing for different views
+    this.route.url.subscribe(urlSegments => {
+      const path = urlSegments.map(segment => segment.path).join('/');
+      
+      if (path === 'organize') {
+        this.showOrganizeView = true;
+        this.selectedScenarioId = null;
+        this.showComparison = false;
+        this.comparisonScenarioId = null;
+      } else if (path === '') {
+        // Default portfolio view
+        this.selectedScenarioId = null;
+        this.showOrganizeView = false;
+        this.showComparison = false;
+        this.comparisonScenarioId = null;
+      }
+    });
+    
+    // Handle route parameters for scenario selection
+    this.route.paramMap.subscribe(params => {
+      const scenarioId = params.get('id');
+      if (scenarioId) {
+        const parsedId = parseInt(scenarioId, 10);
+        
+        // Check if scenarios are loaded and the scenario exists
+        if (this.scenarios.length > 0) {
+          const scenarioExists = this.scenarios.some(s => s.id === parsedId);
+          if (scenarioExists) {
+            this.selectedScenarioId = parsedId;
+            this.showOrganizeView = false;
+            this.showComparison = false;
+            this.comparisonScenarioId = null;
+          } else {
+            this.router.navigate(['/portfolio']);
+          }
+        } else {
+          // Scenarios not loaded yet, store the ID for later
+          this.selectedScenarioId = parsedId;
+        }
+      } else {
+        // No scenario ID in URL, reset to portfolio view
+        this.selectedScenarioId = null;
+      }
+    });
   }
 
   private loadScenariosAndCalculations(): void {
     // Load scenarios first
     this.scenarioService.getAllScenarios().subscribe({
       next: (scenarios) => {
-        console.log('Loaded scenarios:', scenarios);
         this.scenarios = scenarios;
+        
+        // Check if we have a pending scenario selection from URL
+        if (this.selectedScenarioId !== null) {
+          const scenarioExists = scenarios.some(s => s.id === this.selectedScenarioId);
+          if (!scenarioExists) {
+            this.selectedScenarioId = null;
+            this.router.navigate(['/portfolio']);
+          }
+        }
+        
         // Ensure default scenario exists
         if (scenarios.length === 0) {
           this.scenarioService.createNewScenario('My Portfolio', 'Default portfolio scenario').subscribe({
             next: (defaultScenario) => {
-              console.log('Created default scenario:', defaultScenario);
               this.scenarios = [defaultScenario];
               this.loadCalculationsForScenarios();
             }
@@ -441,6 +611,15 @@ export class SavedCalculationsComponent implements OnInit {
         
         // Calculate scenario summaries for comparison
         this.calculateScenarioSummaries();
+        
+        // If we have a selected scenario from URL, make sure it's valid
+        if (this.selectedScenarioId) {
+          const scenarioExists = this.scenarios.some(s => s.id === this.selectedScenarioId);
+          if (!scenarioExists) {
+            // Scenario doesn't exist, redirect to portfolio home
+            this.router.navigate(['/portfolio']);
+          }
+        }
       },
       error: (error) => {
         console.error('Error loading calculations:', error);
@@ -567,15 +746,8 @@ export class SavedCalculationsComponent implements OnInit {
     return connectedIds;
   }
 
-  toggleSelection(calculation: SavedCalculation): void {
-    if (calculation.id) {
-      if (this.selectedCalculations.has(calculation.id)) {
-        this.selectedCalculations.delete(calculation.id);
-      } else {
-        this.selectedCalculations.add(calculation.id);
-      }
-      this.calculatePortfolioSummary();
-    }
+  getScenarioById(scenarioId: number): Scenario | undefined {
+    return this.scenarios.find(s => s.id === scenarioId);
   }
 
   createNewScenario(): void {
@@ -707,52 +879,6 @@ export class SavedCalculationsComponent implements OnInit {
     });
   }
 
-  selectAll(): void {
-    this.getAllCalculations().forEach(calc => {
-      if (calc.id) {
-        this.selectedCalculations.add(calc.id);
-      }
-    });
-    this.calculatePortfolioSummary();
-  }
-
-  clearSelection(): void {
-    this.selectedCalculations.clear();
-    this.portfolioSummary = {};
-  }
-
-  private calculatePortfolioSummary(): void {
-    if (this.selectedCalculations.size === 0) {
-      this.portfolioSummary = {};
-      return;
-    }
-
-    const selectedCalcs = this.getAllCalculations().filter(calc => 
-      calc.id && this.selectedCalculations.has(calc.id) && calc.results
-    );
-
-    if (selectedCalcs.length === 0) {
-      this.portfolioSummary = {};
-      return;
-    }
-
-    // Aggregate all the values
-    this.portfolioSummary = {
-      totalCashInvested: selectedCalcs.reduce((sum: number, calc: SavedCalculation) => sum + (calc.results!.totalCashInvested || 0), 0),
-      monthlyCashFlow: selectedCalcs.reduce((sum: number, calc: SavedCalculation) => sum + (calc.results!.monthlyCashFlow || 0), 0),
-      annualCashFlow: selectedCalcs.reduce((sum: number, calc: SavedCalculation) => sum + (calc.results!.annualCashFlow || 0), 0),
-      monthlyTotalReturn: selectedCalcs.reduce((sum: number, calc: SavedCalculation) => sum + (calc.results!.monthlyTotalReturn || 0), 0),
-      yearlyTotalReturn: selectedCalcs.reduce((sum: number, calc: SavedCalculation) => sum + (calc.results!.yearlyTotalReturn || 0), 0),
-      taxableIncome: selectedCalcs.reduce((sum: number, calc: SavedCalculation) => sum + (calc.results!.taxableIncome || 0), 0),
-      annualDepreciation: selectedCalcs.reduce((sum: number, calc: SavedCalculation) => sum + (calc.results!.annualDepreciation || 0), 0)
-    };
-
-    // Calculate portfolio cash-on-cash return
-    this.portfolioSummary.cashOnCashReturn = this.portfolioSummary.totalCashInvested > 0 
-      ? (this.portfolioSummary.annualCashFlow / this.portfolioSummary.totalCashInvested) * 100 
-      : 0;
-  }
-
   renameCalculation(calculation: SavedCalculation): void {
     const newName = prompt('Enter new name for this property:', calculation.name);
     if (newName && newName.trim() && newName.trim() !== calculation.name) {
@@ -812,24 +938,63 @@ export class SavedCalculationsComponent implements OnInit {
     }
   }
 
-  // Scenario comparison methods
-  toggleScenarioComparison(): void {
-    this.showScenarioComparison = !this.showScenarioComparison;
-    if (this.showScenarioComparison) {
-      this.calculateScenarioSummaries();
+  // Scenario selection and comparison methods
+  selectScenario(scenarioId: number): void {
+    this.router.navigate(['/portfolio/scenario', scenarioId]);
+  }
+
+  goBackToScenarios(): void {
+    this.router.navigate(['/portfolio']);
+  }
+
+  toggleComparison(): void {
+    this.showComparison = !this.showComparison;
+    if (!this.showComparison) {
+      this.comparisonScenarioId = null;
     }
   }
 
-  toggleScenarioForComparison(scenario: Scenario): void {
-    if (this.selectedScenariosForComparison.has(scenario.id!)) {
-      this.selectedScenariosForComparison.delete(scenario.id!);
+  toggleOrganizeView(): void {
+    if (this.showOrganizeView) {
+      // Exit organize mode, go back to portfolio
+      this.router.navigate(['/portfolio']);
     } else {
-      this.selectedScenariosForComparison.add(scenario.id!);
+      // Enter organize mode
+      this.router.navigate(['/portfolio/organize']);
     }
   }
 
-  getSelectedScenarioIds(): number[] {
-    return Array.from(this.selectedScenariosForComparison);
+  getOrganizeDropListIds(): string[] {
+    const allIds = this.scenarios.map(scenario => `organize-scenario-${scenario.id}`);
+    console.log('All organize drop list IDs:', allIds);
+    return allIds;
+  }
+
+  getMetricDifference(scenario1Id: number, scenario2Id: number, metricKey: string): number {
+    const value1 = this.getScenarioMetricValue(scenario1Id, metricKey);
+    const value2 = this.getScenarioMetricValue(scenario2Id, metricKey);
+    return value1 - value2;
+  }
+
+  formatDifference(difference: number, format: string): string {
+    const prefix = difference > 0 ? '+' : '';
+    const absValue = Math.abs(difference);
+    
+    switch (format) {
+      case 'currency':
+        return `${prefix}${new Intl.NumberFormat('en-US', { 
+          style: 'currency', 
+          currency: 'USD',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        }).format(difference)}`;
+      case 'percentage':
+        return `${prefix}${difference.toFixed(2)}%`;
+      case 'number':
+        return `${prefix}${difference}`;
+      default:
+        return `${prefix}${difference}`;
+    }
   }
 
   private calculateScenarioSummaries(): void {
@@ -908,43 +1073,5 @@ export class SavedCalculationsComponent implements OnInit {
       default:
         return value.toString();
     }
-  }
-
-  getPerformanceHighlights(): any[] {
-    if (this.selectedScenariosForComparison.size < 2) return [];
-
-    const highlights: any[] = [];
-    const selectedIds = this.getSelectedScenarioIds();
-    
-    // Find best performers for key metrics
-    const keyMetrics = [
-      { key: 'cashOnCashReturn', label: 'Best Cash-on-Cash Return', format: 'percentage' },
-      { key: 'monthlyTotalReturn', label: 'Highest Monthly Return', format: 'currency' },
-      { key: 'yearlyTotalReturn', label: 'Highest Yearly Return', format: 'currency' },
-      { key: 'annualCashFlow', label: 'Best Annual Cash Flow', format: 'currency' }
-    ];
-
-    keyMetrics.forEach(metric => {
-      let bestValue = Number.NEGATIVE_INFINITY;
-      let bestScenarioId = 0;
-
-      selectedIds.forEach(scenarioId => {
-        const value = this.getScenarioMetricValue(scenarioId, metric.key);
-        if (value > bestValue) {
-          bestValue = value;
-          bestScenarioId = scenarioId;
-        }
-      });
-
-      if (bestScenarioId > 0) {
-        highlights.push({
-          metric: metric.label,
-          scenarioName: this.getScenarioName(bestScenarioId),
-          value: this.formatMetricValue(bestValue, metric.format)
-        });
-      }
-    });
-
-    return highlights;
   }
 }
