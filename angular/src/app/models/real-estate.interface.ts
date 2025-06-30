@@ -60,7 +60,7 @@ export interface CalculationResults {
   deductibleExpenses: number;
 }
 
-export interface Scenario {
+export interface Portfolio {
   id?: number;
   name: string;
   description?: string;
@@ -69,8 +69,8 @@ export interface Scenario {
   updatedAt: Date;
 }
 
-export interface ScenarioSummary {
-  scenario: Scenario;
+export interface PortfolioSummary {
+  portfolio: Portfolio;
   totalProperties: number;
   totalCashInvested: number;
   monthlyCashFlow: number;
@@ -82,9 +82,14 @@ export interface ScenarioSummary {
   annualDepreciation: number;
 }
 
+// Keep Scenario as alias for backward compatibility
+export type Scenario = Portfolio;
+export type ScenarioSummary = PortfolioSummary;
+
 export interface SavedCalculation extends RealEstateCalculation {
   name: string;
   description?: string;
   results?: CalculationResults;
-  scenarioId?: number; // Associate calculation with a scenario
+  portfolioId?: number; // Associate calculation with a portfolio
+  scenarioId?: number; // Keep for backward compatibility
 }

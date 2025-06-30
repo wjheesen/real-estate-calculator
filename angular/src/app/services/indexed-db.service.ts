@@ -1,15 +1,15 @@
 import { Injectable } from '@angular/core';
 import { Observable, from, throwError } from 'rxjs';
-import { SavedCalculation, Scenario } from '../models/real-estate.interface';
+import { SavedCalculation, Portfolio } from '../models/real-estate.interface';
 
 @Injectable({
   providedIn: 'root'
 })
 export class IndexedDbService {
   private dbName = 'RealEstateCalculatorDB';
-  private version = 2; // Updated version for scenarios
+  private version = 3; // Updated version for portfolios (renamed from scenarios)
   private calculationsStoreName = 'calculations';
-  private scenariosStoreName = 'scenarios';
+  private portfoliosStoreName = 'portfolios';
 
   constructor() {}
 
@@ -35,28 +35,28 @@ export class IndexedDbService {
         }
         
         // Create scenarios store
-        if (!db.objectStoreNames.contains(this.scenariosStoreName)) {
-          const scenariosStore = db.createObjectStore(this.scenariosStoreName, { 
+        if (!db.objectStoreNames.contains(this.portfoliosStoreName)) {
+          const portfoliosStore = db.createObjectStore(this.portfoliosStoreName, { 
             keyPath: 'id', 
             autoIncrement: true 
           });
-          scenariosStore.createIndex('name', 'name', { unique: false });
-          scenariosStore.createIndex('createdAt', 'createdAt', { unique: false });
+          portfoliosStore.createIndex('name', 'name', { unique: false });
+          portfoliosStore.createIndex('createdAt', 'createdAt', { unique: false });
         }
         
         // Initialize default scenario if this is a fresh install
         if (event.oldVersion === 0) {
           const transaction = (event.target as IDBOpenDBRequest).transaction!;
-          const scenariosStore = transaction.objectStore(this.scenariosStoreName);
-          const defaultScenario = {
+          const portfoliosStore = transaction.objectStore(this.portfoliosStoreName);
+          const defaultPortfolio = {
             id: 1,
             name: 'My Portfolio',
-            description: 'Default portfolio scenario',
+            description: 'Default portfolio',
             color: '#1976d2',
             createdAt: new Date(),
             updatedAt: new Date()
           };
-          scenariosStore.add(defaultScenario);
+          portfoliosStore.add(defaultPortfolio);
         }
       };
     });
@@ -76,7 +76,7 @@ export class IndexedDbService {
       ...calculation,
       updatedAt: now,
       createdAt: calculation.createdAt || now,
-      scenarioId: calculation.scenarioId || 1 // Default to "My Portfolio" scenario
+      scenarioId: calculation.portfolioId || calculation.scenarioId || 1 // Support both new portfolioId and legacy scenarioId
     };
 
     return new Promise((resolve, reject) => {
@@ -149,31 +149,31 @@ export class IndexedDbService {
     return this.saveCalculation(calculation);
   }
 
-  // Scenario management methods
-  saveScenario(scenario: Scenario): Observable<Scenario> {
-    return from(this.performSaveScenario(scenario));
+  // Portfolio management methods
+  savePortfolio(portfolio: Portfolio): Observable<Portfolio> {
+    return from(this.performSavePortfolio(portfolio));
   }
 
-  private async performSaveScenario(scenario: Scenario): Promise<Scenario> {
+  private async performSavePortfolio(portfolio: Portfolio): Promise<Portfolio> {
     const db = await this.openDatabase();
-    const transaction = db.transaction([this.scenariosStoreName], 'readwrite');
-    const store = transaction.objectStore(this.scenariosStoreName);
+    const transaction = db.transaction([this.portfoliosStoreName], 'readwrite');
+    const store = transaction.objectStore(this.portfoliosStoreName);
     
     const now = new Date();
-    const scenarioToSave = {
-      ...scenario,
+    const portfolioToSave = {
+      ...portfolio,
       updatedAt: now,
-      createdAt: scenario.createdAt || now
+      createdAt: portfolio.createdAt || now
     };
 
     return new Promise((resolve, reject) => {
-      const request = scenario.id 
-        ? store.put(scenarioToSave)
-        : store.add(scenarioToSave);
+      const request = portfolio.id 
+        ? store.put(portfolioToSave)
+        : store.add(portfolioToSave);
       
       request.onsuccess = () => {
-        const result = { ...scenarioToSave };
-        if (!scenario.id) {
+        const result = { ...portfolioToSave };
+        if (!portfolio.id) {
           result.id = request.result as number;
         }
         resolve(result);
@@ -183,14 +183,14 @@ export class IndexedDbService {
     });
   }
 
-  getAllScenarios(): Observable<Scenario[]> {
-    return from(this.performGetAllScenarios());
+  getAllPortfolios(): Observable<Portfolio[]> {
+    return from(this.performGetAllPortfolios());
   }
 
-  private async performGetAllScenarios(): Promise<Scenario[]> {
+  private async performGetAllPortfolios(): Promise<Portfolio[]> {
     const db = await this.openDatabase();
-    const transaction = db.transaction([this.scenariosStoreName], 'readonly');
-    const store = transaction.objectStore(this.scenariosStoreName);
+    const transaction = db.transaction([this.portfoliosStoreName], 'readonly');
+    const store = transaction.objectStore(this.portfoliosStoreName);
 
     return new Promise((resolve, reject) => {
       const request = store.getAll();
@@ -199,14 +199,14 @@ export class IndexedDbService {
     });
   }
 
-  getScenario(id: number): Observable<Scenario | null> {
-    return from(this.performGetScenario(id));
+  getPortfolio(id: number): Observable<Portfolio | null> {
+    return from(this.performGetPortfolio(id));
   }
 
-  private async performGetScenario(id: number): Promise<Scenario | null> {
+  private async performGetPortfolio(id: number): Promise<Portfolio | null> {
     const db = await this.openDatabase();
-    const transaction = db.transaction([this.scenariosStoreName], 'readonly');
-    const store = transaction.objectStore(this.scenariosStoreName);
+    const transaction = db.transaction([this.portfoliosStoreName], 'readonly');
+    const store = transaction.objectStore(this.portfoliosStoreName);
 
     return new Promise((resolve, reject) => {
       const request = store.get(id);
@@ -215,14 +215,14 @@ export class IndexedDbService {
     });
   }
 
-  deleteScenario(id: number): Observable<void> {
-    return from(this.performDeleteScenario(id));
+  deletePortfolio(id: number): Observable<void> {
+    return from(this.performDeletePortfolio(id));
   }
 
-  private async performDeleteScenario(id: number): Promise<void> {
+  private async performDeletePortfolio(id: number): Promise<void> {
     const db = await this.openDatabase();
-    const transaction = db.transaction([this.scenariosStoreName], 'readwrite');
-    const store = transaction.objectStore(this.scenariosStoreName);
+    const transaction = db.transaction([this.portfoliosStoreName], 'readwrite');
+    const store = transaction.objectStore(this.portfoliosStoreName);
 
     return new Promise((resolve, reject) => {
       const request = store.delete(id);
@@ -231,18 +231,18 @@ export class IndexedDbService {
     });
   }
 
-  getCalculationsByScenario(scenarioId: number): Observable<SavedCalculation[]> {
-    return from(this.performGetCalculationsByScenario(scenarioId));
+  getCalculationsByPortfolio(portfolioId: number): Observable<SavedCalculation[]> {
+    return from(this.performGetCalculationsByPortfolio(portfolioId));
   }
 
-  private async performGetCalculationsByScenario(scenarioId: number): Promise<SavedCalculation[]> {
+  private async performGetCalculationsByPortfolio(portfolioId: number): Promise<SavedCalculation[]> {
     const db = await this.openDatabase();
     const transaction = db.transaction([this.calculationsStoreName], 'readonly');
     const store = transaction.objectStore(this.calculationsStoreName);
     const index = store.index('scenarioId');
 
     return new Promise((resolve, reject) => {
-      const request = index.getAll(scenarioId);
+      const request = index.getAll(portfolioId);
       request.onsuccess = () => resolve(request.result || []);
       request.onerror = () => reject(request.error);
     });

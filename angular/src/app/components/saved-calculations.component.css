@@ -191,39 +191,39 @@
   color: #0d47a1;
 }
 
-/* Scenario-based layout styles */
+/* Portfolio-based layout styles */
 
-/* Scenario Selection View */
-.scenario-selection-view {
+/* Portfolio Selection View */
+.portfolio-selection-view {
   margin: 24px 0;
 }
 
-.scenario-selection-view h4 {
+.portfolio-selection-view h4 {
   margin-bottom: 16px;
   color: #333;
   font-weight: 500;
 }
 
-.scenario-selection-grid {
+.portfolio-selection-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 16px;
   margin-top: 16px;
 }
 
-.scenario-selection-card {
+.portfolio-selection-card {
   cursor: pointer;
   transition: all 0.3s ease;
   border: 2px solid transparent;
 }
 
-.scenario-selection-card:hover {
+.portfolio-selection-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   border-color: #1976d2;
 }
 
-.scenario-preview {
+.portfolio-preview {
   padding: 8px 0;
 }
 
@@ -239,13 +239,13 @@
   font-weight: 500;
 }
 
-.empty-scenario-preview {
+.empty-portfolio-preview {
   text-align: center;
   padding: 16px;
   color: #666;
 }
 
-.empty-scenario-preview mat-icon {
+.empty-portfolio-preview mat-icon {
   font-size: 32px;
   width: 32px;
   height: 32px;
@@ -253,34 +253,34 @@
   opacity: 0.5;
 }
 
-/* Scenario Details View */
-.scenario-details-view {
+/* Portfolio Details View */
+.portfolio-details-view {
   margin: 24px 0;
 }
 
-.scenario-header-section {
+.portfolio-header-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
 }
 
-.scenario-header-section h3 {
+.portfolio-header-section h3 {
   margin: 0;
   color: #333;
   font-weight: 500;
 }
 
-.scenario-controls {
+.portfolio-controls {
   display: flex;
   gap: 12px;
 }
 
-.scenario-summary-section {
+.portfolio-summary-section {
   margin-bottom: 24px;
 }
 
-.scenario-summary-section h4 {
+.portfolio-summary-section h4 {
   margin-bottom: 16px;
   color: #333;
   font-weight: 500;
@@ -295,27 +295,27 @@
   margin-left: 12px;
 }
 
-.scenarios-container {
+.portfolios-container {
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
-.scenario-section {
+.portfolio-section {
   width: 100%;
 }
 
-.scenario-card {
+.portfolio-card {
   border: 2px solid transparent;
   transition: border-color 0.2s ease;
 }
 
-.scenario-card.cdk-drop-list-dragging {
+.portfolio-card.cdk-drop-list-dragging {
   border-color: #1976d2;
   background-color: #f3f8ff;
 }
 
-.scenario-header {
+.portfolio-header {
   flex: 1;
 }
 
@@ -805,18 +805,18 @@
   width: 100%;
 }
 
-.organize-scenario-calculations {
+.organize-portfolio-calculations {
   min-height: 150px;
   padding: 8px;
   border-radius: 8px;
   transition: background-color 0.3s ease;
 }
 
-.organize-scenario-calculations.cdk-drop-list-dragging {
+.organize-portfolio-calculations.cdk-drop-list-dragging {
   background-color: #f5f5f5;
 }
 
-.organize-scenario-calculations.cdk-drop-list-receiving {
+.organize-portfolio-calculations.cdk-drop-list-receiving {
   background-color: #e3f2fd;
   border: 2px dashed #1976d2;
 }
@@ -864,7 +864,7 @@
   font-size: 0.9em;
 }
 
-.organize-empty-scenario {
+.organize-empty-portfolio {
   text-align: center;
   padding: 40px 20px;
   color: #999;
@@ -873,13 +873,13 @@
   margin: 8px;
 }
 
-.organize-empty-scenario.cdk-drop-list-receiving {
+.organize-empty-portfolio.cdk-drop-list-receiving {
   border-color: #1976d2;
   background-color: #e3f2fd;
   color: #1976d2;
 }
 
-.organize-empty-scenario .empty-icon {
+.organize-empty-portfolio .empty-icon {
   font-size: 48px;
   width: 48px;
   height: 48px;
@@ -887,11 +887,11 @@
   opacity: 0.5;
 }
 
-.organize-empty-scenario p {
+.organize-empty-portfolio p {
   margin: 8px 0;
 }
 
-.organize-empty-scenario .hint {
+.organize-empty-portfolio .hint {
   font-style: italic;
   font-size: 0.9em;
 }

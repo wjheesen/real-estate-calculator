@@ -17,7 +17,7 @@ import { RealEstateCalculatorService } from '../services/real-estate-calculator.
 import { IndexedDbService } from '../services/indexed-db.service';
 import { CalculatorDataService } from '../services/calculator-data.service';
 import { SettingsService } from '../services/settings.service';
-import { ScenarioService } from '../services/scenario.service';
+import { PortfolioService } from '../services/portfolio.service';
 import { RealEstateCalculation, CalculationResults, SavedCalculation, Scenario } from '../models/real-estate.interface';
 import { Settings } from '../models/settings.interface';
 
@@ -65,7 +65,7 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     private dbService: IndexedDbService,
     private calculatorDataService: CalculatorDataService,
     private settingsService: SettingsService,
-    private scenarioService: ScenarioService,
+    private portfolioService: PortfolioService,
     private router: Router,
     private route: ActivatedRoute,
     private snackBar: MatSnackBar
@@ -140,12 +140,12 @@ export class CalculatorComponent implements OnInit, OnDestroy {
   }
 
   private loadScenarios(): void {
-    this.scenarioService.getAllScenarios().subscribe({
+    this.portfolioService.getAllPortfolios().subscribe({
       next: (scenarios) => {
         this.scenarios = scenarios;
         // Ensure default scenario exists
         if (scenarios.length === 0) {
-          this.scenarioService.createNewScenario('My Portfolio', 'Default portfolio scenario').subscribe({
+          this.portfolioService.createNewPortfolio('My Portfolio', 'Default portfolio').subscribe({
             next: (defaultScenario) => {
               this.scenarios = [defaultScenario];
               this.selectedScenarioId = defaultScenario.id || 1;
@@ -228,26 +228,26 @@ export class CalculatorComponent implements OnInit, OnDestroy {
   private createForm(): FormGroup {
     return this.fb.group({
       purchasePrice: [null, [Validators.required, Validators.min(0)]],
-      rehabCosts: [null, [Validators.required, Validators.min(0)]],
-      closingCosts: [null, [Validators.required, Validators.min(0)]],
-      downPayment: [null, [Validators.required, Validators.min(0)]],
+      rehabCosts: [null, [Validators.min(0)]],
+      closingCosts: [null, [Validators.min(0)]],
+      downPayment: [null, [Validators.min(0)]],
       usePercentageForDownPayment: [false],
       interestRate: [4.5, [Validators.required, Validators.min(0)]],
       termYears: [30, [Validators.required, Validators.min(1)]],
       paymentsPerYear: [12, [Validators.required, Validators.min(1)]],
-      insuranceCost: [null, [Validators.required, Validators.min(0)]],
-      mortgageInsurance: [600, [Validators.required, Validators.min(0)]],
+      insuranceCost: [null, [Validators.min(0)]],
+      mortgageInsurance: [null, [Validators.min(0)]],
       usePercentageForMortgageInsurance: [false],
-      propertyTaxes: [null, [Validators.required, Validators.min(0)]],
-      expectedRentalIncome: [null, [Validators.required, Validators.min(0)]],
-      operatingExpenses: [300, [Validators.required, Validators.min(0)]],
+      propertyTaxes: [null, [Validators.min(0)]],
+      expectedRentalIncome: [null, [Validators.min(0)]],
+      operatingExpenses: [null, [Validators.min(0)]],
       usePercentageForOpex: [false],
-      capitalExpenditures: [100, [Validators.required, Validators.min(0)]],
+      capitalExpenditures: [null, [Validators.min(0)]],
       usePercentageForCapex: [false],
-      appreciationRate: [3, [Validators.required, Validators.min(0)]],
+      appreciationRate: [null, [Validators.min(0)]],
       // Tax-related fields
-      scheduleEDeductibleAmount: [null, [Validators.required, Validators.min(0)]],
-      rentalUsePercentage: [100, [Validators.required, Validators.min(0), Validators.max(100)]]
+      scheduleEDeductibleAmount: [null, [Validators.min(0)]],
+      rentalUsePercentage: [100, [Validators.min(0), Validators.max(100)]]
     });
   }
 
@@ -288,6 +288,29 @@ export class CalculatorComponent implements OnInit, OnDestroy {
         });
       }
     }
+  }
+
+  private applyFormDefaults(): void {
+    const formValue = this.calculatorForm.value;
+    const purchasePrice = formValue.purchasePrice || 0;
+    
+    const defaultValues: Partial<RealEstateCalculation> = {
+      rehabCosts: formValue.rehabCosts || 0,
+      closingCosts: formValue.closingCosts || 0,
+      // Default down payment to 100 if blank, unless using percentage mode
+      downPayment: formValue.downPayment || (formValue.usePercentageForDownPayment ? 20 : 100),
+      insuranceCost: formValue.insuranceCost || 0,
+      mortgageInsurance: formValue.mortgageInsurance || 0,
+      propertyTaxes: formValue.propertyTaxes || 0,
+      expectedRentalIncome: formValue.expectedRentalIncome || 0,
+      operatingExpenses: formValue.operatingExpenses || 0,
+      capitalExpenditures: formValue.capitalExpenditures || 0,
+      appreciationRate: formValue.appreciationRate || 0,
+      scheduleEDeductibleAmount: formValue.scheduleEDeductibleAmount || 0
+    };
+
+    // Apply the defaults to the form
+    this.calculatorForm.patchValue(defaultValues);
   }
 
   get isDownPaymentLessThan20Percent(): boolean {
@@ -404,6 +427,9 @@ export class CalculatorComponent implements OnInit, OnDestroy {
   }
 
   onCalculate(): void {
+    // Apply defaults for any blank fields before validation
+    this.applyFormDefaults();
+    
     if (this.calculatorForm.valid) {
       const calculation: RealEstateCalculation = this.calculatorForm.value;
       this.results = this.calculatorService.calculateResults(calculation);
@@ -531,7 +557,7 @@ export class CalculatorComponent implements OnInit, OnDestroy {
 
   createNewScenario(): void {
     if (this.newScenarioName.trim()) {
-      this.scenarioService.createNewScenario(this.newScenarioName.trim()).subscribe({
+      this.portfolioService.createNewPortfolio(this.newScenarioName.trim()).subscribe({
         next: (newScenario) => {
           this.scenarios.push(newScenario);
           this.selectedScenarioId = newScenario.id || 1;
