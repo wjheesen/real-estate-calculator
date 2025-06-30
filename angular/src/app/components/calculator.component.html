@@ -7,7 +7,7 @@
           <mat-card-subtitle>Calculate your real estate investment returns</mat-card-subtitle>
         </div>
         <div class="navigation-buttons">
-          <button mat-stroked-button routerLink="/saved">
+          <button mat-stroked-button routerLink="/portfolio">
             <mat-icon>business</mat-icon>
             Portfolio
           </button>
@@ -230,6 +230,18 @@
                     <span>Total Cash Invested:</span>
                     <span class="value highlight">{{ results.totalCashInvested | currency }}</span>
                   </div>
+                  <div class="result-item">
+                    <span>Cash-on-Cash Return:</span>
+                    <span class="value highlight" [class.positive]="results.cashOnCashReturn > 0" [class.negative]="results.cashOnCashReturn < 0">
+                      {{ results.cashOnCashReturn | number:'1.2-2' }}%
+                    </span>
+                  </div>
+                  <div class="result-item">
+                    <span>Total ROI ({{ calculatorForm.get('termYears')?.value }} years):</span>
+                    <span class="value highlight" [class.positive]="results.totalROI > 0" [class.negative]="results.totalROI < 0">
+                      {{ results.totalROI | number:'1.2-2' }}%
+                    </span>
+                  </div>
                 </mat-card-content>
               </mat-card>
 
@@ -333,22 +345,6 @@
                       <span>Yearly Return %:</span>
                       <span class="value highlight" [class.positive]="results.yearlyReturnPercentage > 0" [class.negative]="results.yearlyReturnPercentage < 0">
                         {{ results.yearlyReturnPercentage | number:'1.2-2' }}%
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div class="return-section">
-                    <h4>Traditional ROI Metrics</h4>
-                    <div class="result-item">
-                      <span>Cash-on-Cash Return:</span>
-                      <span class="value highlight" [class.positive]="results.cashOnCashReturn > 0" [class.negative]="results.cashOnCashReturn < 0">
-                        {{ results.cashOnCashReturn | number:'1.2-2' }}%
-                      </span>
-                    </div>
-                    <div class="result-item">
-                      <span>Total ROI ({{ calculatorForm.get('termYears')?.value }} years):</span>
-                      <span class="value highlight" [class.positive]="results.totalROI > 0" [class.negative]="results.totalROI < 0">
-                        {{ results.totalROI | number:'1.2-2' }}%
                       </span>
                     </div>
                   </div>

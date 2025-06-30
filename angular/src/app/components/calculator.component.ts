@@ -55,6 +55,7 @@ export class CalculatorComponent implements OnInit, OnDestroy {
   scenarios: Scenario[] = [];
   newScenarioName: string = '';
   originalCalculation: SavedCalculation | null = null; // Store original calculation for cancel functionality
+  private isDuplicating: boolean = false; // Track if we're currently duplicating
   private loadedCalculationSubscription?: Subscription;
   private settingsSubscription?: Subscription;
 
@@ -76,17 +77,28 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     // Load scenarios
     this.loadScenarios();
     
-    // Check for calculation ID in URL parameters
+    // Load settings first
+    this.currentSettings = this.settingsService.getCurrentSettings();
+    
+    // Check for calculation ID or duplicate in URL parameters
     this.route.queryParams.subscribe(params => {
+      console.log('Query params received:', params);
       const calculationId = params['id'];
+      const duplicateId = params['duplicate'];
+      const suggestedName = params['name'];
+      
       if (calculationId) {
+        console.log('Loading calculation from URL:', calculationId);
         this.loadCalculationFromUrl(+calculationId);
+      } else if (duplicateId) {
+        console.log('Loading calculation for duplication:', duplicateId, suggestedName);
+        this.loadCalculationForDuplication(+duplicateId, suggestedName);
+      } else {
+        console.log('No URL params, setting form defaults');
+        // Only set form defaults if we're not loading a calculation
+        this.setFormDefaults();
       }
     });
-    
-    // Load settings and set defaults
-    this.currentSettings = this.settingsService.getCurrentSettings();
-    this.setFormDefaults();
 
     // Subscribe to settings changes
     this.settingsSubscription = this.settingsService.getSettings().subscribe(settings => {
@@ -174,6 +186,45 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     });
   }
 
+  private loadCalculationForDuplication(calculationId: number, suggestedName?: string): void {
+    this.dbService.getCalculation(calculationId).subscribe({
+      next: (calculation) => {
+        if (calculation) {
+          // Set duplication flag to prevent form defaults from overriding
+          this.isDuplicating = true;
+          
+          // Simply populate the form with the calculation data
+          this.populateFormFromCalculation(calculation);
+          
+          // Pre-fill the calculation name with the suggested name
+          if (suggestedName) {
+            this.calculationName = suggestedName;
+          }
+          
+          // This is NOT a loaded calculation - it's a new calculation with pre-filled data
+          this.currentCalculationId = null;
+          
+          // Clear URL parameters
+          this.router.navigate(['/calculator'], { replaceUrl: true });
+          
+          this.snackBar.open(`Loaded "${calculation.name}" for duplication. Make your changes and save with a new name.`, 'Close', {
+            duration: 4000
+          });
+        } else {
+          this.snackBar.open('Calculation not found', 'Close', {
+            duration: 3000
+          });
+        }
+      },
+      error: (error) => {
+        console.error('Error loading calculation for duplication:', error);
+        this.snackBar.open('Error loading calculation', 'Close', {
+          duration: 3000
+        });
+      }
+    });
+  }
+
   private createForm(): FormGroup {
     return this.fb.group({
       purchasePrice: [null, [Validators.required, Validators.min(0)]],
@@ -201,7 +252,7 @@ export class CalculatorComponent implements OnInit, OnDestroy {
   }
 
   private setFormDefaults(): void {
-    if (this.currentSettings) {
+    if (this.currentSettings && !this.isDuplicating) {
       this.calculatorForm.patchValue({
         interestRate: this.currentSettings.interestRate,
         termYears: this.currentSettings.termInYears,
@@ -297,6 +348,31 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     } else {
       this.onCalculate();
     }
+  }
+
+  private populateFormFromCalculation(calculation: SavedCalculation): void {
+    this.calculatorForm.patchValue({
+      purchasePrice: calculation.purchasePrice,
+      rehabCosts: calculation.rehabCosts,
+      closingCosts: calculation.closingCosts,
+      downPayment: calculation.downPayment,
+      usePercentageForDownPayment: calculation.usePercentageForDownPayment,
+      interestRate: calculation.interestRate,
+      termYears: calculation.termYears,
+      paymentsPerYear: calculation.paymentsPerYear,
+      insuranceCost: calculation.insuranceCost,
+      mortgageInsurance: calculation.mortgageInsurance,
+      usePercentageForMortgageInsurance: calculation.usePercentageForMortgageInsurance,
+      propertyTaxes: calculation.propertyTaxes,
+      expectedRentalIncome: calculation.expectedRentalIncome,
+      operatingExpenses: calculation.operatingExpenses,
+      usePercentageForOpex: calculation.usePercentageForOpex,
+      capitalExpenditures: calculation.capitalExpenditures,
+      usePercentageForCapex: calculation.usePercentageForCapex,
+      appreciationRate: calculation.appreciationRate,
+      scheduleEDeductibleAmount: calculation.scheduleEDeductibleAmount || 0,
+      rentalUsePercentage: calculation.rentalUsePercentage || 100
+    });
   }
 
   private updateMortgageInsuranceState(): void {
@@ -436,6 +512,7 @@ export class CalculatorComponent implements OnInit, OnDestroy {
   onNewCalculation(): void {
     this.currentCalculationId = null;
     this.originalCalculation = null; // Clear original calculation reference
+    this.isDuplicating = false; // Clear duplication flag
     this.results = null;
     this.calculationName = '';
     this.selectedScenarioId = 1; // Reset to default scenario

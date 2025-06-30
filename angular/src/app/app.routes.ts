@@ -6,6 +6,6 @@ import { SettingsComponent } from './components/settings.component';
 export const routes: Routes = [
   { path: '', redirectTo: '/calculator', pathMatch: 'full' },
   { path: 'calculator', component: CalculatorComponent },
-  { path: 'saved', component: SavedCalculationsComponent },
+  { path: 'portfolio', component: SavedCalculationsComponent },
   { path: 'settings', component: SettingsComponent }
 ];

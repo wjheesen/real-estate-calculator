@@ -17,6 +17,18 @@
 
 .calculation-card {
   height: fit-content;
+  margin-bottom: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.calculation-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.calculation-card.cdk-drag-dragging {
+  transform: rotate(5deg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 .calculation-summary {
@@ -179,6 +191,146 @@
   color: #0d47a1;
 }
 
+/* Scenario-based layout styles */
+.scenarios-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.scenario-section {
+  width: 100%;
+}
+
+.scenario-card {
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.scenario-card.cdk-drop-list-dragging {
+  border-color: #1976d2;
+  background-color: #f3f8ff;
+}
+
+.scenario-header {
+  flex: 1;
+}
+
+.scenario-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.calculation-count {
+  font-size: 0.9em;
+  color: #666;
+  font-weight: normal;
+}
+
+.scenario-calculations {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 16px;
+  min-height: 120px;
+  padding: 16px;
+  border-radius: 8px;
+  border: 2px dashed transparent;
+  transition: all 0.2s ease;
+}
+
+.scenario-calculations.cdk-drop-list-dragging {
+  background-color: #e3f2fd;
+  border-color: #1976d2;
+  border-style: dashed;
+}
+
+.scenario-calculations.cdk-drop-list-receiving {
+  background-color: #f3f8ff;
+  border-color: #1976d2;
+  border-style: solid;
+}
+
+.property-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.property-card.cdk-drag-dragging {
+  transform: rotate(5deg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+.drag-handle {
+  cursor: grab;
+  color: #666;
+  margin-left: auto;
+  padding: 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.drag-handle:hover {
+  color: #1976d2;
+  background-color: #f5f5f5;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-placeholder {
+  background: #ccc;
+  border: dashed 3px #999;
+  min-height: 60px;
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-style: italic;
+}
+
+.drag-placeholder::before {
+  content: "Drop here";
+}
+
+.empty-scenario {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  background-color: #fafafa;
+  transition: all 0.2s ease;
+}
+
+.empty-scenario.cdk-drop-list-receiving {
+  border-color: #1976d2;
+  background-color: #f3f8ff;
+  color: #1976d2;
+}
+
+.empty-scenario .empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-scenario p {
+  margin: 8px 0;
+}
+
+.empty-scenario .hint {
+  font-size: 0.9em;
+  font-style: italic;
+}
+
+.new-scenario-btn {
+  margin-left: auto;
+}
+
+/* Mobile responsiveness for scenarios */
 @media (max-width: 768px) {
   .saved-calculations-container {
     padding: 10px;
@@ -210,4 +362,51 @@
     width: 100%;
     justify-content: flex-start;
   }
+  
+  .scenario-actions {
+    margin-top: 8px;
+  }
+  
+  .scenario-header {
+    margin-bottom: 8px;
+  }
+  
+  .calculation-card {
+    margin-bottom: 12px;
+  }
+  
+  .new-scenario-btn {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  .controls-row {
+    gap: 8px;
+  }
+}
+
+/* Animation for scenario creation/deletion */
+.scenario-section {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Visual feedback for drag operations */
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.scenario-calculations.cdk-drop-list-receiving {
+  background-color: rgba(76, 175, 80, 0.1);
+  border-color: #4caf50;
 }
