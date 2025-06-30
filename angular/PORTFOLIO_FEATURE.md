@@ -53,12 +53,21 @@ Combines selected properties to show:
 - **Removed Load Button**: Cleaner card interface with fewer buttons
 - **Intuitive Interaction**: Follows common UX patterns (names as links)
 
+### 9. **Scenario Management System**
+- **Multiple Scenarios**: Create and manage different investment scenarios
+- **Default "My Portfolio"**: All existing calculations automatically assigned to default scenario
+- **Scenario Selection**: Choose which scenario to save calculations to
+- **Create New Scenarios**: Inline scenario creation during save process
+- **Scenario Association**: Each calculation is linked to a specific scenario
+
 ## ✅ Technical Implementation
 
 ### Data Structure Updates
 - Added `currentCalculationId` tracking in calculator component
 - Maintained backward compatibility with existing saved calculations
 - Enhanced selection management with `Set<number>` for efficient lookups
+- **Scenario Support**: Added `Scenario` interface and `scenarioId` to calculations
+- **Database Schema V2**: Updated IndexedDB to support scenario management
 
 ### Calculation Aggregation
 - Portfolio summary calculations properly aggregate all financial metrics
@@ -100,11 +109,14 @@ This now perfectly supports your use case:
 
 ## 🎯 Next Steps (Future Enhancements)
 
-1. **Property Types**: Add property categorization (Primary, Rental, Investment)
-2. **Scenario Saving**: Save portfolio combinations for comparison
-3. **Timeline Features**: Model transitions over time
-4. **Advanced Tax Calculations**: More sophisticated tax planning
-5. **Performance Metrics**: IRR, NPV, and other advanced calculations
+1. **Scenario Comparison Dashboard**: Side-by-side comparison of scenario summaries
+2. **Portfolio Page Redesign**: Tab-based or dropdown scenario switching
+3. **Scenario Summary Cards**: Display aggregated metrics per scenario
+4. **Advanced Scenario Management**: Rename, duplicate, and organize scenarios
+5. **Property Types**: Add property categorization (Primary, Rental, Investment)
+6. **Timeline Features**: Model transitions over time
+7. **Advanced Tax Calculations**: More sophisticated tax planning
+8. **Performance Metrics**: IRR, NPV, and other advanced calculations
 
 ## 🔧 Fixed Issues
 - **Duplicate Button**: Error in duplicate functionality resolved

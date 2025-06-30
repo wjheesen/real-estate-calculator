@@ -41,8 +41,8 @@ export class RealEstateCalculatorService {
       downPaymentAmount = (downPayment / 100) * purchasePrice;
     }
     
-    // Calculate loan amount
-    const loanAmount = totalAcquisitionCost - downPaymentAmount;
+    // For fully-owned properties (purchase price = 0), there's no loan
+    const loanAmount = purchasePrice > 0 ? Math.max(0, totalAcquisitionCost - downPaymentAmount) : 0;
     
     // Calculate monthly mortgage payment using PMT formula
     const monthlyInterestRate = interestRate / 100 / paymentsPerYear;
@@ -73,10 +73,13 @@ export class RealEstateCalculatorService {
     // Calculate monthly insurance and taxes
     const monthlyInsurance = insuranceCost / 12;
     
-    // Calculate monthly mortgage insurance
-    let monthlyMortgageInsurance = mortgageInsurance / 12;
-    if (usePercentageForMortgageInsurance) {
-      monthlyMortgageInsurance = (mortgageInsurance / 100) * loanAmount / 12;
+    // Calculate monthly mortgage insurance (only if there's a loan)
+    let monthlyMortgageInsurance = 0;
+    if (loanAmount > 0) {
+      monthlyMortgageInsurance = mortgageInsurance / 12;
+      if (usePercentageForMortgageInsurance) {
+        monthlyMortgageInsurance = (mortgageInsurance / 100) * loanAmount / 12;
+      }
     }
     
     const monthlyPropertyTaxes = propertyTaxes / 12;
@@ -94,6 +97,8 @@ export class RealEstateCalculatorService {
     const annualCashFlow = monthlyCashFlow * 12;
     
     // Calculate Return on Investment (ROI)
+    // For fully-owned properties, total cash invested includes any rehab/closing costs
+    // If no costs, then ROI calculations may not be meaningful
     const totalCashInvested = downPaymentAmount + rehabCosts + closingCosts;
     const cashOnCashReturn = totalCashInvested > 0 ? (annualCashFlow / totalCashInvested) * 100 : 0;
     
@@ -138,11 +143,16 @@ export class RealEstateCalculatorService {
     const annualDepreciation = scheduleEDeductibleAmount > 0 ? 
       (scheduleEDeductibleAmount / 27.5) * (rentalUsePercentage / 100) : 0;
     
-    // Pre-tax income = annual rental income - annual operating expenses (excluding mortgage payments)
+    // Calculate deductible expenses for Schedule E
+    // This includes operating expenses, capital expenditures, insurance, mortgage insurance, and property taxes
+    // adjusted by rental use percentage
+    const totalAnnualExpenses = (monthlyOperatingExpenses + monthlyCapitalExpenditures + 
+                               monthlyInsurance + monthlyMortgageInsurance + monthlyPropertyTaxes) * 12;
+    const deductibleExpenses = totalAnnualExpenses * (rentalUsePercentage / 100);
+    
+    // Pre-tax income = annual rental income - deductible expenses
     const annualRentalIncome = expectedRentalIncome * 12;
-    const annualOperatingExpenses = (monthlyOperatingExpenses + monthlyCapitalExpenditures + 
-                                   monthlyInsurance + monthlyMortgageInsurance + monthlyPropertyTaxes) * 12;
-    const pretaxIncome = annualRentalIncome - annualOperatingExpenses;
+    const pretaxIncome = annualRentalIncome - deductibleExpenses;
     
     // Taxable income = pre-tax income - depreciation
     const taxableIncome = pretaxIncome - annualDepreciation;
@@ -178,7 +188,8 @@ export class RealEstateCalculatorService {
       // Tax calculations
       annualDepreciation: this.round(annualDepreciation),
       taxableIncome: this.round(taxableIncome),
-      pretaxIncome: this.round(pretaxIncome)
+      pretaxIncome: this.round(pretaxIncome),
+      deductibleExpenses: this.round(deductibleExpenses)
     };
   }
 

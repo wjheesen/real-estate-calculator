@@ -110,6 +110,13 @@
   padding-top: 15px;
 }
 
+.result-item.subtotal {
+  border-top: 1px solid #e0e0e0;
+  font-weight: 600;
+  margin-top: 8px;
+  padding-top: 12px;
+}
+
 .value {
   font-weight: 500;
   text-align: right;
@@ -129,20 +136,25 @@
 }
 
 .return-section {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+}
+
+.return-section:not(:last-child) {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.return-section h4 {
+  margin: 0 0 12px 0;
+  color: #1976d2;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .return-section:last-child {
   margin-bottom: 0;
-}
-
-.return-section h4 {
-  color: #1976d2;
-  margin-bottom: 10px;
-  padding-bottom: 5px;
-  border-bottom: 1px solid #e0e0e0;
-  font-size: 1rem;
-  font-weight: 500;
+  padding-bottom: 0;
+  border-bottom: none;
 }
 
 /* Header styling */
@@ -254,8 +266,43 @@
   gap: 16px;
 }
 
-.calculation-name-field {
+.calculation-name-field,
+.scenario-select-field {
   width: 100%;
+}
+
+.new-scenario-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.new-scenario-section h4 {
+  margin: 0 0 12px 0;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.new-scenario-form {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.new-scenario-name-field {
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .new-scenario-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .new-scenario-name-field {
+    width: 100%;
+  }
 }
 
 .save-card mat-card-actions {

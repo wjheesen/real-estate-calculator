@@ -57,10 +57,34 @@ export interface CalculationResults {
   annualDepreciation: number;
   taxableIncome: number;
   pretaxIncome: number;
+  deductibleExpenses: number;
+}
+
+export interface Scenario {
+  id?: number;
+  name: string;
+  description?: string;
+  color?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ScenarioSummary {
+  scenario: Scenario;
+  totalProperties: number;
+  totalCashInvested: number;
+  monthlyCashFlow: number;
+  annualCashFlow: number;
+  monthlyTotalReturn: number;
+  yearlyTotalReturn: number;
+  cashOnCashReturn: number;
+  taxableIncome: number;
+  annualDepreciation: number;
 }
 
 export interface SavedCalculation extends RealEstateCalculation {
   name: string;
   description?: string;
   results?: CalculationResults;
+  scenarioId?: number; // Associate calculation with a scenario
 }

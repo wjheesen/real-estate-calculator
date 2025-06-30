@@ -194,7 +194,10 @@
 
             <div class="form-actions">
               <button mat-raised-button color="primary" type="submit" [disabled]="calculatorForm.invalid">
-                Calculate
+                {{ isLoadedCalculation ? 'Save and Recalculate' : 'Calculate' }}
+              </button>
+              <button mat-stroked-button type="button" (click)="onCancel()" *ngIf="isLoadedCalculation">
+                Cancel Changes
               </button>
               <button mat-stroked-button type="button" (click)="onNewCalculation()">
                 New Calculation
@@ -263,6 +266,10 @@
                     <span>Property Taxes:</span>
                     <span class="value negative">-{{ results.monthlyPropertyTaxes | currency }}</span>
                   </div>
+                  <div class="result-item subtotal">
+                    <span>Total Expenses:</span>
+                    <span class="value negative">-{{ results.totalMonthlyExpenses | currency }}</span>
+                  </div>
                   <div class="result-item total">
                     <span>Monthly Cash Flow:</span>
                     <span class="value" [class.positive]="results.monthlyCashFlow > 0" [class.negative]="results.monthlyCashFlow < 0">
@@ -275,33 +282,7 @@
               <mat-card class="result-card">
                 <mat-card-header>
                   <mat-card-title>Return on Investment</mat-card-title>
-                </mat-card-header>
-                <mat-card-content>
-                  <div class="result-item">
-                    <span>Annual Cash Flow:</span>
-                    <span class="value" [class.positive]="results.annualCashFlow > 0" [class.negative]="results.annualCashFlow < 0">
-                      {{ results.annualCashFlow | currency }}
-                    </span>
-                  </div>
-                  <div class="result-item">
-                    <span>Cash-on-Cash Return:</span>
-                    <span class="value highlight" [class.positive]="results.cashOnCashReturn > 0" [class.negative]="results.cashOnCashReturn < 0">
-                      {{ results.cashOnCashReturn | number:'1.2-2' }}%
-                    </span>
-                  </div>
-                  <div class="result-item">
-                    <span>Total ROI ({{ calculatorForm.get('termYears')?.value }} years):</span>
-                    <span class="value highlight" [class.positive]="results.totalROI > 0" [class.negative]="results.totalROI < 0">
-                      {{ results.totalROI | number:'1.2-2' }}%
-                    </span>
-                  </div>
-                </mat-card-content>
-              </mat-card>
-
-              <mat-card class="result-card">
-                <mat-card-header>
-                  <mat-card-title>Monthly & Yearly Returns</mat-card-title>
-                  <mat-card-subtitle>Cash Flow + Equity Growth</mat-card-subtitle>
+                  <mat-card-subtitle>Cash Flow + Equity Growth Analysis</mat-card-subtitle>
                 </mat-card-header>
                 <mat-card-content>
                   <div class="return-section">
@@ -355,6 +336,22 @@
                       </span>
                     </div>
                   </div>
+                  
+                  <div class="return-section">
+                    <h4>Traditional ROI Metrics</h4>
+                    <div class="result-item">
+                      <span>Cash-on-Cash Return:</span>
+                      <span class="value highlight" [class.positive]="results.cashOnCashReturn > 0" [class.negative]="results.cashOnCashReturn < 0">
+                        {{ results.cashOnCashReturn | number:'1.2-2' }}%
+                      </span>
+                    </div>
+                    <div class="result-item">
+                      <span>Total ROI ({{ calculatorForm.get('termYears')?.value }} years):</span>
+                      <span class="value highlight" [class.positive]="results.totalROI > 0" [class.negative]="results.totalROI < 0">
+                        {{ results.totalROI | number:'1.2-2' }}%
+                      </span>
+                    </div>
+                  </div>
                 </mat-card-content>
               </mat-card>
 
@@ -395,6 +392,18 @@
                 </mat-card-header>
                 <mat-card-content>
                   <div class="result-item">
+                    <span>Annual Rental Income:</span>
+                    <span class="value positive">{{ (calculatorForm.get('expectedRentalIncome')?.value * 12) | currency }}</span>
+                  </div>
+                  <div class="result-item">
+                    <span>Deductible Expenses:</span>
+                    <span class="value negative">-{{ results.deductibleExpenses | currency }}</span>
+                  </div>
+                  <div class="result-item">
+                    <span>Rental Use Percentage:</span>
+                    <span class="value">{{ calculatorForm.get('rentalUsePercentage')?.value }}%</span>
+                  </div>
+                  <div class="result-item subtotal">
                     <span>Pre-tax Income:</span>
                     <span class="value" [class.positive]="results.pretaxIncome > 0" [class.negative]="results.pretaxIncome < 0">
                       {{ results.pretaxIncome | currency }}
@@ -412,7 +421,8 @@
                   </div>
                   <div class="tax-note">
                     <small>
-                      <strong>Note:</strong> Depreciation is calculated as Schedule E deductible amount ÷ 27.5 years × rental use percentage.
+                      <strong>Note:</strong> Deductible expenses include operating expenses, capital expenditures, insurance, and property taxes adjusted by rental use percentage. 
+                      Depreciation is calculated as Schedule E deductible amount ÷ 27.5 years × rental use percentage.
                       Consult a tax professional for accurate tax planning.
                     </small>
                   </div>
@@ -421,7 +431,7 @@
             </div>
             
             <!-- Save to Portfolio Section -->
-            <div class="save-section">
+            <div class="save-section" *ngIf="!isLoadedCalculation">
               <mat-card class="save-card">
                 <mat-card-header>
                   <mat-card-title>Save to Portfolio</mat-card-title>
@@ -434,6 +444,29 @@
                       <input matInput [(ngModel)]="calculationName" placeholder="Enter a name for this property">
                       <mat-hint>Give this calculation a descriptive name (e.g., "123 Main St Duplex")</mat-hint>
                     </mat-form-field>
+                    
+                    <mat-form-field appearance="outline" class="scenario-select-field">
+                      <mat-label>Save to Scenario</mat-label>
+                      <mat-select [(value)]="selectedScenarioId">
+                        <mat-option *ngFor="let scenario of scenarios" [value]="scenario.id">
+                          {{ scenario.name }}
+                        </mat-option>
+                      </mat-select>
+                      <mat-hint>Choose which scenario to save this calculation to</mat-hint>
+                    </mat-form-field>
+                    
+                    <div class="new-scenario-section">
+                      <h4>Or Create New Scenario</h4>
+                      <div class="new-scenario-form">
+                        <mat-form-field appearance="outline" class="new-scenario-name-field">
+                          <mat-label>New Scenario Name</mat-label>
+                          <input matInput [(ngModel)]="newScenarioName" placeholder="Enter scenario name">
+                        </mat-form-field>
+                        <button mat-stroked-button color="primary" (click)="createNewScenario()" [disabled]="!newScenarioName?.trim()">
+                          Create Scenario
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </mat-card-content>
                 <mat-card-actions>

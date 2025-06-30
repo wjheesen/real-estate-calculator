@@ -11,12 +11,14 @@ import { MatTabsModule, MatTabGroup } from '@angular/material/tabs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialogModule } from '@angular/material/dialog';
-import { RouterModule } from '@angular/router';
+import { MatSelectModule } from '@angular/material/select';
+import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { RealEstateCalculatorService } from '../services/real-estate-calculator.service';
 import { IndexedDbService } from '../services/indexed-db.service';
 import { CalculatorDataService } from '../services/calculator-data.service';
 import { SettingsService } from '../services/settings.service';
-import { RealEstateCalculation, CalculationResults, SavedCalculation } from '../models/real-estate.interface';
+import { ScenarioService } from '../services/scenario.service';
+import { RealEstateCalculation, CalculationResults, SavedCalculation, Scenario } from '../models/real-estate.interface';
 import { Settings } from '../models/settings.interface';
 
 @Component({
@@ -35,6 +37,7 @@ import { Settings } from '../models/settings.interface';
     MatIconModule,
     MatSnackBarModule,
     MatDialogModule,
+    MatSelectModule,
     RouterModule
   ],
   templateUrl: './calculator.component.html',
@@ -48,6 +51,10 @@ export class CalculatorComponent implements OnInit, OnDestroy {
   currentSettings: Settings | null = null;
   currentCalculationId: number | null = null; // Track currently loaded calculation
   calculationName: string = ''; // For the save input field
+  selectedScenarioId: number = 1; // Default to "My Portfolio"
+  scenarios: Scenario[] = [];
+  newScenarioName: string = '';
+  originalCalculation: SavedCalculation | null = null; // Store original calculation for cancel functionality
   private loadedCalculationSubscription?: Subscription;
   private settingsSubscription?: Subscription;
 
@@ -57,12 +64,26 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     private dbService: IndexedDbService,
     private calculatorDataService: CalculatorDataService,
     private settingsService: SettingsService,
+    private scenarioService: ScenarioService,
+    private router: Router,
+    private route: ActivatedRoute,
     private snackBar: MatSnackBar
   ) {
     this.calculatorForm = this.createForm();
   }
 
   ngOnInit(): void {
+    // Load scenarios
+    this.loadScenarios();
+    
+    // Check for calculation ID in URL parameters
+    this.route.queryParams.subscribe(params => {
+      const calculationId = params['id'];
+      if (calculationId) {
+        this.loadCalculationFromUrl(+calculationId);
+      }
+    });
+    
     // Load settings and set defaults
     this.currentSettings = this.settingsService.getCurrentSettings();
     this.setFormDefaults();
@@ -104,6 +125,53 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     if (this.settingsSubscription) {
       this.settingsSubscription.unsubscribe();
     }
+  }
+
+  private loadScenarios(): void {
+    this.scenarioService.getAllScenarios().subscribe({
+      next: (scenarios) => {
+        this.scenarios = scenarios;
+        // Ensure default scenario exists
+        if (scenarios.length === 0) {
+          this.scenarioService.createNewScenario('My Portfolio', 'Default portfolio scenario').subscribe({
+            next: (defaultScenario) => {
+              this.scenarios = [defaultScenario];
+              this.selectedScenarioId = defaultScenario.id || 1;
+            }
+          });
+        }
+      },
+      error: (error) => {
+        console.error('Error loading scenarios:', error);
+      }
+    });
+  }
+
+  private loadCalculationFromUrl(calculationId: number): void {
+    this.dbService.getCalculation(calculationId).subscribe({
+      next: (calculation) => {
+        if (calculation) {
+          this.loadCalculationIntoForm(calculation);
+          this.snackBar.open(`Loaded "${calculation.name}" from URL`, 'Close', {
+            duration: 3000
+          });
+        } else {
+          this.snackBar.open('Calculation not found', 'Close', {
+            duration: 3000
+          });
+          // Remove invalid ID from URL
+          this.router.navigate(['/calculator']);
+        }
+      },
+      error: (error) => {
+        console.error('Error loading calculation from URL:', error);
+        this.snackBar.open('Error loading calculation', 'Close', {
+          duration: 3000
+        });
+        // Remove invalid ID from URL
+        this.router.navigate(['/calculator']);
+      }
+    });
   }
 
   private createForm(): FormGroup {
@@ -184,12 +252,22 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     }
   }
 
+  get isLoadedCalculation(): boolean {
+    return this.currentCalculationId !== null;
+  }
+
   private loadCalculationIntoForm(calculation: SavedCalculation): void {
     // Track the current calculation ID for potential overwrite
     this.currentCalculationId = calculation.id || null;
     
+    // Store the original calculation for cancel functionality
+    this.originalCalculation = { ...calculation };
+    
     // Set the calculation name for the save input
     this.calculationName = calculation.name || '';
+    
+    // Set the scenario
+    this.selectedScenarioId = calculation.scenarioId || 1;
     
     this.calculatorForm.patchValue({
       purchasePrice: calculation.purchasePrice,
@@ -254,6 +332,11 @@ export class CalculatorComponent implements OnInit, OnDestroy {
       const calculation: RealEstateCalculation = this.calculatorForm.value;
       this.results = this.calculatorService.calculateResults(calculation);
       
+      // Auto-save if this is a loaded calculation
+      if (this.isLoadedCalculation && this.calculationName.trim()) {
+        this.autoSaveCalculation();
+      }
+      
       // Switch to results tab after calculation
       setTimeout(() => {
         this.tabGroup.selectedIndex = 1;
@@ -266,6 +349,35 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     }
   }
 
+  private autoSaveCalculation(): void {
+    if (this.results && this.calculatorForm.valid && this.calculationName.trim() && this.currentCalculationId) {
+      const savedCalculation: SavedCalculation = {
+        ...this.calculatorForm.value,
+        id: this.currentCalculationId,
+        name: this.calculationName.trim(),
+        results: this.results,
+        scenarioId: this.selectedScenarioId,
+        updatedAt: new Date()
+      };
+
+      this.dbService.saveCalculation(savedCalculation).subscribe({
+        next: (saved) => {
+          // Update the original calculation reference
+          this.originalCalculation = { ...saved };
+          this.snackBar.open('Calculation updated automatically', 'Close', {
+            duration: 2000
+          });
+        },
+        error: (error) => {
+          console.error('Error auto-saving calculation:', error);
+          this.snackBar.open('Error auto-saving calculation', 'Close', {
+            duration: 3000
+          });
+        }
+      });
+    }
+  }
+
   onSave(): void {
     if (this.results && this.calculatorForm.valid && this.calculationName.trim()) {
       if (this.currentCalculationId) {
@@ -275,6 +387,7 @@ export class CalculatorComponent implements OnInit, OnDestroy {
           id: this.currentCalculationId,
           name: this.calculationName.trim(),
           results: this.results,
+          scenarioId: this.selectedScenarioId,
           updatedAt: new Date()
         };
 
@@ -297,6 +410,7 @@ export class CalculatorComponent implements OnInit, OnDestroy {
           ...this.calculatorForm.value,
           name: this.calculationName.trim(),
           results: this.results,
+          scenarioId: this.selectedScenarioId,
           createdAt: new Date(),
           updatedAt: new Date()
         };
@@ -321,8 +435,10 @@ export class CalculatorComponent implements OnInit, OnDestroy {
 
   onNewCalculation(): void {
     this.currentCalculationId = null;
+    this.originalCalculation = null; // Clear original calculation reference
     this.results = null;
     this.calculationName = '';
+    this.selectedScenarioId = 1; // Reset to default scenario
     this.calculatorForm.reset();
     this.setFormDefaults();
     
@@ -334,5 +450,41 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     this.snackBar.open('New calculation started', 'Close', {
       duration: 2000
     });
+  }
+
+  createNewScenario(): void {
+    if (this.newScenarioName.trim()) {
+      this.scenarioService.createNewScenario(this.newScenarioName.trim()).subscribe({
+        next: (newScenario) => {
+          this.scenarios.push(newScenario);
+          this.selectedScenarioId = newScenario.id || 1;
+          this.newScenarioName = '';
+          this.snackBar.open(`Scenario "${newScenario.name}" created!`, 'Close', {
+            duration: 3000
+          });
+        },
+        error: (error) => {
+          console.error('Error creating scenario:', error);
+          this.snackBar.open('Error creating scenario', 'Close', {
+            duration: 3000
+          });
+        }
+      });
+    }
+  }
+
+  onCancel(): void {
+    if (this.originalCalculation) {
+      // Reset form to original calculation values
+      this.loadCalculationIntoForm(this.originalCalculation);
+      this.snackBar.open('Changes cancelled, reverted to saved version', 'Close', {
+        duration: 3000
+      });
+      
+      // Switch back to calculator tab
+      if (this.tabGroup) {
+        this.tabGroup.selectedIndex = 0;
+      }
+    }
   }
 }

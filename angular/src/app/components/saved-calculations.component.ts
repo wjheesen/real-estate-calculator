@@ -253,8 +253,8 @@ export class SavedCalculationsComponent implements OnInit {
     // Load the calculation into the shared service
     this.calculatorDataService.loadCalculation(calculation);
     
-    // Navigate to the calculator
-    this.router.navigate(['/calculator']).then(() => {
+    // Navigate to the calculator with the calculation ID as a query parameter
+    this.router.navigate(['/calculator'], { queryParams: { id: calculation.id } }).then(() => {
       // Show success message
       this.snackBar.open(`Loaded "${calculation.name}" into calculator`, 'Close', {
         duration: 3000
