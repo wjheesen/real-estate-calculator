@@ -15,10 +15,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { RealEstateCalculatorService } from '../services/real-estate-calculator.service';
 import { IndexedDbService } from '../services/indexed-db.service';
-import { CalculatorDataService } from '../services/calculator-data.service';
+import { CalculatorDataService } from './calculator-data.service';
 import { SettingsService } from '../services/settings.service';
 import { PortfolioService } from '../services/portfolio.service';
-import { RealEstateCalculation, CalculationResults, SavedCalculation, Scenario } from '../models/real-estate.interface';
+import { RealEstateCalculation, CalculationResults, SavedCalculation, Portfolio } from '../models/real-estate.interface';
 import { Settings } from '../models/settings.interface';
 
 @Component({
@@ -51,9 +51,9 @@ export class CalculatorComponent implements OnInit, OnDestroy {
   currentSettings: Settings | null = null;
   currentCalculationId: number | null = null; // Track currently loaded calculation
   calculationName: string = ''; // For the save input field
-  selectedScenarioId: number = 1; // Default to "My Portfolio"
-  scenarios: Scenario[] = [];
-  newScenarioName: string = '';
+  selectedPortfolioId: number = 1; // Default to "My Portfolio"
+  portfolios: Portfolio[] = [];
+  newPortfolioName: string = '';
   originalCalculation: SavedCalculation | null = null; // Store original calculation for cancel functionality
   private isDuplicating: boolean = false; // Track if we're currently duplicating
   private loadedCalculationSubscription?: Subscription;
@@ -74,8 +74,8 @@ export class CalculatorComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Load scenarios
-    this.loadScenarios();
+    // Load portfolios
+    this.loadPortfolios();
     
     // Load settings first
     this.currentSettings = this.settingsService.getCurrentSettings();
@@ -139,22 +139,22 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     }
   }
 
-  private loadScenarios(): void {
+  private loadPortfolios(): void {
     this.portfolioService.getAllPortfolios().subscribe({
-      next: (scenarios) => {
-        this.scenarios = scenarios;
-        // Ensure default scenario exists
-        if (scenarios.length === 0) {
+      next: (portfolios) => {
+        this.portfolios = portfolios;
+        // Ensure default portfolio exists
+        if (portfolios.length === 0) {
           this.portfolioService.createNewPortfolio('My Portfolio', 'Default portfolio').subscribe({
-            next: (defaultScenario) => {
-              this.scenarios = [defaultScenario];
-              this.selectedScenarioId = defaultScenario.id || 1;
+            next: (defaultPortfolio) => {
+              this.portfolios = [defaultPortfolio];
+              this.selectedPortfolioId = defaultPortfolio.id || 1;
             }
           });
         }
       },
       error: (error) => {
-        console.error('Error loading scenarios:', error);
+        console.error('Error loading portfolios:', error);
       }
     });
   }
@@ -340,8 +340,8 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     // Set the calculation name for the save input
     this.calculationName = calculation.name || '';
     
-    // Set the scenario
-    this.selectedScenarioId = calculation.scenarioId || 1;
+    // Set the portfolio
+    this.selectedPortfolioId = calculation.portfolioId || calculation.scenarioId || 1;
     
     this.calculatorForm.patchValue({
       purchasePrice: calculation.purchasePrice,
@@ -458,7 +458,8 @@ export class CalculatorComponent implements OnInit, OnDestroy {
         id: this.currentCalculationId,
         name: this.calculationName.trim(),
         results: this.results,
-        scenarioId: this.selectedScenarioId,
+        portfolioId: this.selectedPortfolioId,
+        scenarioId: this.selectedPortfolioId, // For backward compatibility
         updatedAt: new Date()
       };
 
@@ -489,7 +490,8 @@ export class CalculatorComponent implements OnInit, OnDestroy {
           id: this.currentCalculationId,
           name: this.calculationName.trim(),
           results: this.results,
-          scenarioId: this.selectedScenarioId,
+          portfolioId: this.selectedPortfolioId,
+          scenarioId: this.selectedPortfolioId, // For backward compatibility
           updatedAt: new Date()
         };
 
@@ -512,7 +514,8 @@ export class CalculatorComponent implements OnInit, OnDestroy {
           ...this.calculatorForm.value,
           name: this.calculationName.trim(),
           results: this.results,
-          scenarioId: this.selectedScenarioId,
+          portfolioId: this.selectedPortfolioId,
+          scenarioId: this.selectedPortfolioId, // For backward compatibility
           createdAt: new Date(),
           updatedAt: new Date()
         };
@@ -541,7 +544,7 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     this.isDuplicating = false; // Clear duplication flag
     this.results = null;
     this.calculationName = '';
-    this.selectedScenarioId = 1; // Reset to default scenario
+    this.selectedPortfolioId = 1; // Reset to default portfolio
     this.calculatorForm.reset();
     this.setFormDefaults();
     
@@ -555,20 +558,20 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     });
   }
 
-  createNewScenario(): void {
-    if (this.newScenarioName.trim()) {
-      this.portfolioService.createNewPortfolio(this.newScenarioName.trim()).subscribe({
-        next: (newScenario) => {
-          this.scenarios.push(newScenario);
-          this.selectedScenarioId = newScenario.id || 1;
-          this.newScenarioName = '';
-          this.snackBar.open(`Scenario "${newScenario.name}" created!`, 'Close', {
+  createNewPortfolio(): void {
+    if (this.newPortfolioName.trim()) {
+      this.portfolioService.createNewPortfolio(this.newPortfolioName.trim()).subscribe({
+        next: (newPortfolio) => {
+          this.portfolios.push(newPortfolio);
+          this.selectedPortfolioId = newPortfolio.id || 1;
+          this.newPortfolioName = '';
+          this.snackBar.open(`Portfolio "${newPortfolio.name}" created!`, 'Close', {
             duration: 3000
           });
         },
         error: (error) => {
-          console.error('Error creating scenario:', error);
-          this.snackBar.open('Error creating scenario', 'Close', {
+          console.error('Error creating portfolio:', error);
+          this.snackBar.open('Error creating portfolio', 'Close', {
             duration: 3000
           });
         }

@@ -14,7 +14,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
 import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { IndexedDbService } from '../services/indexed-db.service';
-import { CalculatorDataService } from '../services/calculator-data.service';
+import { CalculatorDataService } from './calculator-data.service';
 import { RealEstateCalculatorService } from '../services/real-estate-calculator.service';
 import { PortfolioService } from '../services/portfolio.service';
 import { SavedCalculation, CalculationResults, Portfolio } from '../models/real-estate.interface';
@@ -191,13 +191,13 @@ import { SavedCalculation, CalculationResults, Portfolio } from '../models/real-
             </div>
             
             <!-- Selected Portfolio Details View -->
-            <div class="portfolio-details-view" *ngIf="selectedScenarioId && !showOrganizeView">
+            <div class="portfolio-details-view" *ngIf="selectedPortfolioId && !showOrganizeView">
               <div class="portfolio-header-section">
-                <h3>{{ getScenarioName(selectedScenarioId) }}</h3>
+                <h3>{{ getPortfolioName(selectedPortfolioId) }}</h3>
                 <div class="portfolio-controls">
                   <button mat-stroked-button color="accent" (click)="toggleComparison()" [disabled]="portfolios.length < 2">
                     <mat-icon>compare_arrows</mat-icon>
-                    {{ comparisonScenarioId ? 'Clear Comparison' : 'Quick Compare' }}
+                    {{ comparisonPortfolioId ? 'Clear Comparison' : 'Quick Compare' }}
                   </button>
                 </div>
               </div>
@@ -209,32 +209,32 @@ import { SavedCalculation, CalculationResults, Portfolio } from '../models/real-
                     <mat-card-header>
                       <div class="portfolio-header">
                         <mat-card-title>
-                          Properties in {{ getScenarioName(selectedScenarioId) }}
-                          <span class="calculation-count">({{ getCalculationsForScenario(selectedScenarioId).length }})</span>
+                          Properties in {{ getPortfolioName(selectedPortfolioId) }}
+                          <span class="calculation-count">({{ getCalculationsForPortfolio(selectedPortfolioId).length }})</span>
                         </mat-card-title>
                       </div>
-                      <div class="scenario-actions">
-                        <button mat-icon-button (click)="renameScenario(getScenarioById(selectedScenarioId)!)" matTooltip="Rename portfolio">
+                      <div class="portfolio-actions">
+                        <button mat-icon-button (click)="renamePortfolio(getPortfolioById(selectedPortfolioId)!)" matTooltip="Rename portfolio">
                           <mat-icon>edit</mat-icon>
                         </button>
-                        <button mat-icon-button (click)="deleteScenario(getScenarioById(selectedScenarioId)!)" matTooltip="Delete portfolio" 
-                                [disabled]="scenarios.length <= 1">
+                        <button mat-icon-button (click)="deletePortfolio(getPortfolioById(selectedPortfolioId)!)" matTooltip="Delete portfolio" 
+                                [disabled]="portfolios.length <= 1">
                           <mat-icon>delete</mat-icon>
                         </button>
                       </div>
                     </mat-card-header>
                     
                     <mat-card-content>
-                      <div class="scenario-calculations" 
+                      <div class="portfolio-calculations" 
                            cdkDropList 
-                           [id]="'scenario-' + selectedScenarioId"
-                           [cdkDropListData]="getCalculationsForScenario(selectedScenarioId)"
+                           [id]="'portfolio-' + selectedPortfolioId"
+                           [cdkDropListData]="getCalculationsForPortfolio(selectedPortfolioId)"
                            [cdkDropListConnectedTo]="getDropListIds()"
-                           (cdkDropListDropped)="onDrop($event, selectedScenarioId)">
+                           (cdkDropListDropped)="onDrop($event, selectedPortfolioId)">
                         
                         <div class="calculation-card" 
                              cdkDrag
-                             *ngFor="let calculation of getCalculationsForScenario(selectedScenarioId)">
+                             *ngFor="let calculation of getCalculationsForPortfolio(selectedPortfolioId)">
                           
                           <div class="drag-placeholder" *cdkDragPlaceholder></div>
                           
@@ -321,8 +321,8 @@ import { SavedCalculation, CalculationResults, Portfolio } from '../models/real-
                           </mat-card>
                         </div>
                         
-                        <!-- Empty scenario placeholder -->
-                        <div class="empty-scenario" *ngIf="getCalculationsForScenario(selectedScenarioId).length === 0">
+                        <!-- Empty portfolio placeholder -->
+                        <div class="empty-portfolio" *ngIf="getCalculationsForPortfolio(selectedPortfolioId).length === 0">
                           <mat-icon class="empty-icon">folder_open</mat-icon>
                           <p>No properties in this portfolio</p>
                           <p class="hint">Create new calculations and assign them to this portfolio</p>
@@ -338,66 +338,66 @@ import { SavedCalculation, CalculationResults, Portfolio } from '../models/real-
                 <mat-card class="summary-comparison-card">
                   <mat-card-header>
                     <mat-card-title>Portfolio Summary</mat-card-title>
-                    <mat-card-subtitle *ngIf="!comparisonScenarioId">
+                    <mat-card-subtitle *ngIf="!comparisonPortfolioId">
                       Select another portfolio below to compare
                     </mat-card-subtitle>
-                    <mat-card-subtitle *ngIf="comparisonScenarioId">
-                      Comparing with {{ getScenarioName(comparisonScenarioId) }}
+                    <mat-card-subtitle *ngIf="comparisonPortfolioId">
+                      Comparing with {{ getPortfolioName(comparisonPortfolioId) }}
                     </mat-card-subtitle>
                   </mat-card-header>
                   <mat-card-content>
                     <!-- Portfolio Selection for Comparison -->
-                    <div class="comparison-scenario-selection" *ngIf="scenarios.length > 1">
+                    <div class="comparison-portfolio-selection" *ngIf="portfolios.length > 1">
                       <mat-form-field>
                         <mat-label>Compare with another portfolio</mat-label>
-                        <mat-select [(value)]="comparisonScenarioId">
+                        <mat-select [(value)]="comparisonPortfolioId">
                           <mat-option [value]="null">None (single portfolio view)</mat-option>
-                          <mat-option *ngFor="let scenario of scenarios" 
-                                      [value]="scenario.id" 
-                                      [disabled]="scenario.id === selectedScenarioId">
-                            {{ scenario.name }}
+                          <mat-option *ngFor="let portfolio of portfolios" 
+                                      [value]="portfolio.id" 
+                                      [disabled]="portfolio.id === selectedPortfolioId">
+                            {{ portfolio.name }}
                           </mat-option>
                         </mat-select>
                       </mat-form-field>
                     </div>
 
                     <!-- Summary Table (always in comparison format) -->
-                    <div class="summary-results" *ngIf="getCalculationsForScenario(selectedScenarioId).length > 0; else emptyScenario">
+                    <div class="summary-results" *ngIf="getCalculationsForPortfolio(selectedPortfolioId).length > 0; else emptyPortfolio">
                       <div class="comparison-table-wrapper">
                         <table class="comparison-table">
                           <thead>
                             <tr>
                               <th class="metric-header">Metric</th>
-                              <th class="scenario-header">{{ getScenarioName(selectedScenarioId) }}</th>
-                              <th class="scenario-header" *ngIf="comparisonScenarioId">{{ getScenarioName(comparisonScenarioId) }}</th>
-                              <th class="difference-header" *ngIf="comparisonScenarioId">Difference</th>
+                              <th class="portfolio-header">{{ getPortfolioName(selectedPortfolioId) }}</th>
+                              <th class="portfolio-header" *ngIf="comparisonPortfolioId">{{ getPortfolioName(comparisonPortfolioId) }}</th>
+                              <th class="difference-header" *ngIf="comparisonPortfolioId">Difference</th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr *ngFor="let metric of comparisonMetrics">
                               <td class="metric-name">{{ metric.label }}</td>
                               <td class="metric-value" 
-                                   [class.positive]="getScenarioMetricValue(selectedScenarioId, metric.key) > 0"
-                                   [class.negative]="getScenarioMetricValue(selectedScenarioId, metric.key) < 0">
-                                {{ formatMetricValue(getScenarioMetricValue(selectedScenarioId, metric.key), metric.format) }}
+                                   [class.positive]="getPortfolioMetricValue(selectedPortfolioId, metric.key) > 0"
+                                   [class.negative]="getPortfolioMetricValue(selectedPortfolioId, metric.key) < 0">
+                                {{ formatMetricValue(getPortfolioMetricValue(selectedPortfolioId, metric.key), metric.format) }}
                               </td>
-                              <td class="metric-value" *ngIf="comparisonScenarioId"
-                                   [class.positive]="getScenarioMetricValue(comparisonScenarioId, metric.key) > 0"
-                                   [class.negative]="getScenarioMetricValue(comparisonScenarioId, metric.key) < 0">
-                                {{ formatMetricValue(getScenarioMetricValue(comparisonScenarioId, metric.key), metric.format) }}
+                              <td class="metric-value" *ngIf="comparisonPortfolioId"
+                                   [class.positive]="getPortfolioMetricValue(comparisonPortfolioId, metric.key) > 0"
+                                   [class.negative]="getPortfolioMetricValue(comparisonPortfolioId, metric.key) < 0">
+                                {{ formatMetricValue(getPortfolioMetricValue(comparisonPortfolioId, metric.key), metric.format) }}
                               </td>
-                              <td class="difference-value" *ngIf="comparisonScenarioId"
-                                   [class.better]="getMetricDifference(selectedScenarioId, comparisonScenarioId, metric.key) > 0"
-                                   [class.worse]="getMetricDifference(selectedScenarioId, comparisonScenarioId, metric.key) < 0">
-                                {{ formatDifference(getMetricDifference(selectedScenarioId, comparisonScenarioId, metric.key), metric.format) }}
+                              <td class="difference-value" *ngIf="comparisonPortfolioId"
+                                   [class.better]="getMetricDifference(selectedPortfolioId, comparisonPortfolioId, metric.key) > 0"
+                                   [class.worse]="getMetricDifference(selectedPortfolioId, comparisonPortfolioId, metric.key) < 0">
+                                {{ formatDifference(getMetricDifference(selectedPortfolioId, comparisonPortfolioId, metric.key), metric.format) }}
                               </td>
                             </tr>
                           </tbody>
                         </table>
                       </div>
                     </div>
-                    <ng-template #emptyScenario>
-                      <div class="empty-scenario-summary">
+                    <ng-template #emptyPortfolio>
+                      <div class="empty-portfolio-summary">
                         <mat-icon>folder_open</mat-icon>
                         <p>No properties in this portfolio</p>
                         <p class="hint">Add properties to see portfolio summary</p>
@@ -441,13 +441,6 @@ export class SavedCalculationsComponent implements OnInit {
   showComparison = false;
   showOrganizeView = false;
   portfolioSummaries: { [portfolioId: number]: any } = {};
-  
-  // Legacy aliases for template compatibility
-  scenarios = this.portfolios;
-  scenarioCalculations = this.portfolioCalculations;
-  selectedScenarioId = this.selectedPortfolioId;
-  comparisonScenarioId = this.comparisonPortfolioId;
-  scenarioSummaries = this.portfolioSummaries;
   
   comparisonMetrics = [
     { key: 'totalProperties', label: 'Total Properties', format: 'number' },
@@ -630,36 +623,37 @@ export class SavedCalculationsComponent implements OnInit {
     });
   }
 
-  onDrop(event: CdkDragDrop<SavedCalculation[]>, targetScenarioId: number): void {
+  onDrop(event: CdkDragDrop<SavedCalculation[]>, targetPortfolioId: number): void {
     console.log('Drop event:', {
       previousContainer: event.previousContainer.id,
       currentContainer: event.container.id,
-      targetScenarioId,
+      targetPortfolioId,
       previousIndex: event.previousIndex,
       currentIndex: event.currentIndex,
       sameContainer: event.previousContainer === event.container
     });
 
     if (event.previousContainer === event.container) {
-      // Reordering within the same scenario
-      console.log('Reordering within same scenario');
+      // Reordering within the same portfolio
+      console.log('Reordering within same portfolio');
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
     } else {
-      // Moving between scenarios
-      console.log('Moving between scenarios');
+      // Moving between portfolios
+      console.log('Moving between portfolios');
       const calculation = event.previousContainer.data[event.previousIndex];
-      console.log('Moving calculation:', calculation.name, 'to scenario:', targetScenarioId);
+      console.log('Moving calculation:', calculation.name, 'to portfolio:', targetPortfolioId);
       
-      // Update the calculation's scenario
+      // Update the calculation's portfolio
       const updatedCalculation: SavedCalculation = {
         ...calculation,
-        scenarioId: targetScenarioId,
+        portfolioId: targetPortfolioId,
+        scenarioId: targetPortfolioId, // For backward compatibility
         updatedAt: new Date()
       };
 
       this.dbService.saveCalculation(updatedCalculation).subscribe({
         next: () => {
-          console.log('Successfully saved calculation with new scenario');
+          console.log('Successfully saved calculation with new portfolio');
           // Move the item between containers
           transferArrayItem(
             event.previousContainer.data,
@@ -668,7 +662,7 @@ export class SavedCalculationsComponent implements OnInit {
             event.currentIndex
           );
           
-          this.snackBar.open(`Moved "${calculation.name}" to ${this.getScenarioName(targetScenarioId)}`, 'Close', {
+          this.snackBar.open(`Moved "${calculation.name}" to ${this.getPortfolioName(targetPortfolioId)}`, 'Close', {
             duration: 3000
           });
         },
@@ -684,24 +678,24 @@ export class SavedCalculationsComponent implements OnInit {
 
   getAllCalculations(): SavedCalculation[] {
     const allCalculations: SavedCalculation[] = [];
-    Object.values(this.scenarioCalculations).forEach(calculations => {
+    Object.values(this.portfolioCalculations).forEach(calculations => {
       allCalculations.push(...calculations);
     });
     return allCalculations;
   }
 
   getDropListIds(): string[] {
-    const allIds = this.scenarios.map(scenario => `scenario-${scenario.id}`);
+    const allIds = this.portfolios.map(portfolio => `portfolio-${portfolio.id}`);
     console.log('All drop list IDs:', allIds);
     return allIds;
   }
 
-  getConnectedDropLists(currentScenarioId: number): string[] {
-    // Return all scenario IDs except the current one to allow cross-scenario drops
-    const connectedIds = this.scenarios
-      .filter(scenario => scenario.id !== currentScenarioId)
-      .map(scenario => `scenario-${scenario.id}`);
-    console.log(`Connected drop lists for scenario ${currentScenarioId}:`, connectedIds);
+  getConnectedDropLists(currentPortfolioId: number): string[] {
+    // Return all portfolio IDs except the current one to allow cross-portfolio drops
+    const connectedIds = this.portfolios
+      .filter(portfolio => portfolio.id !== currentPortfolioId)
+      .map(portfolio => `portfolio-${portfolio.id}`);
+    console.log(`Connected drop lists for portfolio ${currentPortfolioId}:`, connectedIds);
     return connectedIds;
   }
 
@@ -877,7 +871,7 @@ export class SavedCalculationsComponent implements OnInit {
       this.comparisonPortfolioId = null;
     } else {
       // If no comparison is active, select the first available portfolio
-      const availablePortfolios = this.scenarios.filter(s => s.id !== this.selectedScenarioId);
+      const availablePortfolios = this.portfolios.filter(p => p.id !== this.selectedPortfolioId);
       if (availablePortfolios.length > 0) {
         this.comparisonPortfolioId = availablePortfolios[0].id!;
       }
@@ -956,17 +950,6 @@ export class SavedCalculationsComponent implements OnInit {
       };
     });
   }
-
-  // Legacy method aliases for template compatibility
-  getScenarioName = this.getPortfolioName;
-  getCalculationsForScenario = this.getCalculationsForPortfolio;
-  getScenarioById = this.getPortfolioById;
-  getScenarioMetricValue = this.getPortfolioMetricValue;
-  
-  selectScenario(id: number) { this.selectPortfolio(id); }
-  renameScenario(portfolio: Portfolio) { this.renamePortfolio(portfolio); }
-  deleteScenario(portfolio: Portfolio) { this.deletePortfolio(portfolio); }
-  createNewScenario() { this.createNewPortfolio(); }
 
   // Missing methods for calculations
   renameCalculation(calculation: SavedCalculation): void {

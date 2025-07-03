@@ -445,25 +445,25 @@
                       <mat-hint>Give this calculation a descriptive name (e.g., "123 Main St Duplex")</mat-hint>
                     </mat-form-field>
                     
-                    <mat-form-field appearance="outline" class="scenario-select-field">
-                      <mat-label>Save to Scenario</mat-label>
-                      <mat-select [(value)]="selectedScenarioId">
-                        <mat-option *ngFor="let scenario of scenarios" [value]="scenario.id">
-                          {{ scenario.name }}
+                    <mat-form-field appearance="outline" class="portfolio-select-field">
+                      <mat-label>Save to Portfolio</mat-label>
+                      <mat-select [(value)]="selectedPortfolioId">
+                        <mat-option *ngFor="let portfolio of portfolios" [value]="portfolio.id">
+                          {{ portfolio.name }}
                         </mat-option>
                       </mat-select>
-                      <mat-hint>Choose which scenario to save this calculation to</mat-hint>
+                      <mat-hint>Choose which portfolio to save this calculation to</mat-hint>
                     </mat-form-field>
                     
-                    <div class="new-scenario-section">
-                      <h4>Or Create New Scenario</h4>
-                      <div class="new-scenario-form">
-                        <mat-form-field appearance="outline" class="new-scenario-name-field">
-                          <mat-label>New Scenario Name</mat-label>
-                          <input matInput [(ngModel)]="newScenarioName" placeholder="Enter scenario name">
+                    <div class="new-portfolio-section">
+                      <h4>Or Create New Portfolio</h4>
+                      <div class="new-portfolio-form">
+                        <mat-form-field appearance="outline" class="new-portfolio-name-field">
+                          <mat-label>New Portfolio Name</mat-label>
+                          <input matInput [(ngModel)]="newPortfolioName" placeholder="Enter portfolio name">
                         </mat-form-field>
-                        <button mat-stroked-button color="primary" (click)="createNewScenario()" [disabled]="!newScenarioName.trim()">
-                          Create Scenario
+                        <button mat-stroked-button color="primary" (click)="createNewPortfolio()" [disabled]="!newPortfolioName.trim()">
+                          Create Portfolio
                         </button>
                       </div>
                     </div>
