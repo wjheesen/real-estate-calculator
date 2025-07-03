@@ -8,6 +8,5 @@ export const routes: Routes = [
   { path: 'calculator', component: CalculatorComponent },
   { path: 'portfolios', component: PortfoliosComponent },
   { path: 'portfolio/:id', component: PortfoliosComponent },
-  { path: 'portfolios/organize', component: PortfoliosComponent },
   { path: 'settings', component: SettingsComponent }
 ];

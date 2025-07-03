@@ -72,72 +72,73 @@ import { ConfirmationDialogComponent } from './confirmation-dialog.component';
               
               <div class="organize-portfolios-container">
                 <div class="organize-portfolio-section" *ngFor="let portfolio of portfolios">
-                  <mat-card class="organize-portfolio-card">
-                    <mat-card-header>
-                      <div class="organize-portfolio-header">
-                        <mat-card-title>
-                          {{ portfolio.name }}
-                          <span class="calculation-count">({{ getCalculationsForPortfolio(portfolio.id!).length }})</span>
-                        </mat-card-title>
-                        <mat-card-subtitle>{{ portfolio.description }}</mat-card-subtitle>
-                      </div>
-                    </mat-card-header>
+                  <div class="organize-portfolio-header">
+                    <h4 class="organize-portfolio-title">
+                      {{ portfolio.name }}
+                      <span class="calculation-count">({{ getCalculationsForPortfolio(portfolio.id!).length }})</span>
+                    </h4>
+                    <p class="organize-portfolio-description" *ngIf="portfolio.description">{{ portfolio.description }}</p>
+                  </div>
+                  
+                  <div class="organize-portfolio-calculations" 
+                       cdkDropList 
+                       [id]="'organize-portfolio-' + portfolio.id"
+                       [cdkDropListData]="getCalculationsForPortfolio(portfolio.id!)"
+                       [cdkDropListConnectedTo]="getOrganizeDropListIds()"
+                       (cdkDropListDropped)="onDrop($event, portfolio.id!)">
                     
-                    <mat-card-content>
-                      <div class="organize-portfolio-calculations" 
-                           cdkDropList 
-                           [id]="'organize-portfolio-' + portfolio.id"
-                           [cdkDropListData]="getCalculationsForPortfolio(portfolio.id!)"
-                           [cdkDropListConnectedTo]="getOrganizeDropListIds()"
-                           (cdkDropListDropped)="onDrop($event, portfolio.id!)">
+                    <div class="organize-calculation-card" 
+                         cdkDrag
+                         *ngFor="let calculation of getCalculationsForPortfolio(portfolio.id!)">
+                      
+                      <div class="drag-placeholder" *cdkDragPlaceholder></div>
+                      
+                      <mat-card class="organize-property-card">
+                        <mat-card-header>
+                          <div class="organize-card-header-content">
+                            <div class="organize-header-text">
+                              <mat-card-title>{{ calculation.name }}</mat-card-title>
+                              <mat-card-subtitle>{{ calculation.purchasePrice | currency }}</mat-card-subtitle>
+                            </div>
+                            <mat-icon class="drag-handle" cdkDragHandle>drag_handle</mat-icon>
+                          </div>
+                        </mat-card-header>
                         
-                        <div class="organize-calculation-card" 
-                             cdkDrag
-                             *ngFor="let calculation of getCalculationsForPortfolio(portfolio.id!)">
-                          
-                          <div class="drag-placeholder" *cdkDragPlaceholder></div>
-                          
-                          <mat-card class="organize-property-card">
-                            <mat-card-header>
-                              <div class="organize-card-header-content">
-                                <div class="organize-header-text">
-                                  <mat-card-title>{{ calculation.name }}</mat-card-title>
-                                  <mat-card-subtitle>{{ calculation.purchasePrice | currency }}</mat-card-subtitle>
-                                </div>
-                                <mat-icon class="drag-handle" cdkDragHandle>drag_handle</mat-icon>
-                              </div>
-                            </mat-card-header>
-                            
-                            <mat-card-content>
-                              <div class="organize-calculation-summary">
-                                <div class="organize-summary-item">
-                                  <span>Monthly Cash Flow:</span>
-                                  <span [class.positive]="calculation.results && calculation.results.monthlyCashFlow > 0" 
-                                        [class.negative]="calculation.results && calculation.results.monthlyCashFlow < 0">
-                                    {{ calculation.results?.monthlyCashFlow | currency }}
-                                  </span>
-                                </div>
-                                <div class="organize-summary-item">
-                                  <span>Cash-on-Cash Return:</span>
-                                  <span [class.positive]="calculation.results && calculation.results.cashOnCashReturn > 0" 
-                                        [class.negative]="calculation.results && calculation.results.cashOnCashReturn < 0">
-                                    {{ calculation.results?.cashOnCashReturn | number:'1.2-2' }}%
-                                  </span>
-                                </div>
-                              </div>
-                            </mat-card-content>
-                          </mat-card>
-                        </div>
-                        
-                        <!-- Empty portfolio placeholder -->
-                        <div class="organize-empty-portfolio" *ngIf="getCalculationsForPortfolio(portfolio.id!).length === 0">
-                          <mat-icon class="empty-icon">folder_open</mat-icon>
-                          <p>No properties in this portfolio</p>
-                          <p class="hint">Drag properties here to organize them</p>
-                        </div>
-                      </div>
-                    </mat-card-content>
-                  </mat-card>
+                        <mat-card-content>
+                          <div class="organize-calculation-summary">
+                            <div class="organize-summary-item">
+                              <span>Monthly Cash Flow:</span>
+                              <span [class.positive]="calculation.results && calculation.results.monthlyCashFlow > 0" 
+                                    [class.negative]="calculation.results && calculation.results.monthlyCashFlow < 0">
+                                {{ calculation.results?.monthlyCashFlow | currency }}
+                              </span>
+                            </div>
+                            <div class="organize-summary-item">
+                              <span>Monthly Equity Gain:</span>
+                              <span [class.positive]="calculation.results && calculation.results.monthlyEquityGain > 0" 
+                                    [class.negative]="calculation.results && calculation.results.monthlyEquityGain < 0">
+                                {{ calculation.results?.monthlyEquityGain | currency }}
+                              </span>
+                            </div>
+                            <div class="organize-summary-item">
+                              <span>Monthly Total Return:</span>
+                              <span [class.positive]="calculation.results && calculation.results.monthlyTotalReturn > 0" 
+                                    [class.negative]="calculation.results && calculation.results.monthlyTotalReturn < 0">
+                                {{ calculation.results?.monthlyTotalReturn | currency }}
+                              </span>
+                            </div>
+                          </div>
+                        </mat-card-content>
+                      </mat-card>
+                    </div>
+                    
+                    <!-- Empty portfolio placeholder -->
+                    <div class="organize-empty-portfolio" *ngIf="getCalculationsForPortfolio(portfolio.id!).length === 0">
+                      <mat-icon class="empty-icon">folder_open</mat-icon>
+                      <p>No properties in this portfolio</p>
+                      <p class="hint">Drag properties here to organize them</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -161,10 +162,17 @@ import { ConfirmationDialogComponent } from './confirmation-dialog.component';
                         </span>
                       </div>
                       <div class="preview-metric" *ngIf="getCalculationsForPortfolio(portfolio.id!).length > 0">
-                        <span>Cash-on-Cash Return:</span>
-                        <span class="value" [class.positive]="getPortfolioMetricValue(portfolio.id!, 'cashOnCashReturn') > 0" 
-                              [class.negative]="getPortfolioMetricValue(portfolio.id!, 'cashOnCashReturn') < 0">
-                          {{ formatMetricValue(getPortfolioMetricValue(portfolio.id!, 'cashOnCashReturn'), 'percentage') }}
+                        <span>Monthly Equity Gain:</span>
+                        <span class="value" [class.positive]="getPortfolioMetricValue(portfolio.id!, 'monthlyEquityGain') > 0" 
+                              [class.negative]="getPortfolioMetricValue(portfolio.id!, 'monthlyEquityGain') < 0">
+                          {{ formatMetricValue(getPortfolioMetricValue(portfolio.id!, 'monthlyEquityGain'), 'currency') }}
+                        </span>
+                      </div>
+                      <div class="preview-metric" *ngIf="getCalculationsForPortfolio(portfolio.id!).length > 0">
+                        <span>Monthly Total Return:</span>
+                        <span class="value" [class.positive]="getPortfolioMetricValue(portfolio.id!, 'monthlyTotalReturn') > 0" 
+                              [class.negative]="getPortfolioMetricValue(portfolio.id!, 'monthlyTotalReturn') < 0">
+                          {{ formatMetricValue(getPortfolioMetricValue(portfolio.id!, 'monthlyTotalReturn'), 'currency') }}
                         </span>
                       </div>
                       <div class="empty-portfolio-preview" *ngIf="getCalculationsForPortfolio(portfolio.id!).length === 0">
@@ -255,6 +263,13 @@ import { ConfirmationDialogComponent } from './confirmation-dialog.component';
                                   <span [class.positive]="calculation.results && calculation.results.monthlyCashFlow > 0" 
                                         [class.negative]="calculation.results && calculation.results.monthlyCashFlow < 0">
                                     {{ calculation.results?.monthlyCashFlow | currency }}
+                                  </span>
+                                </div>
+                                <div class="summary-item">
+                                  <span>Monthly Equity Gain:</span>
+                                  <span [class.positive]="calculation.results && calculation.results.monthlyEquityGain > 0" 
+                                        [class.negative]="calculation.results && calculation.results.monthlyEquityGain < 0">
+                                    {{ calculation.results?.monthlyEquityGain | currency }}
                                   </span>
                                 </div>
                                 <div class="summary-item">
@@ -430,6 +445,7 @@ export class PortfoliosComponent implements OnInit {
     { key: 'totalCashInvested', label: 'Total Cash Invested', format: 'currency' },
     { key: 'monthlyCashFlow', label: 'Monthly Cash Flow', format: 'currency' },
     { key: 'annualCashFlow', label: 'Annual Cash Flow', format: 'currency' },
+    { key: 'monthlyEquityGain', label: 'Monthly Equity Gain', format: 'currency' },
     { key: 'monthlyTotalReturn', label: 'Monthly Total Return', format: 'currency' },
     { key: 'yearlyTotalReturn', label: 'Yearly Total Return', format: 'currency' },
     { key: 'cashOnCashReturn', label: 'Cash-on-Cash Return', format: 'percentage' },
@@ -448,24 +464,6 @@ export class PortfoliosComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadPortfoliosAndCalculations();
-    
-    // Handle URL routing for different views
-    this.route.url.subscribe(urlSegments => {
-      const path = urlSegments.map(segment => segment.path).join('/');
-      
-      if (path === 'organize') {
-        this.showOrganizeView = true;
-        this.selectedPortfolioId = null;
-        this.showComparison = false;
-        this.comparisonPortfolioId = null;
-      } else if (path === '') {
-        // Default portfolio view
-        this.selectedPortfolioId = null;
-        this.showOrganizeView = false;
-        this.showComparison = false;
-        this.comparisonPortfolioId = null;
-      }
-    });
     
     // Handle route parameters for portfolio selection
     this.route.paramMap.subscribe(params => {
@@ -491,6 +489,7 @@ export class PortfoliosComponent implements OnInit {
       } else {
         // No portfolio ID in URL, reset to portfolio view
         this.selectedPortfolioId = null;
+        this.showOrganizeView = false;
       }
     });
   }
@@ -692,12 +691,13 @@ export class PortfoliosComponent implements OnInit {
   }
 
   toggleOrganizeView(): void {
+    // Simple state toggle without navigation
+    this.showOrganizeView = !this.showOrganizeView;
     if (this.showOrganizeView) {
-      // Exit organize mode, go back to portfolios
-      this.router.navigate(['/portfolios']);
-    } else {
-      // Enter organize mode
-      this.router.navigate(['/portfolios/organize']);
+      // Clear other views when entering organize mode
+      this.selectedPortfolioId = null;
+      this.showComparison = false;
+      this.comparisonPortfolioId = null;
     }
   }
 
@@ -892,6 +892,7 @@ export class PortfoliosComponent implements OnInit {
           totalCashInvested: 0,
           monthlyCashFlow: 0,
           annualCashFlow: 0,
+          monthlyEquityGain: 0,
           monthlyTotalReturn: 0,
           yearlyTotalReturn: 0,
           cashOnCashReturn: 0,
@@ -907,6 +908,7 @@ export class PortfoliosComponent implements OnInit {
           totalCashInvested: acc.totalCashInvested + (results.totalCashInvested || 0),
           monthlyCashFlow: acc.monthlyCashFlow + (results.monthlyCashFlow || 0),
           annualCashFlow: acc.annualCashFlow + (results.annualCashFlow || 0),
+          monthlyEquityGain: acc.monthlyEquityGain + (results.monthlyEquityGain || 0),
           monthlyTotalReturn: acc.monthlyTotalReturn + (results.monthlyTotalReturn || 0),
           yearlyTotalReturn: acc.yearlyTotalReturn + (results.yearlyTotalReturn || 0),
           taxableIncome: acc.taxableIncome + (results.taxableIncome || 0),
@@ -916,6 +918,7 @@ export class PortfoliosComponent implements OnInit {
         totalCashInvested: 0,
         monthlyCashFlow: 0,
         annualCashFlow: 0,
+        monthlyEquityGain: 0,
         monthlyTotalReturn: 0,
         yearlyTotalReturn: 0,
         taxableIncome: 0,
