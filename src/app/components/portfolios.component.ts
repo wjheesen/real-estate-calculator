@@ -21,7 +21,7 @@ import { SavedCalculation, CalculationResults, Portfolio } from '../models/real-
 import { ConfirmationDialogComponent } from './confirmation-dialog.component';
 
 @Component({
-  selector: 'app-saved-calculations',
+  selector: 'app-portfolios',
   standalone: true,
   imports: [
     CommonModule,
@@ -40,22 +40,13 @@ import { ConfirmationDialogComponent } from './confirmation-dialog.component';
     DragDropModule
   ],
   template: `
-    <div class="saved-calculations-container">
-      <mat-card class="saved-calculations-card">
-        <mat-card-header>
-          <div class="portfolio-header">
-            <div class="portfolio-title">
-              <mat-card-title>Portfolios</mat-card-title>
-              <mat-card-subtitle>Manage your real estate investment portfolios</mat-card-subtitle>
-            </div>
-          </div>
-        </mat-card-header>
-        
+    <div class="portfolios-container">
+      <mat-card class="portfolios-card">
         <mat-card-content>
           <!-- Portfolio Summary Section -->
           <div class="portfolio-section" *ngIf="getAllCalculations().length > 0">
             <div class="portfolio-controls">
-              <h3>Portfolio Management</h3>
+              <mat-card-title>Portfolio Management</mat-card-title>
               <div class="controls-row">
                 <button mat-stroked-button color="primary" (click)="createNewPortfolio()" class="new-portfolio-btn">
                   <mat-icon>add</mat-icon>
@@ -198,7 +189,20 @@ import { ConfirmationDialogComponent } from './confirmation-dialog.component';
             <!-- Selected Portfolio Details View -->
             <div class="portfolio-details-view" *ngIf="selectedPortfolioId && !showOrganizeView">
               <div class="portfolio-header-section">
-                <h3>{{ getPortfolioName(selectedPortfolioId) }}</h3>
+                <div class="portfolio-title-section">
+                  <mat-card-title>{{ getPortfolioName(selectedPortfolioId) }}
+                    <span class="calculation-count">({{ getCalculationsForPortfolio(selectedPortfolioId).length }})</span>
+                  </mat-card-title>
+                  <div class="portfolio-actions">
+                    <button mat-icon-button (click)="renamePortfolio(getPortfolioById(selectedPortfolioId)!)" matTooltip="Rename portfolio">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="deletePortfolio(getPortfolioById(selectedPortfolioId)!)" matTooltip="Delete portfolio" 
+                            [disabled]="portfolios.length <= 1">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </div>
                 <div class="portfolio-controls">
                   <button mat-stroked-button color="accent" (click)="toggleComparison()" [disabled]="portfolios.length < 2">
                     <mat-icon>compare_arrows</mat-icon>
@@ -207,35 +211,13 @@ import { ConfirmationDialogComponent } from './confirmation-dialog.component';
                 </div>
               </div>
 
-              <!-- Properties Section (moved to top) -->
-              <div class="portfolios-container">
-                <div class="portfolio-section">
-                  <mat-card class="portfolio-card">
-                    <mat-card-header>
-                      <div class="portfolio-header">
-                        <mat-card-title>
-                          Properties in {{ getPortfolioName(selectedPortfolioId) }}
-                          <span class="calculation-count">({{ getCalculationsForPortfolio(selectedPortfolioId).length }})</span>
-                        </mat-card-title>
-                      </div>
-                      <div class="portfolio-actions">
-                        <button mat-icon-button (click)="renamePortfolio(getPortfolioById(selectedPortfolioId)!)" matTooltip="Rename portfolio">
-                          <mat-icon>edit</mat-icon>
-                        </button>
-                        <button mat-icon-button (click)="deletePortfolio(getPortfolioById(selectedPortfolioId)!)" matTooltip="Delete portfolio" 
-                                [disabled]="portfolios.length <= 1">
-                          <mat-icon>delete</mat-icon>
-                        </button>
-                      </div>
-                    </mat-card-header>
-                    
-                    <mat-card-content>
-                      <div class="portfolio-calculations" 
-                           cdkDropList 
-                           [id]="'portfolio-' + selectedPortfolioId"
-                           [cdkDropListData]="getCalculationsForPortfolio(selectedPortfolioId)"
-                           [cdkDropListConnectedTo]="getDropListIds()"
-                           (cdkDropListDropped)="onDrop($event, selectedPortfolioId)">
+              <!-- Properties Section -->
+              <div class="portfolio-calculations" 
+                   cdkDropList 
+                   [id]="'portfolio-' + selectedPortfolioId"
+                   [cdkDropListData]="getCalculationsForPortfolio(selectedPortfolioId)"
+                   [cdkDropListConnectedTo]="getDropListIds()"
+                   (cdkDropListDropped)="onDrop($event, selectedPortfolioId)">
                         
                         <div class="calculation-card" 
                              cdkDrag
@@ -332,13 +314,9 @@ import { ConfirmationDialogComponent } from './confirmation-dialog.component';
                           <p>No properties in this portfolio</p>
                           <p class="hint">Create new calculations and assign them to this portfolio</p>
                         </div>
-                      </div>
-                    </mat-card-content>
-                  </mat-card>
-                </div>
               </div>
               
-              <!-- Portfolio Summary Section (moved to bottom, using comparison table format) -->
+              <!-- Portfolio Summary Section -->
               <div class="portfolio-summary-section">
                 <mat-card class="summary-comparison-card">
                   <mat-card-header>
@@ -418,7 +396,7 @@ import { ConfirmationDialogComponent } from './confirmation-dialog.component';
           <ng-template #noCalculations>
             <div class="no-calculations">
               <mat-icon class="large-icon">calculate</mat-icon>
-              <h3>No saved calculations</h3>
+              <mat-card-title>No saved calculations</mat-card-title>
               <p>Start by creating a calculation and saving it for future reference.</p>
               <button mat-raised-button color="primary" [routerLink]="['/calculator']">
                 Create First Calculation
@@ -434,9 +412,9 @@ import { ConfirmationDialogComponent } from './confirmation-dialog.component';
       </mat-card>
     </div>
   `,
-  styleUrls: ['./saved-calculations.component.css']
+  styleUrls: ['./portfolios.component.css']
 })
-export class SavedCalculationsComponent implements OnInit {
+export class PortfoliosComponent implements OnInit {
   portfolios: Portfolio[] = [];
   portfolioCalculations: { [portfolioId: number]: SavedCalculation[] } = {};
   

@@ -5,7 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { CloudStorageService } from './services/cloud-storage.service';
+import { DataExportService } from './services/data-export.service';
 
 @Component({
   selector: 'app-root',
@@ -25,55 +25,55 @@ import { CloudStorageService } from './services/cloud-storage.service';
 export class AppComponent {
   title = 'Real Estate Investment Calculator';
   
-  private cloudStorageService = inject(CloudStorageService);
+  private dataExportService = inject(DataExportService);
   private snackBar = inject(MatSnackBar);
   
-  cloudOperationInProgress = false;
+  exportImportInProgress = false;
 
-  get isCloudStorageAvailable(): boolean {
-    return this.cloudStorageService.isCloudStorageAvailable();
+  get isDataExportAvailable(): boolean {
+    return this.dataExportService.isFileOperationAvailable();
   }
 
   /**
-   * Upload portfolio data and settings to cloud storage (export as ZIP)
+   * Export portfolio data and settings as ZIP file
    */
-  uploadToCloud(): void {
-    if (this.cloudOperationInProgress) return;
+  exportData(): void {
+    if (this.exportImportInProgress) return;
     
-    this.cloudOperationInProgress = true;
-    this.cloudStorageService.uploadToCloud().subscribe({
+    this.exportImportInProgress = true;
+    this.dataExportService.exportData().subscribe({
       next: () => {
         this.snackBar.open('All application data and settings exported as ZIP file successfully!', 'Close', { duration: 3000 });
-        this.cloudOperationInProgress = false;
+        this.exportImportInProgress = false;
       },
-      error: (error) => {
+      error: (error: any) => {
         this.snackBar.open(`Export failed: ${error.message}`, 'Close', { duration: 5000 });
-        this.cloudOperationInProgress = false;
+        this.exportImportInProgress = false;
       }
     });
   }
 
   /**
-   * Download portfolio data and settings from cloud storage (import from ZIP)
+   * Import portfolio data and settings from ZIP file
    */
-  downloadFromCloud(): void {
-    if (this.cloudOperationInProgress) return;
+  importData(): void {
+    if (this.exportImportInProgress) return;
     
     if (!confirm('This will replace all current portfolio data and settings. Are you sure you want to continue?')) {
       return;
     }
     
-    this.cloudOperationInProgress = true;
-    this.cloudStorageService.downloadFromCloud().subscribe({
+    this.exportImportInProgress = true;
+    this.dataExportService.importData().subscribe({
       next: () => {
         this.snackBar.open('All application data and settings imported from ZIP file successfully!', 'Close', { duration: 3000 });
-        this.cloudOperationInProgress = false;
+        this.exportImportInProgress = false;
         // Reload the page to reflect imported data
         window.location.reload();
       },
-      error: (error) => {
+      error: (error: any) => {
         this.snackBar.open(`Import failed: ${error.message}`, 'Close', { duration: 5000 });
-        this.cloudOperationInProgress = false;
+        this.exportImportInProgress = false;
       }
     });
   }

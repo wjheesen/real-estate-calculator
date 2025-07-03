@@ -7,7 +7,7 @@ A comprehensive client-side real estate investment calculator built with Angular
 - **Investment Analysis**: Calculate ROI, cash flow, appreciation, and other key metrics
 - **Portfolio Management**: Organize properties into different portfolios
 - **Local Storage**: All data stored locally using IndexedDB
-- **ZIP Export/Import**: Export and import portfolio data and settings as ZIP files containing CSV data
+- **Data Export/Import**: Export and import portfolio data and settings as ZIP files containing CSV data
 - **Responsive Design**: Works on desktop and mobile devices
 - **Tax Calculations**: Include tax implications in your analysis
 
@@ -44,7 +44,7 @@ A comprehensive client-side real estate investment calculator built with Angular
 - Compare different portfolios side by side
 - Drag and drop properties between portfolios
 
-### ZIP Export/Import
+### Data Export/Import
 - Export all application data and settings as a ZIP file from the top navigation
 - Import application data and settings from ZIP files via the top navigation
 - Includes README with export information
@@ -60,7 +60,7 @@ A comprehensive client-side real estate investment calculator built with Angular
 
 ## Browser Support
 
-- **All modern browsers**: Full support including ZIP export/import
+- **All modern browsers**: Full support including data export/import
 
 ## Contributing
 

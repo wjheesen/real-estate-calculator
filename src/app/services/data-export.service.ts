@@ -6,7 +6,7 @@ import { Portfolio, SavedCalculation } from '../models/real-estate.interface';
 import { Settings } from '../models/settings.interface';
 import JSZip from 'jszip';
 
-export interface CloudStorageData {
+export interface ExportData {
   portfolios: Portfolio[];
   calculations: SavedCalculation[];
   settings: Settings;
@@ -17,7 +17,7 @@ export interface CloudStorageData {
 @Injectable({
   providedIn: 'root'
 })
-export class CloudStorageService {
+export class DataExportService {
   private dbService = inject(IndexedDbService);
   private settingsService = inject(SettingsService);
 
@@ -26,7 +26,7 @@ export class CloudStorageService {
   /**
    * Check if file download/upload is available (always true for modern browsers)
    */
-  isCloudStorageAvailable(): boolean {
+  isFileOperationAvailable(): boolean {
     return typeof window !== 'undefined' && 
            typeof document !== 'undefined' &&
            'createElement' in document &&
@@ -34,10 +34,10 @@ export class CloudStorageService {
   }
 
   /**
-   * Download all portfolio data as a ZIP file containing CSV files
+   * Export all portfolio data as a ZIP file containing CSV files
    */
-  uploadToCloud(): Observable<void> {
-    if (!this.isCloudStorageAvailable()) {
+  exportData(): Observable<void> {
+    if (!this.isFileOperationAvailable()) {
       return throwError(() => new Error('File download is not available'));
     }
 
@@ -77,7 +77,7 @@ Files Included:
 
 To import this data:
 1. Go to the Portfolio page in the Real Estate Calculator
-2. Click the upload button (↑)
+2. Click the Import button
 3. Select this entire ZIP file
 
 Note: Importing will replace all existing data and settings.
@@ -105,8 +105,8 @@ Note: Importing will replace all existing data and settings.
   /**
    * Import portfolio data from ZIP file containing CSV files
    */
-  downloadFromCloud(): Observable<void> {
-    if (!this.isCloudStorageAvailable()) {
+  importData(): Observable<void> {
+    if (!this.isFileOperationAvailable()) {
       return throwError(() => new Error('File upload is not available'));
     }
 
@@ -169,7 +169,7 @@ Note: Importing will replace all existing data and settings.
             const settingsData = contents[2] ? this.parseSettingsCSV(contents[2]) : null;
             
             // Import the data
-            this.importData(portfoliosData, calculationsData, settingsData, observer);
+            this.importDataToDatabase(portfoliosData, calculationsData, settingsData, observer);
           } catch (error) {
             observer.error(new Error(`Failed to parse CSV files: ${error}`));
           }
@@ -205,7 +205,7 @@ Note: Importing will replace all existing data and settings.
     reader.readAsText(file);
   }
 
-  private async importData(portfoliosData: Portfolio[], calculationsData: SavedCalculation[], settingsData: Settings | null, observer: any): Promise<void> {
+  private async importDataToDatabase(portfoliosData: Portfolio[], calculationsData: SavedCalculation[], settingsData: Settings | null, observer: any): Promise<void> {
     try {
       // Clear existing data first
       await this.clearLocalData();

@@ -1,13 +1,13 @@
 import { Routes } from '@angular/router';
 import { CalculatorComponent } from './components/calculator.component';
-import { SavedCalculationsComponent } from './components/saved-calculations.component';
+import { PortfoliosComponent } from './components/portfolios.component';
 import { SettingsComponent } from './components/settings.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/calculator', pathMatch: 'full' },
   { path: 'calculator', component: CalculatorComponent },
-  { path: 'portfolios', component: SavedCalculationsComponent },
-  { path: 'portfolio/:id', component: SavedCalculationsComponent },
-  { path: 'portfolios/organize', component: SavedCalculationsComponent },
+  { path: 'portfolios', component: PortfoliosComponent },
+  { path: 'portfolio/:id', component: PortfoliosComponent },
+  { path: 'portfolios/organize', component: PortfoliosComponent },
   { path: 'settings', component: SettingsComponent }
 ];

@@ -1,6 +1,6 @@
-# ZIP Export/Import Feature
+# Data Export/Import Feature
 
-This application includes ZIP export/import capabilities for backing up and syncing portfolio data and application settings.
+This application includes data export/import capabilities for backing up and syncing portfolio data and application settings.
 
 ## Features
 
