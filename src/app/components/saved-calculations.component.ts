@@ -1,11 +1,11 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatDialogModule, MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -18,6 +18,7 @@ import { CalculatorDataService } from './calculator-data.service';
 import { RealEstateCalculatorService } from '../services/real-estate-calculator.service';
 import { PortfolioService } from '../services/portfolio.service';
 import { SavedCalculation, CalculationResults, Portfolio } from '../models/real-estate.interface';
+import { ConfirmationDialogComponent } from './confirmation-dialog.component';
 
 @Component({
   selector: 'app-saved-calculations',
@@ -42,8 +43,12 @@ import { SavedCalculation, CalculationResults, Portfolio } from '../models/real-
     <div class="saved-calculations-container">
       <mat-card class="saved-calculations-card">
         <mat-card-header>
-          <mat-card-title>Portfolios</mat-card-title>
-          <mat-card-subtitle>Manage your real estate investment portfolios</mat-card-subtitle>
+          <div class="portfolio-header">
+            <div class="portfolio-title">
+              <mat-card-title>Portfolios</mat-card-title>
+              <mat-card-subtitle>Manage your real estate investment portfolios</mat-card-subtitle>
+            </div>
+          </div>
         </mat-card-header>
         
         <mat-card-content>
@@ -458,10 +463,10 @@ export class SavedCalculationsComponent implements OnInit {
   private calculatorDataService = inject(CalculatorDataService);
   private calculatorService = inject(RealEstateCalculatorService);
   private portfolioService = inject(PortfolioService);
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   ngOnInit(): void {
     this.loadPortfoliosAndCalculations();

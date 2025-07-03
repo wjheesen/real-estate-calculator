@@ -899,3 +899,35 @@
 .organize-btn {
   margin-left: 12px;
 }
+
+/* Cloud storage header styles */
+.portfolio-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.portfolio-title {
+  flex: 1;
+}
+
+.cloud-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.cloud-controls button {
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.cloud-controls button:hover {
+  opacity: 1;
+}
+
+.cloud-controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
