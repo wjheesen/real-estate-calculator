@@ -8,13 +8,13 @@
 }
 
 .income-summary-card,
-.expenses-card,
+.expenses-summary-card,
 .housing-summary-card {
   width: 100%;
 }
 
 .income-summary-card mat-card-header,
-.expenses-card mat-card-header,
+.expenses-summary-card mat-card-header,
 .housing-summary-card mat-card-header {
   display: flex;
   justify-content: space-between;
@@ -26,6 +26,7 @@
 }
 
 .income-summary,
+.expense-summary,
 .housing-summary {
   display: flex;
   flex-direction: column;
@@ -119,7 +120,12 @@
 .actions {
   display: flex;
   justify-content: center;
+  gap: 16px;
   padding: 20px 0;
+}
+
+.actions button {
+  min-width: 160px;
 }
 
 /* Responsive Design */
@@ -171,6 +177,16 @@
   .housing-summary-card mat-card-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .actions button {
+    width: 100%;
+    max-width: 300px;
   }
 }
 

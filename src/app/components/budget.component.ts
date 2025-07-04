@@ -71,15 +71,11 @@ import { BudgetData, BudgetWithCalculations, PayDeduction } from '../models/budg
 
             <!-- Pay Deductions -->
             <div class="form-section">
-              <div class="section-header">
-                <h3>Pay Deductions</h3>
-                <button mat-icon-button color="primary" (click)="addDeduction()" type="button">
-                  <mat-icon>add</mat-icon>
-                </button>
-              </div>
-
-              <div class="deductions-list" *ngIf="payDeductions.length > 0">
-                <div class="deduction-item" *ngFor="let deduction of payDeductions.controls; let i = index" [formGroup]="$any(deduction)">
+              <h3>Pay Deductions</h3>
+              
+              <!-- Add Deduction Form -->
+              <form [formGroup]="deductionForm" (ngSubmit)="addDeduction()" class="deduction-input-form">
+                <div class="deduction-input-row">
                   <mat-form-field appearance="outline" class="deduction-name">
                     <mat-label>Deduction Name</mat-label>
                     <input matInput formControlName="name" placeholder="e.g., Federal Tax, Health Insurance">
@@ -87,10 +83,21 @@ import { BudgetData, BudgetWithCalculations, PayDeduction } from '../models/budg
                   
                   <mat-form-field appearance="outline" class="deduction-amount">
                     <mat-label>{{ budgetForm.get('useTwoWeekPayStub')?.value ? 'Bi-weekly Amount' : 'Annual Amount' }}</mat-label>
-                    <input matInput type="number" formControlName="amount" step="0.01">
+                    <input matInput type="number" formControlName="amount" placeholder="0">
                     <span matPrefix>$</span>
                   </mat-form-field>
                   
+                  <button mat-raised-button color="primary" type="submit" [disabled]="!deductionForm.valid">
+                    <mat-icon>add</mat-icon>
+                    Add
+                  </button>
+                </div>
+              </form>
+
+              <div class="deduction-list" *ngIf="payDeductions.length > 0">
+                <div class="deduction-item" *ngFor="let deduction of payDeductions.controls; let i = index" [formGroup]="$any(deduction)">
+                  <span class="deduction-name">{{ deduction.get('name')?.value }}</span>
+                  <span class="deduction-amount">{{ deduction.get('amount')?.value | currency }}{{ budgetForm.get('useTwoWeekPayStub')?.value ? ' bi-weekly' : ' annually' }}</span>
                   <button mat-icon-button color="warn" (click)="removeDeduction(i)" type="button">
                     <mat-icon>delete</mat-icon>
                   </button>
@@ -98,7 +105,7 @@ import { BudgetData, BudgetWithCalculations, PayDeduction } from '../models/budg
               </div>
 
               <div class="no-deductions" *ngIf="payDeductions.length === 0">
-                <p>No deductions added yet. Click the + button to add deductions.</p>
+                <p>No deductions added yet. Add deductions like taxes, insurance, or retirement contributions.</p>
               </div>
             </div>
 
@@ -181,6 +188,7 @@ export class BudgetComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   
   budgetForm!: FormGroup;
+  deductionForm!: FormGroup;
   budgetResults: BudgetWithCalculations | null = null;
   private subscription?: Subscription;
 
@@ -198,6 +206,11 @@ export class BudgetComponent implements OnInit, OnDestroy {
       grossIncome: [0, [Validators.required, Validators.min(0)]],
       useTwoWeekPayStub: [false],
       payDeductions: this.fb.array([])
+    });
+
+    this.deductionForm = this.fb.group({
+      name: ['', Validators.required],
+      amount: [0, [Validators.required, Validators.min(0)]]
     });
 
     // Watch for changes in the two-week checkbox to update labels
@@ -244,7 +257,18 @@ export class BudgetComponent implements OnInit, OnDestroy {
   }
 
   addDeduction(): void {
-    this.payDeductions.push(this.createDeductionFormGroup());
+    if (this.deductionForm.valid) {
+      const { name, amount } = this.deductionForm.value;
+      const newDeduction: PayDeduction = {
+        id: Date.now(),
+        name,
+        amount
+      };
+      
+      this.payDeductions.push(this.createDeductionFormGroup(newDeduction));
+      this.deductionForm.reset();
+      this.snackBar.open('Deduction added!', 'Close', { duration: 2000 });
+    }
   }
 
   removeDeduction(index: number): void {

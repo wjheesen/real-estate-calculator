@@ -4,11 +4,13 @@ import { IndexedDbService } from './indexed-db.service';
 import { SettingsService } from './settings.service';
 import { Portfolio, SavedCalculation } from '../models/real-estate.interface';
 import { Settings } from '../models/settings.interface';
+import { BudgetData } from '../models/budget.interface';
 import JSZip from 'jszip';
 
 export interface ExportData {
   portfolios: Portfolio[];
   calculations: SavedCalculation[];
+  budget: BudgetData | null;
   settings: Settings;
   exportDate: string;
   version: string;
@@ -46,14 +48,18 @@ export class DataExportService {
       Promise.all([
         this.dbService.getAllPortfolios().toPromise(),
         this.dbService.getAllCalculations().toPromise(),
+        this.dbService.getBudget().toPromise(),
         Promise.resolve(this.settingsService.getCurrentSettings())
-      ]).then(([portfolios, calculations, settings]) => {
+      ]).then(([portfolios, calculations, budget, settings]) => {
         try {
           // Create CSV content for portfolios
           const portfoliosCsvContent = this.convertPortfoliosToCSV(portfolios || []);
           
           // Create CSV content for calculations
           const calculationsCsvContent = this.convertCalculationsToCSV(calculations || []);
+          
+          // Create CSV content for budget
+          const budgetCsvContent = this.convertBudgetToCSV(budget || null);
           
           // Create CSV content for settings
           const settingsCsvContent = this.convertSettingsToCSV(settings);
@@ -62,6 +68,7 @@ export class DataExportService {
           const zip = new JSZip();
           zip.file('portfolios.csv', portfoliosCsvContent);
           zip.file('calculations.csv', calculationsCsvContent);
+          zip.file('budget.csv', budgetCsvContent);
           zip.file('settings.csv', settingsCsvContent);
           
           // Add a README file with export information
@@ -73,6 +80,7 @@ Export Date: ${exportDate}
 Files Included:
 - portfolios.csv: Portfolio information
 - calculations.csv: Property calculation data
+- budget.csv: Budget and expense data
 - settings.csv: Application settings and defaults
 
 To import this data:
@@ -145,6 +153,7 @@ Note: Importing will replace all existing data and settings.
         // Extract CSV files from ZIP
         const portfoliosFile = zip.file('portfolios.csv');
         const calculationsFile = zip.file('calculations.csv');
+        const budgetFile = zip.file('budget.csv');
         const settingsFile = zip.file('settings.csv');
 
         if (!portfoliosFile || !calculationsFile) {
@@ -152,24 +161,33 @@ Note: Importing will replace all existing data and settings.
           return;
         }
 
-        // Read CSV files (settings is optional for backwards compatibility)
-        const promises = [
+        // Read CSV files (budget and settings are optional for backwards compatibility)
+        const promises: Promise<string | null>[] = [
           portfoliosFile.async('text'),
           calculationsFile.async('text')
         ];
 
+        if (budgetFile) {
+          promises.push(budgetFile.async('text'));
+        } else {
+          promises.push(Promise.resolve(null)); // Add null as placeholder
+        }
+
         if (settingsFile) {
           promises.push(settingsFile.async('text'));
+        } else {
+          promises.push(Promise.resolve(null)); // Add null as placeholder
         }
 
         Promise.all(promises).then((contents) => {
           try {
-            const portfoliosData = this.parsePortfoliosCSV(contents[0]);
-            const calculationsData = this.parseCalculationsCSV(contents[1]);
-            const settingsData = contents[2] ? this.parseSettingsCSV(contents[2]) : null;
+            const portfoliosData = this.parsePortfoliosCSV(contents[0]!);
+            const calculationsData = this.parseCalculationsCSV(contents[1]!);
+            const budgetData = contents[2] ? this.parseBudgetCSV(contents[2]) : null;
+            const settingsData = contents[3] ? this.parseSettingsCSV(contents[3]) : null;
             
             // Import the data
-            this.importDataToDatabase(portfoliosData, calculationsData, settingsData, observer);
+            this.importDataToDatabase(portfoliosData, calculationsData, budgetData, settingsData, observer);
           } catch (error) {
             observer.error(new Error(`Failed to parse CSV files: ${error}`));
           }
@@ -205,7 +223,7 @@ Note: Importing will replace all existing data and settings.
     reader.readAsText(file);
   }
 
-  private async importDataToDatabase(portfoliosData: Portfolio[], calculationsData: SavedCalculation[], settingsData: Settings | null, observer: any): Promise<void> {
+  private async importDataToDatabase(portfoliosData: Portfolio[], calculationsData: SavedCalculation[], budgetData: BudgetData | null, settingsData: Settings | null, observer: any): Promise<void> {
     try {
       // Clear existing data first
       await this.clearLocalData();
@@ -218,6 +236,11 @@ Note: Importing will replace all existing data and settings.
       // Restore calculations
       for (const calculation of calculationsData) {
         await this.dbService.saveCalculation(calculation).toPromise();
+      }
+
+      // Restore budget if provided
+      if (budgetData) {
+        await this.dbService.saveBudget(budgetData).toPromise();
       }
 
       // Restore settings if provided
@@ -395,45 +418,6 @@ Note: Importing will replace all existing data and settings.
   }
 
   /**
-   * Parse a single CSV line, handling quoted fields
-   */
-  private parseCSVLine(line: string): string[] {
-    const result: string[] = [];
-    let current = '';
-    let inQuotes = false;
-    let i = 0;
-    
-    while (i < line.length) {
-      const char = line[i];
-      
-      if (char === '"') {
-        if (inQuotes && line[i + 1] === '"') {
-          // Escaped quote
-          current += '"';
-          i += 2;
-        } else {
-          // Toggle quote state
-          inQuotes = !inQuotes;
-          i++;
-        }
-      } else if (char === ',' && !inQuotes) {
-        // Field separator
-        result.push(current.trim());
-        current = '';
-        i++;
-      } else {
-        current += char;
-        i++;
-      }
-    }
-    
-    // Add the last field
-    result.push(current.trim());
-    
-    return result;
-  }
-
-  /**
    * Convert settings to CSV format
    */
   private convertSettingsToCSV(settings: Settings): string {
@@ -481,6 +465,167 @@ Note: Importing will replace all existing data and settings.
   }
 
   /**
+   * Convert budget to CSV format
+   */
+  private convertBudgetToCSV(budget: BudgetData | null): string {
+    if (!budget) {
+      return 'No budget data';
+    }
+
+    // Budget basic info headers
+    const basicHeaders = ['id', 'grossIncome', 'useTwoWeekPayStub', 'createdAt', 'updatedAt'];
+    const basicRow = [
+      budget.id || '',
+      budget.grossIncome || 0,
+      budget.useTwoWeekPayStub || false,
+      budget.createdAt ? new Date(budget.createdAt).toISOString() : '',
+      budget.updatedAt ? new Date(budget.updatedAt).toISOString() : ''
+    ];
+
+    let csvContent = basicHeaders.join(',') + '\n' + basicRow.join(',') + '\n\n';
+
+    // Pay deductions section
+    csvContent += 'PAY_DEDUCTIONS\n';
+    csvContent += 'id,name,amount,description\n';
+    if (budget.payDeductions && budget.payDeductions.length > 0) {
+      budget.payDeductions.forEach(deduction => {
+        csvContent += [
+          deduction.id || '',
+          `"${(deduction.name || '').replace(/"/g, '""')}"`,
+          deduction.amount || 0,
+          `"${(deduction.description || '').replace(/"/g, '""')}"`
+        ].join(',') + '\n';
+      });
+    }
+
+    // Annual expenses section
+    csvContent += '\nANNUAL_EXPENSES\n';
+    csvContent += 'id,name,amount,description\n';
+    if (budget.annualExpenses && budget.annualExpenses.length > 0) {
+      budget.annualExpenses.forEach(expense => {
+        csvContent += [
+          expense.id || '',
+          `"${(expense.name || '').replace(/"/g, '""')}"`,
+          expense.amount || 0,
+          `"${(expense.description || '').replace(/"/g, '""')}"`
+        ].join(',') + '\n';
+      });
+    }
+
+    // Monthly expenses section
+    csvContent += '\nMONTHLY_EXPENSES\n';
+    csvContent += 'id,name,amount,description\n';
+    if (budget.monthlyExpenses && budget.monthlyExpenses.length > 0) {
+      budget.monthlyExpenses.forEach(expense => {
+        csvContent += [
+          expense.id || '',
+          `"${(expense.name || '').replace(/"/g, '""')}"`,
+          expense.amount || 0,
+          `"${(expense.description || '').replace(/"/g, '""')}"`
+        ].join(',') + '\n';
+      });
+    }
+
+    return csvContent;
+  }
+
+  /**
+   * Parse budget CSV content
+   */
+  private parseBudgetCSV(content: string): BudgetData | null {
+    const lines = content.split('\n');
+    
+    if (lines[0] === 'No budget data') {
+      return null;
+    }
+
+    // Parse basic budget info
+    const basicHeaders = lines[0].split(',');
+    const basicValues = lines[1].split(',');
+    
+    const budget: BudgetData = {
+      id: basicValues[0] ? parseInt(basicValues[0]) : undefined,
+      grossIncome: basicValues[1] ? parseFloat(basicValues[1]) : 0,
+      useTwoWeekPayStub: basicValues[2] === 'true',
+      payDeductions: [],
+      annualExpenses: [],
+      monthlyExpenses: [],
+      createdAt: basicValues[3] ? new Date(basicValues[3]) : undefined,
+      updatedAt: basicValues[4] ? new Date(basicValues[4]) : undefined
+    };
+
+    // Parse sections
+    let currentSection = '';
+    let sectionStartIndex = -1;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      if (line === 'PAY_DEDUCTIONS') {
+        currentSection = 'PAY_DEDUCTIONS';
+        sectionStartIndex = i + 2; // Skip header line
+      } else if (line === 'ANNUAL_EXPENSES') {
+        currentSection = 'ANNUAL_EXPENSES';
+        sectionStartIndex = i + 2; // Skip header line
+      } else if (line === 'MONTHLY_EXPENSES') {
+        currentSection = 'MONTHLY_EXPENSES';
+        sectionStartIndex = i + 2; // Skip header line
+      } else if (currentSection && i >= sectionStartIndex && line && !line.includes('_EXPENSES') && !line.includes('_DEDUCTIONS')) {
+        const values = this.parseCSVLine(line);
+        
+        if (values.length >= 3) {
+          const item = {
+            id: values[0] ? parseInt(values[0]) : undefined,
+            name: values[1] || '',
+            amount: values[2] ? parseFloat(values[2]) : 0,
+            description: values[3] || ''
+          };
+
+          if (currentSection === 'PAY_DEDUCTIONS') {
+            budget.payDeductions.push(item);
+          } else if (currentSection === 'ANNUAL_EXPENSES') {
+            budget.annualExpenses.push(item);
+          } else if (currentSection === 'MONTHLY_EXPENSES') {
+            budget.monthlyExpenses.push(item);
+          }
+        }
+      }
+    }
+
+    return budget;
+  }
+
+  /**
+   * Parse a CSV line handling quoted fields
+   */
+  private parseCSVLine(line: string): string[] {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i++; // Skip next quote
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        result.push(current);
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    
+    result.push(current);
+    return result;
+  }
+
+  /**
    * Clear all local data
    */
   private async clearLocalData(): Promise<void> {
@@ -508,6 +653,9 @@ Note: Importing will replace all existing data and settings.
           }
         }
       }
+
+      // Clear all budget data
+      await this.dbService.clearAllBudgets().toPromise();
     } catch (error) {
       throw new Error(`Failed to clear local data: ${error}`);
     }

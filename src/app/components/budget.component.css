@@ -56,20 +56,47 @@
   width: 100%;
 }
 
-.deductions-list {
+.deduction-input-form {
+  margin-bottom: 24px;
+}
+
+.deduction-input-row {
+  display: flex;
+  gap: 16px;
+  align-items: end;
+}
+
+.deduction-input-row .deduction-name {
+  flex: 2;
+}
+
+.deduction-input-row .deduction-amount {
+  flex: 1;
+}
+
+.deduction-list {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .deduction-item {
   display: flex;
-  gap: 16px;
-  align-items: flex-start;
-  padding: 16px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background-color: #fafafa;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.deduction-item:last-of-type {
+  border-bottom: none;
+}
+
+.deduction-item:hover {
+  background-color: rgba(0, 0, 0, 0.04);
 }
 
 .deduction-name {
@@ -78,6 +105,16 @@
 
 .deduction-amount {
   flex: 1;
+}
+
+.deduction-item .deduction-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.deduction-item .deduction-amount {
+  margin-right: 16px;
+  color: rgba(0, 0, 0, 0.7);
 }
 
 .no-deductions {
@@ -171,7 +208,12 @@
   
   .deduction-item {
     flex-direction: column;
-    gap: 12px;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .deduction-item .deduction-amount {
+    margin-right: 0;
   }
   
   .deduction-name,
