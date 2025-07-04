@@ -94,98 +94,81 @@ import { BudgetWithCalculations } from '../models/budget.interface';
               <span class="value"><strong>{{ (budget?.calculations?.totalExpensesAnnual || 0) / 12 | currency }}</strong></span>
             </div>
           </div>
-
-          <!-- Expense Details -->
-          <div class="expense-details" *ngIf="hasExpenses()">
-            <mat-divider></mat-divider>
-            <h4 class="details-title">Expense Breakdown</h4>
-            
-            <div class="expense-category" *ngIf="hasAnnualExpenses()">
-              <h5>Annual Expenses:</h5>
-              <div class="expense-list">
-                <div class="expense-item" *ngFor="let expense of getAnnualExpenses()">
-                  <span class="expense-name">{{ expense.name }}</span>
-                  <span class="expense-amount">{{ expense.amount | currency }}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="expense-category" *ngIf="hasMonthlyExpenses()">
-              <h5>Monthly Expenses:</h5>
-              <div class="expense-list">
-                <div class="expense-item" *ngFor="let expense of getMonthlyExpenses()">
-                  <span class="expense-name">{{ expense.name }}</span>
-                  <span class="expense-amount">{{ expense.amount | currency }}/month</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="no-expenses" *ngIf="!hasExpenses()">
-            <p>No expenses added yet.</p>
-            <button mat-raised-button color="accent" (click)="editExpenses()">
-              Add Expenses
-            </button>
-          </div>
         </mat-card-content>
       </mat-card>
 
-      <!-- Available for Housing Card -->
-      <mat-card class="housing-card" *ngIf="budget">
+      <!-- Mortgage Affordability Card -->
+      <mat-card class="mortgage-card" *ngIf="budget">
         <mat-card-header>
           <mat-card-title>
-            <mat-icon>home</mat-icon>
-            Available for Housing
+            <mat-icon>calculate</mat-icon>
+            Mortgage Affordability
           </mat-card-title>
+          <div class="header-actions">
+            <button mat-raised-button color="primary" (click)="editMortgageSettings()">
+              <mat-icon>tune</mat-icon>
+              Adjust Mortgage Settings
+            </button>
+          </div>
         </mat-card-header>
         
         <mat-card-content>
-          <div class="housing-calculation">
-            <div class="calculation-row">
-              <span class="label">Net Income (Annual):</span>
-              <span class="value positive">{{ budget?.calculations?.netIncomeAnnual | currency }}</span>
+          <div class="mortgage-summary" *ngIf="hasMortgageSettings(); else noMortgageSettings">
+            <div class="mortgage-params">
+              <p><strong>Mortgage Parameters:</strong> {{ budget?.anticipatedMortgageRate }}% interest rate for {{ budget?.anticipatedMortgageTermYears }} years</p>
             </div>
-            <div class="calculation-row">
-              <span class="label">Total Expenses (Annual):</span>
-              <span class="value negative">-{{ budget?.calculations?.totalExpensesAnnual | currency }}</span>
+            
+            <div class="affordability-calculation">
+              <div class="calc-row">
+                <span class="label">Available for Housing:</span>
+                <span class="value positive">{{ budget?.calculations?.availableForHousingMonthly | currency }}/month</span>
+              </div>
+              <div class="calc-row" *ngIf="hasHousingExpenses()">
+                <span class="label">Housing Expenses:</span>
+                <span class="value negative">-{{ budget?.calculations?.totalHousingExpensesMonthly | currency }}/month</span>
+              </div>
+              <mat-divider></mat-divider>
+              <div class="calc-row highlight extra-large">
+                <span class="label"><strong>Affordable Monthly Payment:</strong></span>
+                <span class="value mortgage-payment"><strong>{{ budget?.calculations?.affordableMonthlyMortgagePayment | currency }}/month</strong></span>
+              </div>
+              <div class="calc-row highlight extra-large">
+                <span class="label"><strong>Total Affordable Mortgage:</strong></span>
+                <span class="value mortgage-amount"><strong>{{ budget?.calculations?.affordableTotalMortgageAmount | currency }}</strong></span>
+              </div>
             </div>
-            <mat-divider class="calculation-divider"></mat-divider>
-            <div class="calculation-row result">
-              <span class="label"><strong>Available for Housing (Annual):</strong></span>
-              <span class="value" [class.positive]="(budget?.calculations?.availableForHousingAnnual || 0) > 0" 
-                                  [class.negative]="(budget?.calculations?.availableForHousingAnnual || 0) < 0">
-                <strong>{{ budget?.calculations?.availableForHousingAnnual | currency }}</strong>
-              </span>
-            </div>
-            <div class="calculation-row result">
-              <span class="label"><strong>Available for Housing (Monthly):</strong></span>
-              <span class="value" [class.positive]="(budget?.calculations?.availableForHousingMonthly || 0) > 0"
-                                  [class.negative]="(budget?.calculations?.availableForHousingMonthly || 0) < 0">
-                <strong>{{ budget?.calculations?.availableForHousingMonthly | currency }}</strong>
-              </span>
-            </div>
-          </div>
 
-          <div class="housing-guidance" *ngIf="budget?.calculations?.availableForHousingMonthly">
-            <mat-divider></mat-divider>
-            <div class="guidance-content">
-              <h4>Housing Budget Guidance</h4>
-              <div class="guidance-item" *ngIf="(budget?.calculations?.availableForHousingMonthly || 0) > 0">
-                <mat-icon class="guidance-icon">info</mat-icon>
-                <div class="guidance-text">
-                  <p><strong>Recommended maximum housing payment:</strong> {{ budget?.calculations?.availableForHousingMonthly | currency }}/month</p>
-                  <p class="guidance-note">This includes mortgage/rent, utilities, insurance, taxes, and maintenance.</p>
+            <div class="mortgage-guidance" *ngIf="budget?.calculations?.affordableMonthlyMortgagePayment">
+              <mat-divider></mat-divider>
+              <div class="guidance-content">
+                <h4>Mortgage Guidance</h4>
+                <div class="guidance-item" *ngIf="(budget?.calculations?.affordableMonthlyMortgagePayment || 0) > 0">
+                  <mat-icon class="guidance-icon">info</mat-icon>
+                  <div class="guidance-text">
+                    <p><strong>You can afford a mortgage payment of {{ budget?.calculations?.affordableMonthlyMortgagePayment | currency }}/month</strong></p>
+                    <p class="guidance-note">This calculation includes your housing expenses and leaves you with a sustainable budget.</p>
+                  </div>
                 </div>
-              </div>
-              <div class="guidance-item warning" *ngIf="(budget?.calculations?.availableForHousingMonthly || 0) <= 0">
-                <mat-icon class="guidance-icon">warning</mat-icon>
-                <div class="guidance-text">
-                  <p><strong>Warning:</strong> Your expenses exceed your net income.</p>
-                  <p class="guidance-note">Consider reducing expenses before taking on housing costs.</p>
+                <div class="guidance-item warning" *ngIf="(budget?.calculations?.affordableMonthlyMortgagePayment || 0) <= 0">
+                  <mat-icon class="guidance-icon">warning</mat-icon>
+                  <div class="guidance-text">
+                    <p><strong>Warning:</strong> Your housing expenses exceed your available housing budget.</p>
+                    <p class="guidance-note">Consider reducing housing expenses or increasing income before taking on mortgage debt.</p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+          
+          <ng-template #noMortgageSettings>
+            <div class="no-mortgage-settings">
+              <p>Set your anticipated mortgage rate and term to see affordability calculations.</p>
+              <button mat-raised-button color="accent" (click)="editMortgageSettings()">
+                <mat-icon>settings</mat-icon>
+                Set Mortgage Parameters
+              </button>
+            </div>
+          </ng-template>
         </mat-card-content>
       </mat-card>
 
@@ -221,46 +204,41 @@ export class BudgetFinalComponent implements OnInit, OnDestroy {
       if (budget) {
         this.budget = budget;
       } else {
-        // No budget data, redirect to budget input
-        this.router.navigate(['/budget']);
+        // No budget data, redirect to budget summary
+        this.router.navigate(['/budget-summary']);
       }
     });
   }
 
   editIncome(): void {
-    this.router.navigate(['/budget']);
+    this.router.navigate(['/budget-income']);
   }
 
   editExpenses(): void {
-    this.router.navigate(['/budget-summary']);
+    this.router.navigate(['/budget-expenses']);
+  }
+
+  editMortgageSettings(): void {
+    this.router.navigate(['/budget-mortgage']);
   }
 
   clearBudget(): void {
     if (confirm('Are you sure you want to clear all budget data? This cannot be undone.')) {
       this.budgetService.clearBudget();
       this.snackBar.open('Budget data cleared.', 'Close', { duration: 3000 });
-      this.router.navigate(['/budget']);
+      this.router.navigate(['/budget-summary']);
     }
   }
 
-  // Helper methods for expenses
-  hasExpenses(): boolean {
-    return this.hasAnnualExpenses() || this.hasMonthlyExpenses();
+  hasHousingExpenses(): boolean {
+    if (!this.budget) return false;
+    const hasMonthly = this.budget.monthlyHousingExpenses && this.budget.monthlyHousingExpenses.length > 0;
+    const hasAnnual = this.budget.annualHousingExpenses && this.budget.annualHousingExpenses.length > 0;
+    return hasMonthly || hasAnnual;
   }
 
-  hasAnnualExpenses(): boolean {
-    return !!(this.budget?.annualExpenses && this.budget.annualExpenses.length > 0);
-  }
-
-  getAnnualExpenses() {
-    return this.budget?.annualExpenses || [];
-  }
-
-  hasMonthlyExpenses(): boolean {
-    return !!(this.budget?.monthlyExpenses && this.budget.monthlyExpenses.length > 0);
-  }
-
-  getMonthlyExpenses() {
-    return this.budget?.monthlyExpenses || [];
+  hasMortgageSettings(): boolean {
+    if (!this.budget) return false;
+    return !!(this.budget.anticipatedMortgageRate && this.budget.anticipatedMortgageTermYears);
   }
 }

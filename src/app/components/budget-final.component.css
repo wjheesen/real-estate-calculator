@@ -8,12 +8,14 @@
 }
 
 .summary-card,
-.housing-card {
+.housing-card,
+.mortgage-card {
   width: 100%;
 }
 
 .summary-card mat-card-header,
-.housing-card mat-card-header {
+.housing-card mat-card-header,
+.mortgage-card mat-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -30,7 +32,8 @@
 }
 
 .summary-row,
-.calculation-row {
+.calculation-row,
+.calc-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -38,11 +41,17 @@
 }
 
 .summary-row.highlight,
-.calculation-row.result {
+.calculation-row.result,
+.calc-row.highlight {
   background-color: rgba(25, 118, 210, 0.1);
   padding: 12px 16px;
   border-radius: 8px;
   margin: 8px 0;
+}
+
+.calc-row.extra-large {
+  font-size: 1.2em;
+  padding: 20px;
 }
 
 .calculation-row.result {
@@ -66,7 +75,18 @@
   color: #d32f2f;
 }
 
-.housing-calculation {
+.value.mortgage-payment,
+.value.mortgage-amount {
+  color: #1976d2;
+  font-weight: 700;
+}
+
+.value.mortgage-amount {
+  font-size: 1.4em;
+}
+
+.housing-calculation,
+.affordability-calculation {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -134,7 +154,8 @@
   margin-bottom: 16px;
 }
 
-.housing-guidance {
+.housing-guidance,
+.mortgage-guidance {
   margin-top: 24px;
 }
 
@@ -194,6 +215,24 @@
   padding: 20px 0;
 }
 
+.mortgage-params {
+  background: rgba(25, 118, 210, 0.05);
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.no-mortgage-settings {
+  text-align: center;
+  padding: 24px;
+  color: #666;
+}
+
+.no-mortgage-settings button {
+  margin-top: 16px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .budget-final-container {
@@ -202,7 +241,8 @@
   }
   
   .summary-row,
-  .calculation-row {
+  .calculation-row,
+  .calc-row {
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
@@ -227,7 +267,8 @@
   }
   
   .summary-card mat-card-header,
-  .housing-card mat-card-header {
+  .housing-card mat-card-header,
+  .mortgage-card mat-card-header {
     flex-direction: column;
     align-items: flex-start;
   }

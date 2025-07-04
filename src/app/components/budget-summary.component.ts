@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subscription } from 'rxjs';
 import { BudgetService } from '../services/budget.service';
 import { BudgetWithCalculations } from '../models/budget.interface';
@@ -19,19 +20,26 @@ import { BudgetWithCalculations } from '../models/budget.interface';
     MatButtonModule,
     MatIconModule,
     MatSnackBarModule,
-    MatDividerModule
+    MatDividerModule,
+    MatTooltipModule
   ],
   template: `
     <div class="budget-summary-container">
+      <h1 class="page-title">
+        <mat-icon>summarize</mat-icon>
+        Budget Summary
+      </h1>
+      <p class="page-description">Review your budget information and proceed to mortgage planning</p>
+
       <!-- Income Summary Card -->
-      <mat-card class="income-summary-card">
+      <mat-card class="income-card">
         <mat-card-header>
           <mat-card-title>
             <mat-icon>attach_money</mat-icon>
             Income Summary
           </mat-card-title>
           <div class="header-actions">
-            <button mat-raised-button color="primary" (click)="editIncome()">
+            <button mat-stroked-button (click)="editIncome()">
               <mat-icon>edit</mat-icon>
               Edit Income
             </button>
@@ -39,36 +47,43 @@ import { BudgetWithCalculations } from '../models/budget.interface';
         </mat-card-header>
         
         <mat-card-content>
-          <div class="income-summary" *ngIf="budget">
+          <div class="income-summary" *ngIf="budget?.calculations; else noIncomeData">
             <div class="summary-row">
-              <span class="label">Gross Income (Annual):</span>
-              <span class="value">{{ budget?.calculations?.grossIncomeAnnual | currency }}</span>
+              <span class="label">Monthly Net Income:</span>
+              <span class="value">{{ budget?.calculations?.netIncomeMonthly | currency }}/month</span>
             </div>
             <div class="summary-row">
-              <span class="label">Total Deductions (Annual):</span>
-              <span class="value">{{ budget?.calculations?.totalDeductionsAnnual | currency }}</span>
+              <span class="label">Monthly Expenses:</span>
+              <span class="value">{{ budget?.calculations?.totalMonthlyExpenses | currency }}/month</span>
             </div>
             <div class="summary-row highlight">
-              <span class="label"><strong>Net Income (Annual):</strong></span>
-              <span class="value"><strong>{{ budget?.calculations?.netIncomeAnnual | currency }}</strong></span>
-            </div>
-            <div class="summary-row highlight">
-              <span class="label"><strong>Net Income (Monthly):</strong></span>
-              <span class="value"><strong>{{ budget?.calculations?.netIncomeMonthly | currency }}</strong></span>
+              <span class="label"><strong>Available for Housing:</strong></span>
+              <span class="value positive"><strong>{{ budget?.calculations?.availableForHousingMonthly | currency }}/month</strong></span>
             </div>
           </div>
+          
+          <ng-template #noIncomeData>
+            <div class="no-data">
+              <mat-icon>info</mat-icon>
+              <p>Start by adding your income and expense information</p>
+              <button mat-raised-button color="primary" (click)="editIncome()">
+                <mat-icon>add</mat-icon>
+                Add Income & Expenses
+              </button>
+            </div>
+          </ng-template>
         </mat-card-content>
       </mat-card>
 
-      <!-- Expense Summary Card -->
-      <mat-card class="expenses-summary-card">
+      <!-- Expenses Summary Card -->
+      <mat-card class="expenses-card">
         <mat-card-header>
           <mat-card-title>
             <mat-icon>receipt</mat-icon>
-            Expense Summary (excluding housing)
+            Non-Housing Expenses
           </mat-card-title>
           <div class="header-actions">
-            <button mat-raised-button color="primary" (click)="editExpenses()">
+            <button mat-stroked-button (click)="editExpenses()" [disabled]="!budget">
               <mat-icon>edit</mat-icon>
               Edit Expenses
             </button>
@@ -76,72 +91,72 @@ import { BudgetWithCalculations } from '../models/budget.interface';
         </mat-card-header>
         
         <mat-card-content>
-          <div class="expense-summary" *ngIf="budget">
+          <div class="expenses-summary" *ngIf="budget?.calculations; else noExpensesData">
             <div class="summary-row">
-              <span class="label">Annual Expenses:</span>
-              <span class="value">{{ budget?.calculations?.totalAnnualExpenses | currency }}</span>
-            </div>
-            <div class="summary-row">
-              <span class="label">Monthly Expenses:</span>
+              <span class="label">Total Monthly Expenses:</span>
               <span class="value">{{ budget?.calculations?.totalMonthlyExpenses | currency }}/month</span>
             </div>
-            <div class="summary-row">
-              <span class="label">Monthly Expenses (Annualized):</span>
-              <span class="value">{{ budget?.calculations?.totalMonthlyExpensesAnnualized | currency }}</span>
-            </div>
-            <div class="summary-row highlight">
-              <span class="label"><strong>Total Annual Expenses:</strong></span>
-              <span class="value"><strong>{{ budget?.calculations?.totalExpensesAnnual | currency }}</strong></span>
-            </div>
+            <p class="help-text">These are your regular monthly expenses excluding housing costs.</p>
           </div>
+          
+          <ng-template #noExpensesData>
+            <div class="no-data">
+              <mat-icon>info</mat-icon>
+              <p>Add your monthly expenses to get accurate housing budget calculations</p>
+            </div>
+          </ng-template>
         </mat-card-content>
       </mat-card>
 
-      <!-- Available for Housing Card -->
-      <mat-card class="housing-summary-card" *ngIf="budget">
+      <!-- Housing Expenses Card -->
+      <mat-card class="housing-card">
         <mat-card-header>
           <mat-card-title>
-            <mat-icon>home</mat-icon>
-            Available for Housing
+            <mat-icon>home_work</mat-icon>
+            Housing Expenses
           </mat-card-title>
+          <div class="header-actions">
+            <button mat-stroked-button (click)="editHousingExpenses()">
+              <mat-icon>edit</mat-icon>
+              Edit Housing Costs
+            </button>
+          </div>
         </mat-card-header>
         
         <mat-card-content>
-          <div class="housing-summary">
+          <div class="housing-summary" *ngIf="hasHousingExpenses(); else noHousingData">
             <div class="summary-row">
-              <span class="label">Net Income (Annual):</span>
-              <span class="value">{{ budget?.calculations?.netIncomeAnnual | currency }}</span>
+              <span class="label">Monthly Housing Expenses:</span>
+              <span class="value">{{ budget?.calculations?.totalMonthlyHousingExpenses | currency }}/month</span>
             </div>
             <div class="summary-row">
-              <span class="label">Total Expenses (Annual):</span>
-              <span class="value">-{{ budget?.calculations?.totalExpensesAnnual | currency }}</span>
+              <span class="label">Annual Housing Expenses (Monthly):</span>
+              <span class="value">{{ (budget?.calculations?.totalAnnualHousingExpenses || 0) / 12 | currency }}/month</span>
             </div>
-            <mat-divider></mat-divider>
-            <div class="summary-row highlight large">
-              <span class="label"><strong>Available for Housing (Annual):</strong></span>
-              <span class="value"><strong>{{ budget?.calculations?.availableForHousingAnnual | currency }}</strong></span>
-            </div>
-            <div class="summary-row highlight large">
-              <span class="label"><strong>Available for Housing (Monthly):</strong></span>
-              <span class="value"><strong>{{ budget?.calculations?.availableForHousingMonthly | currency }}</strong></span>
+            <div class="summary-row highlight">
+              <span class="label"><strong>Total Housing Expenses:</strong></span>
+              <span class="value"><strong>{{ budget?.calculations?.totalHousingExpensesMonthly | currency }}/month</strong></span>
             </div>
           </div>
+          
+          <ng-template #noHousingData>
+            <div class="no-data">
+              <mat-icon>info</mat-icon>
+              <p>Add housing expenses like property taxes, insurance, HOA fees, etc.</p>
+            </div>
+          </ng-template>
         </mat-card-content>
       </mat-card>
 
-      <!-- Actions -->
+      <!-- Action Buttons -->
       <div class="actions">
-        <button mat-raised-button color="accent" (click)="planMortgage()" [disabled]="!budget">
-          <mat-icon>calculate</mat-icon>
-          Plan Mortgage
+        <button mat-raised-button color="primary" (click)="viewMortgagePlanning()" [disabled]="!budget?.calculations">
+          <mat-icon>home</mat-icon>
+          Mortgage Planning & Affordability
         </button>
-        <button mat-raised-button color="primary" (click)="finishExpenses()" [disabled]="!budget">
-          <mat-icon>check</mat-icon>
-          Finish & View Summary
-        </button>
-        <button mat-raised-button color="warn" (click)="clearBudget()">
+        <button mat-stroked-button color="warn" (click)="clearBudget()" *ngIf="budget">
           <mat-icon>clear</mat-icon>
-          Clear All Budget Data
+          Clear All Data
         </button>
       </div>
     </div>
@@ -166,39 +181,37 @@ export class BudgetSummaryComponent implements OnInit, OnDestroy {
 
   private loadBudget(): void {
     this.subscription = this.budgetService.getBudget().subscribe(budget => {
-      if (budget) {
-        this.budget = budget;
-      } else {
-        // No budget data, redirect to budget input
-        this.router.navigate(['/budget']);
-      }
+      this.budget = budget; // Always set budget, even if null
     });
   }
 
   editIncome(): void {
-    this.router.navigate(['/budget']);
+    this.router.navigate(['/budget-income']);
   }
 
   editExpenses(): void {
     this.router.navigate(['/budget-expenses']);
   }
 
-  planMortgage(): void {
+  editHousingExpenses(): void {
     this.router.navigate(['/budget-mortgage']);
+  }
+
+  viewMortgagePlanning(): void {
+    this.router.navigate(['/budget-final']);
+  }
+
+  hasHousingExpenses(): boolean {
+    if (!this.budget) return false;
+    const hasMonthly = this.budget.monthlyHousingExpenses && this.budget.monthlyHousingExpenses.length > 0;
+    const hasAnnual = this.budget.annualHousingExpenses && this.budget.annualHousingExpenses.length > 0;
+    return hasMonthly || hasAnnual;
   }
 
   clearBudget(): void {
     if (confirm('Are you sure you want to clear all budget data? This cannot be undone.')) {
       this.budgetService.clearBudget();
       this.snackBar.open('Budget data cleared.', 'Close', { duration: 3000 });
-      this.router.navigate(['/budget']);
     }
-  }
-
-  finishExpenses(): void {
-    this.snackBar.open('Redirecting to budget summary...', 'Close', { duration: 2000 });
-    setTimeout(() => {
-      this.router.navigate(['/budget-final']);
-    }, 2000);
   }
 }

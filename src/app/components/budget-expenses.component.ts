@@ -208,14 +208,14 @@ export class BudgetExpensesComponent implements OnInit, OnDestroy {
       if (budget) {
         this.budget = budget;
       } else {
-        // No budget data, redirect to budget input
-        this.router.navigate(['/budget']);
+        // No budget data, redirect to budget summary
+        this.router.navigate(['/budget-summary']);
       }
     });
   }
 
   editIncome(): void {
-    this.router.navigate(['/budget']);
+    this.router.navigate(['/budget-income']);
   }
 
   addAnnualExpense(): void {
@@ -254,7 +254,7 @@ export class BudgetExpensesComponent implements OnInit, OnDestroy {
     if (confirm('Are you sure you want to clear all budget data? This cannot be undone.')) {
       this.budgetService.clearBudget();
       this.snackBar.open('Budget data cleared.', 'Close', { duration: 3000 });
-      this.router.navigate(['/budget']);
+      this.router.navigate(['/budget-summary']);
     }
   }
 

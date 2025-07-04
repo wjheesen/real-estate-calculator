@@ -231,9 +231,13 @@ import { BudgetWithCalculations, Expense } from '../models/budget.interface';
 
       <!-- Actions -->
       <div class="actions">
-        <button mat-raised-button color="primary" (click)="backToSummary()" [disabled]="!budget">
+        <button mat-raised-button (click)="backToSummary()" [disabled]="!budget">
           <mat-icon>arrow_back</mat-icon>
-          Back to Summary
+          Back to Housing Summary
+        </button>
+        <button mat-raised-button color="primary" (click)="viewFinalSummary()" [disabled]="!budget">
+          <mat-icon>arrow_forward</mat-icon>
+          Continue to Final Summary
         </button>
         <button mat-raised-button color="warn" (click)="clearBudget()">
           <mat-icon>clear</mat-icon>
@@ -298,14 +302,14 @@ export class BudgetMortgageComponent implements OnInit, OnDestroy {
           });
         }
       } else {
-        // No budget data, redirect to budget input
-        this.router.navigate(['/budget']);
+        // No budget data, redirect to budget summary
+        this.router.navigate(['/budget-summary']);
       }
     });
   }
 
   editIncome(): void {
-    this.router.navigate(['/budget-expenses']);
+    this.router.navigate(['/budget-income']);
   }
 
   updateMortgageParams(): void {
@@ -352,12 +356,16 @@ export class BudgetMortgageComponent implements OnInit, OnDestroy {
     if (confirm('Are you sure you want to clear all budget data? This cannot be undone.')) {
       this.budgetService.clearBudget();
       this.snackBar.open('Budget data cleared.', 'Close', { duration: 3000 });
-      this.router.navigate(['/budget']);
+      this.router.navigate(['/budget-summary']);
     }
   }
 
   backToSummary(): void {
     this.router.navigate(['/budget-summary']);
+  }
+
+  viewFinalSummary(): void {
+    this.router.navigate(['/budget-final']);
   }
 
   // Helper methods for template
