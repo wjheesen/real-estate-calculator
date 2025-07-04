@@ -9,6 +9,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Subscription } from 'rxjs';
 import { BudgetService } from '../services/budget.service';
 import { BudgetWithCalculations, Expense } from '../models/budget.interface';
@@ -25,7 +27,9 @@ import { BudgetWithCalculations, Expense } from '../models/budget.interface';
     MatButtonModule,
     MatIconModule,
     MatSnackBarModule,
-    MatDividerModule
+    MatDividerModule,
+    MatTooltipModule,
+    DragDropModule
   ],
   template: `
     <div class="budget-mortgage-container">
@@ -103,7 +107,7 @@ import { BudgetWithCalculations, Expense } from '../models/budget.interface';
         </mat-card-header>
         
         <mat-card-content>
-          <form [formGroup]="annualHousingExpenseForm" (ngSubmit)="addAnnualHousingExpense()" class="expense-form">
+          <form [formGroup]="annualHousingExpenseForm" (ngSubmit)="saveAnnualHousingExpense()" class="expense-form">
             <div class="expense-input-row">
               <mat-form-field appearance="outline" class="expense-name">
                 <mat-label>Expense Name</mat-label>
@@ -117,19 +121,32 @@ import { BudgetWithCalculations, Expense } from '../models/budget.interface';
               </mat-form-field>
               
               <button mat-raised-button color="primary" type="submit" [disabled]="!annualHousingExpenseForm.valid">
-                <mat-icon>add</mat-icon>
-                Add
+                <mat-icon>{{ editingAnnualHousingExpenseId >= 0 ? 'save' : 'add' }}</mat-icon>
+                {{ editingAnnualHousingExpenseId >= 0 ? 'Update' : 'Add' }}
+              </button>
+              
+              <button mat-stroked-button type="button" (click)="cancelAnnualHousingEdit()" *ngIf="editingAnnualHousingExpenseId >= 0">
+                <mat-icon>cancel</mat-icon>
+                Cancel
               </button>
             </div>
           </form>
 
-          <div class="expense-list" *ngIf="hasAnnualHousingExpenses()">
-            <div class="expense-item" *ngFor="let expense of getAnnualHousingExpenses()">
-              <span class="expense-name">{{ expense.name }}</span>
-              <span class="expense-amount">{{ expense.amount | currency }}</span>
-              <button mat-icon-button color="warn" (click)="deleteAnnualHousingExpense(expense.id!)">
-                <mat-icon>delete</mat-icon>
-              </button>
+          <div class="expense-list" *ngIf="hasAnnualHousingExpenses()" cdkDropList (cdkDropListDropped)="dropAnnualHousingExpense($event)">
+            <div class="expense-item" *ngFor="let expense of getAnnualHousingExpenses(); trackBy: trackByExpenseId" cdkDrag>
+              <div class="expense-content">
+                <mat-icon class="drag-handle" cdkDragHandle>drag_indicator</mat-icon>
+                <span class="expense-name">{{ expense.name }}</span>
+                <span class="expense-amount">{{ expense.amount | currency }}</span>
+                <div class="expense-actions">
+                  <button mat-icon-button color="primary" (click)="editAnnualHousingExpense(expense)" type="button" matTooltip="Edit">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="deleteAnnualHousingExpense(expense.id!)" matTooltip="Delete">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
             </div>
             <div class="expense-total">
               <strong>Total Annual Housing Expenses: {{ budget?.calculations?.totalAnnualHousingExpenses | currency }}</strong>
@@ -148,7 +165,7 @@ import { BudgetWithCalculations, Expense } from '../models/budget.interface';
         </mat-card-header>
         
         <mat-card-content>
-          <form [formGroup]="monthlyHousingExpenseForm" (ngSubmit)="addMonthlyHousingExpense()" class="expense-form">
+          <form [formGroup]="monthlyHousingExpenseForm" (ngSubmit)="saveMonthlyHousingExpense()" class="expense-form">
             <div class="expense-input-row">
               <mat-form-field appearance="outline" class="expense-name">
                 <mat-label>Expense Name</mat-label>
@@ -162,19 +179,32 @@ import { BudgetWithCalculations, Expense } from '../models/budget.interface';
               </mat-form-field>
               
               <button mat-raised-button color="primary" type="submit" [disabled]="!monthlyHousingExpenseForm.valid">
-                <mat-icon>add</mat-icon>
-                Add
+                <mat-icon>{{ editingMonthlyHousingExpenseId >= 0 ? 'save' : 'add' }}</mat-icon>
+                {{ editingMonthlyHousingExpenseId >= 0 ? 'Update' : 'Add' }}
+              </button>
+              
+              <button mat-stroked-button type="button" (click)="cancelMonthlyHousingEdit()" *ngIf="editingMonthlyHousingExpenseId >= 0">
+                <mat-icon>cancel</mat-icon>
+                Cancel
               </button>
             </div>
           </form>
 
-          <div class="expense-list" *ngIf="hasMonthlyHousingExpenses()">
-            <div class="expense-item" *ngFor="let expense of getMonthlyHousingExpenses()">
-              <span class="expense-name">{{ expense.name }}</span>
-              <span class="expense-amount">{{ expense.amount | currency }}/month</span>
-              <button mat-icon-button color="warn" (click)="deleteMonthlyHousingExpense(expense.id!)">
-                <mat-icon>delete</mat-icon>
-              </button>
+          <div class="expense-list" *ngIf="hasMonthlyHousingExpenses()" cdkDropList (cdkDropListDropped)="dropMonthlyHousingExpense($event)">
+            <div class="expense-item" *ngFor="let expense of getMonthlyHousingExpenses(); trackBy: trackByExpenseId" cdkDrag>
+              <div class="expense-content">
+                <mat-icon class="drag-handle" cdkDragHandle>drag_indicator</mat-icon>
+                <span class="expense-name">{{ expense.name }}</span>
+                <span class="expense-amount">{{ expense.amount | currency }}/month</span>
+                <div class="expense-actions">
+                  <button mat-icon-button color="primary" (click)="editMonthlyHousingExpense(expense)" type="button" matTooltip="Edit">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="deleteMonthlyHousingExpense(expense.id!)" matTooltip="Delete">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
             </div>
             <div class="expense-total">
               <strong>Total Monthly Housing Expenses: {{ budget?.calculations?.totalMonthlyHousingExpenses | currency }}/month</strong>
@@ -258,6 +288,8 @@ export class BudgetMortgageComponent implements OnInit, OnDestroy {
   mortgageForm!: FormGroup;
   annualHousingExpenseForm!: FormGroup;
   monthlyHousingExpenseForm!: FormGroup;
+  editingAnnualHousingExpenseId: number = -1;
+  editingMonthlyHousingExpenseId: number = -1;
   private subscription?: Subscription;
 
   ngOnInit(): void {
@@ -320,22 +352,86 @@ export class BudgetMortgageComponent implements OnInit, OnDestroy {
     }
   }
 
-  addAnnualHousingExpense(): void {
+  saveAnnualHousingExpense(): void {
     if (this.annualHousingExpenseForm.valid) {
       const { name, amount } = this.annualHousingExpenseForm.value;
-      this.budgetService.addAnnualHousingExpense(name, amount);
-      this.annualHousingExpenseForm.reset();
-      this.snackBar.open('Annual housing expense added!', 'Close', { duration: 2000 });
+      
+      if (this.editingAnnualHousingExpenseId >= 0) {
+        // Update existing expense
+        this.budgetService.updateAnnualHousingExpense(this.editingAnnualHousingExpenseId, { name, amount });
+        this.snackBar.open('Annual housing expense updated!', 'Close', { duration: 2000 });
+        this.cancelAnnualHousingEdit();
+      } else {
+        // Add new expense
+        this.budgetService.addAnnualHousingExpense(name, amount);
+        this.annualHousingExpenseForm.reset();
+        this.snackBar.open('Annual housing expense added!', 'Close', { duration: 2000 });
+      }
     }
   }
 
-  addMonthlyHousingExpense(): void {
+  saveMonthlyHousingExpense(): void {
     if (this.monthlyHousingExpenseForm.valid) {
       const { name, amount } = this.monthlyHousingExpenseForm.value;
-      this.budgetService.addMonthlyHousingExpense(name, amount);
-      this.monthlyHousingExpenseForm.reset();
-      this.snackBar.open('Monthly housing expense added!', 'Close', { duration: 2000 });
+      
+      if (this.editingMonthlyHousingExpenseId >= 0) {
+        // Update existing expense
+        this.budgetService.updateMonthlyHousingExpense(this.editingMonthlyHousingExpenseId, { name, amount });
+        this.snackBar.open('Monthly housing expense updated!', 'Close', { duration: 2000 });
+        this.cancelMonthlyHousingEdit();
+      } else {
+        // Add new expense
+        this.budgetService.addMonthlyHousingExpense(name, amount);
+        this.monthlyHousingExpenseForm.reset();
+        this.snackBar.open('Monthly housing expense added!', 'Close', { duration: 2000 });
+      }
     }
+  }
+
+  editAnnualHousingExpense(expense: Expense): void {
+    this.editingAnnualHousingExpenseId = expense.id!;
+    this.annualHousingExpenseForm.patchValue({
+      name: expense.name,
+      amount: expense.amount
+    });
+  }
+
+  editMonthlyHousingExpense(expense: Expense): void {
+    this.editingMonthlyHousingExpenseId = expense.id!;
+    this.monthlyHousingExpenseForm.patchValue({
+      name: expense.name,
+      amount: expense.amount
+    });
+  }
+
+  cancelAnnualHousingEdit(): void {
+    this.editingAnnualHousingExpenseId = -1;
+    this.annualHousingExpenseForm.reset();
+  }
+
+  cancelMonthlyHousingEdit(): void {
+    this.editingMonthlyHousingExpenseId = -1;
+    this.monthlyHousingExpenseForm.reset();
+  }
+
+  dropAnnualHousingExpense(event: CdkDragDrop<Expense[]>): void {
+    if (this.budget?.annualHousingExpenses) {
+      const expenses = [...this.budget.annualHousingExpenses];
+      moveItemInArray(expenses, event.previousIndex, event.currentIndex);
+      this.budgetService.reorderAnnualHousingExpenses(expenses);
+    }
+  }
+
+  dropMonthlyHousingExpense(event: CdkDragDrop<Expense[]>): void {
+    if (this.budget?.monthlyHousingExpenses) {
+      const expenses = [...this.budget.monthlyHousingExpenses];
+      moveItemInArray(expenses, event.previousIndex, event.currentIndex);
+      this.budgetService.reorderMonthlyHousingExpenses(expenses);
+    }
+  }
+
+  trackByExpenseId(index: number, expense: Expense): number {
+    return expense.id || index;
   }
 
   deleteAnnualHousingExpense(id: number): void {

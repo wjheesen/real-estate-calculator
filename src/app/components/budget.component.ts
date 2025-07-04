@@ -9,8 +9,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTableModule } from '@angular/material/table';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Subscription } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { BudgetService } from '../services/budget.service';
@@ -29,8 +31,10 @@ import { BudgetData, BudgetWithCalculations, PayDeduction } from '../models/budg
     MatCheckboxModule,
     MatIconModule,
     MatSnackBarModule,
+    MatTooltipModule,
     MatTableModule,
-    MatDialogModule
+    MatDialogModule,
+    DragDropModule
   ],
   template: `
     <div class="budget-container">
@@ -75,7 +79,7 @@ import { BudgetData, BudgetWithCalculations, PayDeduction } from '../models/budg
               <h3>Pay Deductions</h3>
               
               <!-- Add Deduction Form -->
-              <form [formGroup]="deductionForm" (ngSubmit)="addDeduction()" class="deduction-input-form">
+              <form [formGroup]="deductionForm" (ngSubmit)="saveDeduction()" class="deduction-input-form">
                 <div class="deduction-input-row">
                   <mat-form-field appearance="outline" class="deduction-name">
                     <mat-label>Deduction Name</mat-label>
@@ -89,19 +93,33 @@ import { BudgetData, BudgetWithCalculations, PayDeduction } from '../models/budg
                   </mat-form-field>
                   
                   <button mat-raised-button color="primary" type="submit" [disabled]="!deductionForm.valid">
-                    <mat-icon>add</mat-icon>
-                    Add
+                    <mat-icon>{{ editingDeductionIndex >= 0 ? 'save' : 'add' }}</mat-icon>
+                    {{ editingDeductionIndex >= 0 ? 'Update' : 'Add' }}
+                  </button>
+                  
+                  <button mat-stroked-button type="button" (click)="cancelEdit()" *ngIf="editingDeductionIndex >= 0">
+                    <mat-icon>cancel</mat-icon>
+                    Cancel
                   </button>
                 </div>
               </form>
 
-              <div class="deduction-list" *ngIf="payDeductions.length > 0">
-                <div class="deduction-item" *ngFor="let deduction of payDeductions.controls; let i = index" [formGroup]="$any(deduction)">
-                  <span class="deduction-name">{{ deduction.get('name')?.value }}</span>
-                  <span class="deduction-amount">{{ deduction.get('amount')?.value | currency }}{{ budgetForm.get('useTwoWeekPayStub')?.value ? ' bi-weekly' : ' annually' }}</span>
-                  <button mat-icon-button color="warn" (click)="removeDeduction(i)" type="button">
-                    <mat-icon>delete</mat-icon>
-                  </button>
+              <div class="deduction-list" *ngIf="payDeductions.length > 0" cdkDropList (cdkDropListDropped)="dropDeduction($event)">
+                <div class="deduction-item" *ngFor="let deduction of payDeductions.controls; let i = index" 
+                     [formGroup]="$any(deduction)" cdkDrag>
+                  <div class="deduction-content">
+                    <mat-icon class="drag-handle" cdkDragHandle>drag_indicator</mat-icon>
+                    <span class="deduction-name">{{ deduction.get('name')?.value }}</span>
+                    <span class="deduction-amount">{{ deduction.get('amount')?.value | currency }}{{ budgetForm.get('useTwoWeekPayStub')?.value ? ' bi-weekly' : ' annually' }}</span>
+                    <div class="deduction-actions">
+                      <button mat-icon-button color="primary" (click)="editDeduction(i)" type="button" matTooltip="Edit">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      <button mat-icon-button color="warn" (click)="removeDeduction(i)" type="button" matTooltip="Delete">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -143,6 +161,7 @@ export class BudgetComponent implements OnInit, OnDestroy {
   budgetForm!: FormGroup;
   deductionForm!: FormGroup;
   budgetResults: BudgetWithCalculations | null = null;
+  editingDeductionIndex: number = -1;
   private subscription?: Subscription;
 
   ngOnInit(): void {
@@ -209,27 +228,72 @@ export class BudgetComponent implements OnInit, OnDestroy {
     });
   }
 
-  addDeduction(): void {
+  saveDeduction(): void {
     if (this.deductionForm.valid) {
       const { name, amount } = this.deductionForm.value;
-      const newDeduction: PayDeduction = {
-        id: Date.now(),
-        name,
-        amount
-      };
       
-      this.payDeductions.push(this.createDeductionFormGroup(newDeduction));
+      if (this.editingDeductionIndex >= 0) {
+        // Update existing deduction
+        const deductionControl = this.payDeductions.at(this.editingDeductionIndex);
+        deductionControl.patchValue({ name, amount });
+        this.snackBar.open('Deduction updated!', 'Close', { duration: 2000 });
+        this.editingDeductionIndex = -1;
+      } else {
+        // Add new deduction
+        const newDeduction: PayDeduction = {
+          id: Date.now(),
+          name,
+          amount
+        };
+        
+        this.payDeductions.push(this.createDeductionFormGroup(newDeduction));
+        this.snackBar.open('Deduction added!', 'Close', { duration: 2000 });
+      }
+      
       this.deductionForm.reset();
-      this.snackBar.open('Deduction added!', 'Close', { duration: 2000 });
       
-      // Auto-save when deduction is added
+      // Auto-save when deduction is added/updated
       if (this.budgetForm.valid) {
         this.saveBudget();
       }
     }
   }
 
+  editDeduction(index: number): void {
+    const deduction = this.payDeductions.at(index);
+    this.deductionForm.patchValue({
+      name: deduction.get('name')?.value,
+      amount: deduction.get('amount')?.value
+    });
+    this.editingDeductionIndex = index;
+  }
+
+  cancelEdit(): void {
+    this.deductionForm.reset();
+    this.editingDeductionIndex = -1;
+  }
+
+  dropDeduction(event: CdkDragDrop<string[]>): void {
+    const deductionsArray = this.payDeductions;
+    const item = deductionsArray.at(event.previousIndex);
+    deductionsArray.removeAt(event.previousIndex);
+    deductionsArray.insert(event.currentIndex, item);
+    
+    // Auto-save when order changes
+    if (this.budgetForm.valid) {
+      this.saveBudget();
+    }
+  }
+
   removeDeduction(index: number): void {
+    // If we're editing this deduction, cancel the edit
+    if (this.editingDeductionIndex === index) {
+      this.cancelEdit();
+    } else if (this.editingDeductionIndex > index) {
+      // Adjust editing index if we're removing an item before it
+      this.editingDeductionIndex--;
+    }
+    
     this.payDeductions.removeAt(index);
     this.snackBar.open('Deduction removed!', 'Close', { duration: 2000 });
     

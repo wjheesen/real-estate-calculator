@@ -357,6 +357,38 @@ export class BudgetService {
     }
   }
 
+  updateAnnualHousingExpense(id: number, updates: Partial<Expense>): void {
+    const currentBudget = this.budgetSubject.value;
+    if (currentBudget) {
+      const updatedExpenses = (currentBudget.annualHousingExpenses || []).map(expense =>
+        expense.id === id ? { ...expense, ...updates } : expense
+      );
+      
+      const updatedBudget: BudgetData = {
+        ...currentBudget,
+        annualHousingExpenses: updatedExpenses
+      };
+      
+      this.saveBudget(updatedBudget);
+    }
+  }
+
+  updateMonthlyHousingExpense(id: number, updates: Partial<Expense>): void {
+    const currentBudget = this.budgetSubject.value;
+    if (currentBudget) {
+      const updatedExpenses = (currentBudget.monthlyHousingExpenses || []).map(expense =>
+        expense.id === id ? { ...expense, ...updates } : expense
+      );
+      
+      const updatedBudget: BudgetData = {
+        ...currentBudget,
+        monthlyHousingExpenses: updatedExpenses
+      };
+      
+      this.saveBudget(updatedBudget);
+    }
+  }
+
   deleteAnnualHousingExpense(id: number): void {
     const currentBudget = this.budgetSubject.value;
     if (currentBudget) {
@@ -397,6 +429,54 @@ export class BudgetService {
         ...currentBudget,
         anticipatedMortgageRate: rate,
         anticipatedMortgageTermYears: termYears
+      };
+      
+      this.saveBudget(updatedBudget);
+    }
+  }
+
+  reorderAnnualExpenses(reorderedExpenses: Expense[]): void {
+    const currentBudget = this.budgetSubject.value;
+    if (currentBudget) {
+      const updatedBudget: BudgetData = {
+        ...currentBudget,
+        annualExpenses: reorderedExpenses
+      };
+      
+      this.saveBudget(updatedBudget);
+    }
+  }
+
+  reorderMonthlyExpenses(reorderedExpenses: Expense[]): void {
+    const currentBudget = this.budgetSubject.value;
+    if (currentBudget) {
+      const updatedBudget: BudgetData = {
+        ...currentBudget,
+        monthlyExpenses: reorderedExpenses
+      };
+      
+      this.saveBudget(updatedBudget);
+    }
+  }
+
+  reorderAnnualHousingExpenses(reorderedExpenses: Expense[]): void {
+    const currentBudget = this.budgetSubject.value;
+    if (currentBudget) {
+      const updatedBudget: BudgetData = {
+        ...currentBudget,
+        annualHousingExpenses: reorderedExpenses
+      };
+      
+      this.saveBudget(updatedBudget);
+    }
+  }
+
+  reorderMonthlyHousingExpenses(reorderedExpenses: Expense[]): void {
+    const currentBudget = this.budgetSubject.value;
+    if (currentBudget) {
+      const updatedBudget: BudgetData = {
+        ...currentBudget,
+        monthlyHousingExpenses: reorderedExpenses
       };
       
       this.saveBudget(updatedBudget);

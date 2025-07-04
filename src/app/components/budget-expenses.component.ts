@@ -8,6 +8,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Subscription } from 'rxjs';
 import { BudgetService } from '../services/budget.service';
 import { BudgetWithCalculations, Expense } from '../models/budget.interface';
@@ -23,7 +25,9 @@ import { BudgetWithCalculations, Expense } from '../models/budget.interface';
     MatInputModule,
     MatButtonModule,
     MatIconModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatTooltipModule,
+    DragDropModule
   ],
   template: `
     <div class="budget-expenses-container">
@@ -74,7 +78,7 @@ import { BudgetWithCalculations, Expense } from '../models/budget.interface';
         </mat-card-header>
         
         <mat-card-content>
-          <form [formGroup]="annualExpenseForm" (ngSubmit)="addAnnualExpense()" class="expense-form">
+          <form [formGroup]="annualExpenseForm" (ngSubmit)="saveAnnualExpense()" class="expense-form">
             <div class="expense-input-row">
               <mat-form-field appearance="outline" class="expense-name">
                 <mat-label>Expense Name</mat-label>
@@ -88,19 +92,32 @@ import { BudgetWithCalculations, Expense } from '../models/budget.interface';
               </mat-form-field>
               
               <button mat-raised-button color="primary" type="submit" [disabled]="!annualExpenseForm.valid">
-                <mat-icon>add</mat-icon>
-                Add
+                <mat-icon>{{ editingAnnualExpenseId >= 0 ? 'save' : 'add' }}</mat-icon>
+                {{ editingAnnualExpenseId >= 0 ? 'Update' : 'Add' }}
+              </button>
+              
+              <button mat-stroked-button type="button" (click)="cancelAnnualEdit()" *ngIf="editingAnnualExpenseId >= 0">
+                <mat-icon>cancel</mat-icon>
+                Cancel
               </button>
             </div>
           </form>
 
-          <div class="expense-list" *ngIf="hasAnnualExpenses()">
-            <div class="expense-item" *ngFor="let expense of getAnnualExpenses()">
-              <span class="expense-name">{{ expense.name }}</span>
-              <span class="expense-amount">{{ expense.amount | currency }}</span>
-              <button mat-icon-button color="warn" (click)="deleteAnnualExpense(expense.id!)">
-                <mat-icon>delete</mat-icon>
-              </button>
+          <div class="expense-list" *ngIf="hasAnnualExpenses()" cdkDropList (cdkDropListDropped)="dropAnnualExpense($event)">
+            <div class="expense-item" *ngFor="let expense of getAnnualExpenses(); trackBy: trackByExpenseId" cdkDrag>
+              <div class="expense-content">
+                <mat-icon class="drag-handle" cdkDragHandle>drag_indicator</mat-icon>
+                <span class="expense-name">{{ expense.name }}</span>
+                <span class="expense-amount">{{ expense.amount | currency }}</span>
+                <div class="expense-actions">
+                  <button mat-icon-button color="primary" (click)="editAnnualExpense(expense)" type="button" matTooltip="Edit">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="deleteAnnualExpense(expense.id!)" matTooltip="Delete">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
             </div>
             <div class="expense-total">
               <strong>Total Annual Expenses: {{ budget?.calculations?.totalAnnualExpenses | currency }}</strong>
@@ -119,7 +136,7 @@ import { BudgetWithCalculations, Expense } from '../models/budget.interface';
         </mat-card-header>
         
         <mat-card-content>
-          <form [formGroup]="monthlyExpenseForm" (ngSubmit)="addMonthlyExpense()" class="expense-form">
+          <form [formGroup]="monthlyExpenseForm" (ngSubmit)="saveMonthlyExpense()" class="expense-form">
             <div class="expense-input-row">
               <mat-form-field appearance="outline" class="expense-name">
                 <mat-label>Expense Name</mat-label>
@@ -133,19 +150,32 @@ import { BudgetWithCalculations, Expense } from '../models/budget.interface';
               </mat-form-field>
               
               <button mat-raised-button color="primary" type="submit" [disabled]="!monthlyExpenseForm.valid">
-                <mat-icon>add</mat-icon>
-                Add
+                <mat-icon>{{ editingMonthlyExpenseId >= 0 ? 'save' : 'add' }}</mat-icon>
+                {{ editingMonthlyExpenseId >= 0 ? 'Update' : 'Add' }}
+              </button>
+              
+              <button mat-stroked-button type="button" (click)="cancelMonthlyEdit()" *ngIf="editingMonthlyExpenseId >= 0">
+                <mat-icon>cancel</mat-icon>
+                Cancel
               </button>
             </div>
           </form>
 
-          <div class="expense-list" *ngIf="hasMonthlyExpenses()">
-            <div class="expense-item" *ngFor="let expense of getMonthlyExpenses()">
-              <span class="expense-name">{{ expense.name }}</span>
-              <span class="expense-amount">{{ expense.amount | currency }}/month</span>
-              <button mat-icon-button color="warn" (click)="deleteMonthlyExpense(expense.id!)">
-                <mat-icon>delete</mat-icon>
-              </button>
+          <div class="expense-list" *ngIf="hasMonthlyExpenses()" cdkDropList (cdkDropListDropped)="dropMonthlyExpense($event)">
+            <div class="expense-item" *ngFor="let expense of getMonthlyExpenses(); trackBy: trackByExpenseId" cdkDrag>
+              <div class="expense-content">
+                <mat-icon class="drag-handle" cdkDragHandle>drag_indicator</mat-icon>
+                <span class="expense-name">{{ expense.name }}</span>
+                <span class="expense-amount">{{ expense.amount | currency }}/month</span>
+                <div class="expense-actions">
+                  <button mat-icon-button color="primary" (click)="editMonthlyExpense(expense)" type="button" matTooltip="Edit">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="deleteMonthlyExpense(expense.id!)" matTooltip="Delete">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
             </div>
             <div class="expense-total">
               <strong>Total Monthly Expenses: {{ budget?.calculations?.totalMonthlyExpenses | currency }}/month</strong>
@@ -180,6 +210,8 @@ export class BudgetExpensesComponent implements OnInit, OnDestroy {
   budget: BudgetWithCalculations | null = null;
   annualExpenseForm!: FormGroup;
   monthlyExpenseForm!: FormGroup;
+  editingAnnualExpenseId: number = -1;
+  editingMonthlyExpenseId: number = -1;
   private subscription?: Subscription;
 
   ngOnInit(): void {
@@ -218,22 +250,86 @@ export class BudgetExpensesComponent implements OnInit, OnDestroy {
     this.router.navigate(['/budget-income']);
   }
 
-  addAnnualExpense(): void {
+  saveAnnualExpense(): void {
     if (this.annualExpenseForm.valid) {
       const { name, amount } = this.annualExpenseForm.value;
-      this.budgetService.addAnnualExpense(name, amount);
-      this.annualExpenseForm.reset();
-      this.snackBar.open('Annual expense added!', 'Close', { duration: 2000 });
+      
+      if (this.editingAnnualExpenseId >= 0) {
+        // Update existing expense
+        this.budgetService.updateAnnualExpense(this.editingAnnualExpenseId, { name, amount });
+        this.snackBar.open('Annual expense updated!', 'Close', { duration: 2000 });
+        this.cancelAnnualEdit();
+      } else {
+        // Add new expense
+        this.budgetService.addAnnualExpense(name, amount);
+        this.annualExpenseForm.reset();
+        this.snackBar.open('Annual expense added!', 'Close', { duration: 2000 });
+      }
     }
   }
 
-  addMonthlyExpense(): void {
+  saveMonthlyExpense(): void {
     if (this.monthlyExpenseForm.valid) {
       const { name, amount } = this.monthlyExpenseForm.value;
-      this.budgetService.addMonthlyExpense(name, amount);
-      this.monthlyExpenseForm.reset();
-      this.snackBar.open('Monthly expense added!', 'Close', { duration: 2000 });
+      
+      if (this.editingMonthlyExpenseId >= 0) {
+        // Update existing expense
+        this.budgetService.updateMonthlyExpense(this.editingMonthlyExpenseId, { name, amount });
+        this.snackBar.open('Monthly expense updated!', 'Close', { duration: 2000 });
+        this.cancelMonthlyEdit();
+      } else {
+        // Add new expense
+        this.budgetService.addMonthlyExpense(name, amount);
+        this.monthlyExpenseForm.reset();
+        this.snackBar.open('Monthly expense added!', 'Close', { duration: 2000 });
+      }
     }
+  }
+
+  editAnnualExpense(expense: Expense): void {
+    this.editingAnnualExpenseId = expense.id!;
+    this.annualExpenseForm.patchValue({
+      name: expense.name,
+      amount: expense.amount
+    });
+  }
+
+  editMonthlyExpense(expense: Expense): void {
+    this.editingMonthlyExpenseId = expense.id!;
+    this.monthlyExpenseForm.patchValue({
+      name: expense.name,
+      amount: expense.amount
+    });
+  }
+
+  cancelAnnualEdit(): void {
+    this.editingAnnualExpenseId = -1;
+    this.annualExpenseForm.reset();
+  }
+
+  cancelMonthlyEdit(): void {
+    this.editingMonthlyExpenseId = -1;
+    this.monthlyExpenseForm.reset();
+  }
+
+  dropAnnualExpense(event: CdkDragDrop<Expense[]>): void {
+    if (this.budget?.annualExpenses) {
+      const expenses = [...this.budget.annualExpenses];
+      moveItemInArray(expenses, event.previousIndex, event.currentIndex);
+      this.budgetService.reorderAnnualExpenses(expenses);
+    }
+  }
+
+  dropMonthlyExpense(event: CdkDragDrop<Expense[]>): void {
+    if (this.budget?.monthlyExpenses) {
+      const expenses = [...this.budget.monthlyExpenses];
+      moveItemInArray(expenses, event.previousIndex, event.currentIndex);
+      this.budgetService.reorderMonthlyExpenses(expenses);
+    }
+  }
+
+  trackByExpenseId(index: number, expense: Expense): number {
+    return expense.id || index;
   }
 
   deleteAnnualExpense(id: number): void {
