@@ -10,7 +10,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTabsModule, MatTabGroup } from '@angular/material/tabs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatSelectModule } from '@angular/material/select';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { RealEstateCalculatorService } from '../services/real-estate-calculator.service';
@@ -20,6 +20,7 @@ import { SettingsService } from '../services/settings.service';
 import { PortfolioService } from '../services/portfolio.service';
 import { RealEstateCalculation, CalculationResults, SavedCalculation, Portfolio } from '../models/real-estate.interface';
 import { Settings } from '../models/settings.interface';
+import { SettingsComponent } from './settings.component';
 
 @Component({
   selector: 'app-calculator',
@@ -68,7 +69,8 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     private portfolioService: PortfolioService,
     private router: Router,
     private route: ActivatedRoute,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private dialog: MatDialog
   ) {
     this.calculatorForm = this.createForm();
   }
@@ -592,5 +594,26 @@ export class CalculatorComponent implements OnInit, OnDestroy {
         this.tabGroup.selectedIndex = 0;
       }
     }
+  }
+
+  openSettings(): void {
+    const dialogRef = this.dialog.open(SettingsComponent, {
+      width: '600px',
+      disableClose: false
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        // Settings were saved, show a message
+        this.snackBar.open('Settings updated successfully', 'Close', {
+          duration: 3000
+        });
+        
+        // Reload current settings to pick up any changes
+        this.settingsService.getSettings().subscribe(settings => {
+          this.currentSettings = settings;
+        });
+      }
+    });
   }
 }

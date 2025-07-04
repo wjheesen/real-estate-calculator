@@ -11,6 +11,23 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.title-section {
+  flex: 1;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
 .calculator-form {
   padding: 20px 0;
 }
@@ -155,18 +172,6 @@
   margin-bottom: 0;
   padding-bottom: 0;
   border-bottom: none;
-}
-
-/* Header styling */
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  width: 100%;
-}
-
-.title-section {
-  flex: 1;
 }
 
 /* Disabled field styling */

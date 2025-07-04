@@ -7,7 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatIconModule } from '@angular/material/icon';
-import { RouterModule } from '@angular/router';
+import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { Settings, DEFAULT_SETTINGS } from '../models/settings.interface';
 import { SettingsService } from '../services/settings.service';
 
@@ -23,7 +23,7 @@ import { SettingsService } from '../services/settings.service';
     MatButtonModule,
     MatSnackBarModule,
     MatIconModule,
-    RouterModule
+    MatDialogModule
   ],
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.css']
@@ -32,6 +32,7 @@ export class SettingsComponent implements OnInit {
   private fb = inject(FormBuilder);
   private snackBar = inject(MatSnackBar);
   private settingsService = inject(SettingsService);
+  private dialogRef = inject(MatDialogRef<SettingsComponent>);
 
   settingsForm!: FormGroup;
 
@@ -64,12 +65,19 @@ export class SettingsComponent implements OnInit {
         const settings: Settings = this.settingsForm.value;
         this.settingsService.saveSettings(settings);
         this.showSnackBar('Settings saved successfully!');
+        // Close dialog with result indicating success
+        this.dialogRef.close(true);
       } catch (error) {
         this.showSnackBar('Error saving settings. Please try again.');
       }
     } else {
       this.showSnackBar('Please fix validation errors before saving.');
     }
+  }
+
+  onCancel(): void {
+    // Close dialog without saving
+    this.dialogRef.close(false);
   }
 
   onReset(): void {
