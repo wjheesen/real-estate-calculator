@@ -1,0 +1,233 @@
+.budget-mortgage-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.income-summary-card,
+.mortgage-params-card,
+.housing-expenses-card,
+.mortgage-results-card {
+  width: 100%;
+}
+
+.income-summary-card mat-card-header,
+.mortgage-params-card mat-card-header,
+.housing-expenses-card mat-card-header,
+.mortgage-results-card mat-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-actions {
+  margin-left: auto;
+}
+
+.income-summary,
+.mortgage-results {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.summary-row,
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.summary-row.highlight,
+.result-row.highlight {
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin: 8px 0;
+}
+
+.result-row.large {
+  font-size: 1.1em;
+}
+
+.label {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.value {
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.9);
+}
+
+.mortgage-form,
+.expense-form {
+  margin-bottom: 24px;
+}
+
+.mortgage-input-row,
+.expense-input-row {
+  display: flex;
+  gap: 16px;
+  align-items: end;
+}
+
+.mortgage-rate,
+.mortgage-term {
+  flex: 1;
+}
+
+.expense-name {
+  flex: 2;
+}
+
+.expense-amount {
+  flex: 1;
+}
+
+.expense-list {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.expense-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.expense-item:last-of-type {
+  border-bottom: none;
+}
+
+.expense-item:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.expense-item .expense-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.expense-item .expense-amount {
+  margin-right: 16px;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.expense-total {
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 12px 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  text-align: center;
+  color: #1976d2;
+}
+
+.mortgage-results-card {
+  background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+  color: white;
+}
+
+.mortgage-results-card mat-card-header,
+.mortgage-results-card mat-card-title {
+  color: white !important;
+}
+
+.mortgage-results-card .label {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.mortgage-results-card .value {
+  color: white;
+  font-weight: 600;
+}
+
+.mortgage-results-card .result-row.highlight {
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.mortgage-details {
+  margin-top: 16px;
+  padding: 12px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.details-text {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .budget-mortgage-container {
+    padding: 10px;
+  }
+  
+  .mortgage-input-row,
+  .expense-input-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .mortgage-rate,
+  .mortgage-term,
+  .expense-name,
+  .expense-amount {
+    flex: 1;
+    width: 100%;
+  }
+  
+  .expense-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .expense-item .expense-amount {
+    margin-right: 0;
+  }
+  
+  .actions {
+    flex-direction: column;
+  }
+  
+  .actions button {
+    width: 100%;
+  }
+}
+
+/* Button styling */
+button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Form field styling */
+mat-form-field {
+  margin-bottom: 0;
+}
+
+/* Icon styling in headers */
+mat-card-title mat-icon {
+  margin-right: 8px;
+  vertical-align: middle;
+}

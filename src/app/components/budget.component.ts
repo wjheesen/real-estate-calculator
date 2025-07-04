@@ -283,7 +283,11 @@ export class BudgetComponent implements OnInit, OnDestroy {
         useTwoWeekPayStub: formValue.useTwoWeekPayStub,
         payDeductions: formValue.payDeductions,
         annualExpenses: [],
-        monthlyExpenses: []
+        monthlyExpenses: [],
+        anticipatedMortgageRate: 6.5,
+        anticipatedMortgageTermYears: 30,
+        annualHousingExpenses: [],
+        monthlyHousingExpenses: []
       };
 
       this.budgetService.saveBudget(budgetData);

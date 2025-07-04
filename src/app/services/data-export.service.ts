@@ -473,11 +473,13 @@ Note: Importing will replace all existing data and settings.
     }
 
     // Budget basic info headers
-    const basicHeaders = ['id', 'grossIncome', 'useTwoWeekPayStub', 'createdAt', 'updatedAt'];
+    const basicHeaders = ['id', 'grossIncome', 'useTwoWeekPayStub', 'anticipatedMortgageRate', 'anticipatedMortgageTermYears', 'createdAt', 'updatedAt'];
     const basicRow = [
       budget.id || '',
       budget.grossIncome || 0,
       budget.useTwoWeekPayStub || false,
+      budget.anticipatedMortgageRate || '',
+      budget.anticipatedMortgageTermYears || '',
       budget.createdAt ? new Date(budget.createdAt).toISOString() : '',
       budget.updatedAt ? new Date(budget.updatedAt).toISOString() : ''
     ];
@@ -526,6 +528,34 @@ Note: Importing will replace all existing data and settings.
       });
     }
 
+    // Annual housing expenses section
+    csvContent += '\nANNUAL_HOUSING_EXPENSES\n';
+    csvContent += 'id,name,amount,description\n';
+    if (budget.annualHousingExpenses && budget.annualHousingExpenses.length > 0) {
+      budget.annualHousingExpenses.forEach(expense => {
+        csvContent += [
+          expense.id || '',
+          `"${(expense.name || '').replace(/"/g, '""')}"`,
+          expense.amount || 0,
+          `"${(expense.description || '').replace(/"/g, '""')}"`
+        ].join(',') + '\n';
+      });
+    }
+
+    // Monthly housing expenses section
+    csvContent += '\nMONTHLY_HOUSING_EXPENSES\n';
+    csvContent += 'id,name,amount,description\n';
+    if (budget.monthlyHousingExpenses && budget.monthlyHousingExpenses.length > 0) {
+      budget.monthlyHousingExpenses.forEach(expense => {
+        csvContent += [
+          expense.id || '',
+          `"${(expense.name || '').replace(/"/g, '""')}"`,
+          expense.amount || 0,
+          `"${(expense.description || '').replace(/"/g, '""')}"`
+        ].join(',') + '\n';
+      });
+    }
+
     return csvContent;
   }
 
@@ -547,11 +577,15 @@ Note: Importing will replace all existing data and settings.
       id: basicValues[0] ? parseInt(basicValues[0]) : undefined,
       grossIncome: basicValues[1] ? parseFloat(basicValues[1]) : 0,
       useTwoWeekPayStub: basicValues[2] === 'true',
+      anticipatedMortgageRate: basicValues[3] ? parseFloat(basicValues[3]) : undefined,
+      anticipatedMortgageTermYears: basicValues[4] ? parseInt(basicValues[4]) : undefined,
       payDeductions: [],
       annualExpenses: [],
       monthlyExpenses: [],
-      createdAt: basicValues[3] ? new Date(basicValues[3]) : undefined,
-      updatedAt: basicValues[4] ? new Date(basicValues[4]) : undefined
+      annualHousingExpenses: [],
+      monthlyHousingExpenses: [],
+      createdAt: basicValues[5] ? new Date(basicValues[5]) : undefined,
+      updatedAt: basicValues[6] ? new Date(basicValues[6]) : undefined
     };
 
     // Parse sections

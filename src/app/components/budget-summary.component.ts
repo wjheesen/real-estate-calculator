@@ -131,6 +131,10 @@ import { BudgetWithCalculations } from '../models/budget.interface';
 
       <!-- Actions -->
       <div class="actions">
+        <button mat-raised-button color="accent" (click)="planMortgage()" [disabled]="!budget">
+          <mat-icon>calculate</mat-icon>
+          Plan Mortgage
+        </button>
         <button mat-raised-button color="primary" (click)="finishExpenses()" [disabled]="!budget">
           <mat-icon>check</mat-icon>
           Finish & View Summary
@@ -177,6 +181,10 @@ export class BudgetSummaryComponent implements OnInit, OnDestroy {
 
   editExpenses(): void {
     this.router.navigate(['/budget-expenses']);
+  }
+
+  planMortgage(): void {
+    this.router.navigate(['/budget-mortgage']);
   }
 
   clearBudget(): void {

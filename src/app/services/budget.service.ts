@@ -40,7 +40,9 @@ export class BudgetService {
           const completeData = {
             ...budgetData,
             annualExpenses: budgetData.annualExpenses || [],
-            monthlyExpenses: budgetData.monthlyExpenses || []
+            monthlyExpenses: budgetData.monthlyExpenses || [],
+            annualHousingExpenses: budgetData.annualHousingExpenses || [],
+            monthlyHousingExpenses: budgetData.monthlyHousingExpenses || []
           };
           const budgetWithCalculations = this.calculateBudget(completeData);
           this.budgetSubject.next(budgetWithCalculations);
@@ -62,7 +64,7 @@ export class BudgetService {
     );
     const netIncomeAnnual = grossIncomeAnnual - totalDeductionsAnnual;
     
-    // Calculate expenses
+    // Calculate non-housing expenses
     const totalAnnualExpenses = (budgetData.annualExpenses || []).reduce(
       (sum, expense) => sum + expense.amount, 
       0
@@ -74,9 +76,53 @@ export class BudgetService {
     const totalMonthlyExpensesAnnualized = totalMonthlyExpenses * 12;
     const totalExpensesAnnual = totalAnnualExpenses + totalMonthlyExpensesAnnualized;
     
-    // Calculate available for housing
+    // Calculate housing expenses
+    const totalAnnualHousingExpenses = (budgetData.annualHousingExpenses || []).reduce(
+      (sum, expense) => sum + expense.amount, 
+      0
+    );
+    const totalMonthlyHousingExpenses = (budgetData.monthlyHousingExpenses || []).reduce(
+      (sum, expense) => sum + expense.amount, 
+      0
+    );
+    const totalMonthlyHousingExpensesAnnualized = totalMonthlyHousingExpenses * 12;
+    const totalHousingExpensesAnnual = totalAnnualHousingExpenses + totalMonthlyHousingExpensesAnnualized;
+    
+    // Calculate available for housing (before mortgage)
     const availableForHousingAnnual = netIncomeAnnual - totalExpensesAnnual;
     const availableForHousingMonthly = availableForHousingAnnual / 12;
+    
+    // Calculate mortgage affordability
+    let affordableMonthlyMortgagePayment: number | undefined;
+    let affordableTotalMortgageAmount: number | undefined;
+    let remainingMonthlyAfterMortgage: number | undefined;
+    
+    // Calculate total combined monthly housing expenses
+    const totalHousingExpensesMonthly = totalMonthlyHousingExpenses + (totalAnnualHousingExpenses / 12);
+    
+    if (budgetData.anticipatedMortgageRate && budgetData.anticipatedMortgageTermYears) {
+      // Available monthly amount after housing expenses (property taxes, insurance, etc.)
+      const availableForMortgageMonthly = availableForHousingMonthly - totalHousingExpensesMonthly;
+      
+      if (availableForMortgageMonthly > 0) {
+        affordableMonthlyMortgagePayment = availableForMortgageMonthly;
+        
+        // Calculate total mortgage amount using mortgage payment formula
+        const monthlyRate = budgetData.anticipatedMortgageRate / 100 / 12;
+        const totalPayments = budgetData.anticipatedMortgageTermYears * 12;
+        
+        if (monthlyRate > 0) {
+          // PMT formula rearranged to solve for principal: P = PMT * [(1 - (1 + r)^-n) / r]
+          affordableTotalMortgageAmount = affordableMonthlyMortgagePayment * 
+            ((1 - Math.pow(1 + monthlyRate, -totalPayments)) / monthlyRate);
+        } else {
+          // If rate is 0%, simple calculation
+          affordableTotalMortgageAmount = affordableMonthlyMortgagePayment * totalPayments;
+        }
+        
+        remainingMonthlyAfterMortgage = 0; // All available housing budget used for mortgage
+      }
+    }
     
     const calculations: BudgetCalculations = {
       grossIncomeAnnual,
@@ -90,7 +136,15 @@ export class BudgetService {
       totalMonthlyExpensesAnnualized,
       totalExpensesAnnual,
       availableForHousingAnnual,
-      availableForHousingMonthly
+      availableForHousingMonthly,
+      totalAnnualHousingExpenses,
+      totalMonthlyHousingExpenses,
+      totalMonthlyHousingExpensesAnnualized,
+      totalHousingExpensesAnnual,
+      totalHousingExpensesMonthly,
+      affordableMonthlyMortgagePayment,
+      affordableTotalMortgageAmount,
+      remainingMonthlyAfterMortgage
     };
 
     return {
@@ -258,6 +312,91 @@ export class BudgetService {
       const updatedBudget: BudgetData = {
         ...currentBudget,
         monthlyExpenses: updatedExpenses
+      };
+      
+      this.saveBudget(updatedBudget);
+    }
+  }
+
+  // Housing expense management methods
+  addAnnualHousingExpense(name: string, amount: number, description?: string): void {
+    const currentBudget = this.budgetSubject.value;
+    if (currentBudget) {
+      const newExpense: Expense = {
+        id: Date.now(),
+        name,
+        amount,
+        description
+      };
+      
+      const updatedBudget: BudgetData = {
+        ...currentBudget,
+        annualHousingExpenses: [...(currentBudget.annualHousingExpenses || []), newExpense]
+      };
+      
+      this.saveBudget(updatedBudget);
+    }
+  }
+
+  addMonthlyHousingExpense(name: string, amount: number, description?: string): void {
+    const currentBudget = this.budgetSubject.value;
+    if (currentBudget) {
+      const newExpense: Expense = {
+        id: Date.now(),
+        name,
+        amount,
+        description
+      };
+      
+      const updatedBudget: BudgetData = {
+        ...currentBudget,
+        monthlyHousingExpenses: [...(currentBudget.monthlyHousingExpenses || []), newExpense]
+      };
+      
+      this.saveBudget(updatedBudget);
+    }
+  }
+
+  deleteAnnualHousingExpense(id: number): void {
+    const currentBudget = this.budgetSubject.value;
+    if (currentBudget) {
+      const updatedExpenses = (currentBudget.annualHousingExpenses || []).filter(
+        expense => expense.id !== id
+      );
+      
+      const updatedBudget: BudgetData = {
+        ...currentBudget,
+        annualHousingExpenses: updatedExpenses
+      };
+      
+      this.saveBudget(updatedBudget);
+    }
+  }
+
+  deleteMonthlyHousingExpense(id: number): void {
+    const currentBudget = this.budgetSubject.value;
+    if (currentBudget) {
+      const updatedExpenses = (currentBudget.monthlyHousingExpenses || []).filter(
+        expense => expense.id !== id
+      );
+      
+      const updatedBudget: BudgetData = {
+        ...currentBudget,
+        monthlyHousingExpenses: updatedExpenses
+      };
+      
+      this.saveBudget(updatedBudget);
+    }
+  }
+
+  // Mortgage parameter update method
+  updateMortgageParameters(rate?: number, termYears?: number): void {
+    const currentBudget = this.budgetSubject.value;
+    if (currentBudget) {
+      const updatedBudget: BudgetData = {
+        ...currentBudget,
+        anticipatedMortgageRate: rate,
+        anticipatedMortgageTermYears: termYears
       };
       
       this.saveBudget(updatedBudget);

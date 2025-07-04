@@ -4,6 +4,7 @@ import { PortfoliosComponent } from './components/portfolios.component';
 import { BudgetComponent } from './components/budget.component';
 import { BudgetSummaryComponent } from './components/budget-summary.component';
 import { BudgetExpensesComponent } from './components/budget-expenses.component';
+import { BudgetMortgageComponent } from './components/budget-mortgage.component';
 import { BudgetFinalComponent } from './components/budget-final.component';
 
 export const routes: Routes = [
@@ -14,5 +15,6 @@ export const routes: Routes = [
   { path: 'budget', component: BudgetComponent },
   { path: 'budget-summary', component: BudgetSummaryComponent },
   { path: 'budget-expenses', component: BudgetExpensesComponent },
+  { path: 'budget-mortgage', component: BudgetMortgageComponent },
   { path: 'budget-final', component: BudgetFinalComponent }
 ];

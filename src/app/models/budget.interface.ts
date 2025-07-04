@@ -19,6 +19,11 @@ export interface BudgetData {
   payDeductions: PayDeduction[];
   annualExpenses: Expense[];
   monthlyExpenses: Expense[];
+  // Mortgage-related fields
+  anticipatedMortgageRate?: number;
+  anticipatedMortgageTermYears?: number;
+  annualHousingExpenses: Expense[];
+  monthlyHousingExpenses: Expense[];
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -36,6 +41,16 @@ export interface BudgetCalculations {
   totalExpensesAnnual: number;
   availableForHousingAnnual: number;
   availableForHousingMonthly: number;
+  // Housing expense calculations
+  totalAnnualHousingExpenses: number;
+  totalMonthlyHousingExpenses: number;
+  totalMonthlyHousingExpensesAnnualized: number;
+  totalHousingExpensesAnnual: number;
+  totalHousingExpensesMonthly: number; // Combined monthly + annual/12
+  // Mortgage calculations
+  affordableMonthlyMortgagePayment?: number;
+  affordableTotalMortgageAmount?: number;
+  remainingMonthlyAfterMortgage?: number;
 }
 
 export interface BudgetWithCalculations extends BudgetData {
