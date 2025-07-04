@@ -12,6 +12,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
+import { take } from 'rxjs/operators';
 import { BudgetService } from '../services/budget.service';
 import { BudgetData, BudgetWithCalculations, PayDeduction } from '../models/budget.interface';
 
@@ -36,11 +37,11 @@ import { BudgetData, BudgetWithCalculations, PayDeduction } from '../models/budg
       <mat-card class="budget-card">
         <mat-card-header>
           <mat-card-title>
-            <mat-icon>account_balance_wallet</mat-icon>
-            Budget Calculator
+            <mat-icon>edit</mat-icon>
+            Edit Income Information
           </mat-card-title>
           <mat-card-subtitle>
-            Track your income and deductions to calculate net income
+            Update your income and deductions
           </mat-card-subtitle>
         </mat-card-header>
 
@@ -111,70 +112,22 @@ import { BudgetData, BudgetWithCalculations, PayDeduction } from '../models/budg
 
             <!-- Action Buttons -->
             <div class="form-actions">
-              <button mat-raised-button color="primary" (click)="calculateBudget()" [disabled]="!budgetForm.valid">
-                <mat-icon>calculate</mat-icon>
-                Calculate Budget
+              <button mat-raised-button color="primary" (click)="saveBudget()" [disabled]="!budgetForm.valid">
+                <mat-icon>save</mat-icon>
+                Save Income Data
               </button>
               
-              <button mat-stroked-button (click)="clearBudget()" type="button">
+              <button mat-stroked-button (click)="backToSummary()" type="button">
+                <mat-icon>arrow_back</mat-icon>
+                Back to Summary
+              </button>
+              
+              <button mat-stroked-button color="warn" (click)="clearBudget()" type="button">
                 <mat-icon>clear</mat-icon>
                 Clear All
               </button>
             </div>
           </form>
-
-          <!-- Results Section -->
-          <div class="results-section" *ngIf="budgetResults">
-            <mat-card class="results-card">
-              <mat-card-header>
-                <mat-card-title>Budget Summary</mat-card-title>
-              </mat-card-header>
-              
-              <mat-card-content>
-                <div class="results-grid">
-                  <!-- Annual Figures -->
-                  <div class="result-group">
-                    <h4>Annual Figures</h4>
-                    <div class="result-item">
-                      <span class="label">Gross Income:</span>
-                      <span class="value positive">{{ budgetResults.calculations.grossIncomeAnnual | currency }}</span>
-                    </div>
-                    <div class="result-item">
-                      <span class="label">Total Deductions:</span>
-                      <span class="value negative">{{ budgetResults.calculations.totalDeductionsAnnual | currency }}</span>
-                    </div>
-                    <div class="result-item total">
-                      <span class="label">Net Income:</span>
-                      <span class="value" [class.positive]="budgetResults.calculations.netIncomeAnnual > 0" 
-                            [class.negative]="budgetResults.calculations.netIncomeAnnual <= 0">
-                        {{ budgetResults.calculations.netIncomeAnnual | currency }}
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- Monthly Figures -->
-                  <div class="result-group">
-                    <h4>Monthly Figures</h4>
-                    <div class="result-item">
-                      <span class="label">Gross Income:</span>
-                      <span class="value positive">{{ budgetResults.calculations.grossIncomeMonthly | currency }}</span>
-                    </div>
-                    <div class="result-item">
-                      <span class="label">Total Deductions:</span>
-                      <span class="value negative">{{ budgetResults.calculations.totalDeductionsMonthly | currency }}</span>
-                    </div>
-                    <div class="result-item total">
-                      <span class="label">Net Income:</span>
-                      <span class="value" [class.positive]="budgetResults.calculations.netIncomeMonthly > 0" 
-                            [class.negative]="budgetResults.calculations.netIncomeMonthly <= 0">
-                        {{ budgetResults.calculations.netIncomeMonthly | currency }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </mat-card-content>
-            </mat-card>
-          </div>
         </mat-card-content>
       </mat-card>
     </div>
@@ -268,42 +221,57 @@ export class BudgetComponent implements OnInit, OnDestroy {
       this.payDeductions.push(this.createDeductionFormGroup(newDeduction));
       this.deductionForm.reset();
       this.snackBar.open('Deduction added!', 'Close', { duration: 2000 });
+      
+      // Auto-save when deduction is added
+      if (this.budgetForm.valid) {
+        this.saveBudget();
+      }
     }
   }
 
   removeDeduction(index: number): void {
     this.payDeductions.removeAt(index);
+    this.snackBar.open('Deduction removed!', 'Close', { duration: 2000 });
+    
+    // Auto-save when deduction is removed
+    if (this.budgetForm.valid) {
+      this.saveBudget();
+    }
   }
 
-  calculateBudget(): void {
+  saveBudget(): void {
     if (this.budgetForm.valid) {
       const formValue = this.budgetForm.value;
-      const budgetData: BudgetData = {
-        grossIncome: formValue.grossIncome,
-        useTwoWeekPayStub: formValue.useTwoWeekPayStub,
-        payDeductions: formValue.payDeductions,
-        annualExpenses: [],
-        monthlyExpenses: [],
-        anticipatedMortgageRate: 6.5,
-        anticipatedMortgageTermYears: 30,
-        annualHousingExpenses: [],
-        monthlyHousingExpenses: []
-      };
-
-      this.budgetService.saveBudget(budgetData);
-      this.snackBar.open('Budget saved! Redirecting to budget summary...', 'Close', {
-        duration: 2000
-      });
       
-      // Redirect to budget summary page
-      setTimeout(() => {
-        this.router.navigate(['/budget-summary']);
-      }, 2000);
+      // Get existing budget or create new one
+      this.budgetService.getBudget().pipe(take(1)).subscribe(existingBudget => {
+        const budgetData: BudgetData = {
+          grossIncome: formValue.grossIncome,
+          useTwoWeekPayStub: formValue.useTwoWeekPayStub,
+          payDeductions: formValue.payDeductions,
+          // Preserve existing expense and housing data
+          annualExpenses: existingBudget?.annualExpenses || [],
+          monthlyExpenses: existingBudget?.monthlyExpenses || [],
+          anticipatedMortgageRate: existingBudget?.anticipatedMortgageRate || 6.5,
+          anticipatedMortgageTermYears: existingBudget?.anticipatedMortgageTermYears || 30,
+          annualHousingExpenses: existingBudget?.annualHousingExpenses || [],
+          monthlyHousingExpenses: existingBudget?.monthlyHousingExpenses || []
+        };
+
+        this.budgetService.saveBudget(budgetData);
+        this.snackBar.open('Income data saved successfully!', 'Close', {
+          duration: 2000
+        });
+      });
     } else {
       this.snackBar.open('Please fill in all required fields correctly.', 'Close', {
         duration: 3000
       });
     }
+  }
+
+  backToSummary(): void {
+    this.router.navigate(['/budget']);
   }
 
   clearBudget(): void {

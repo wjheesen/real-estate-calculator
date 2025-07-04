@@ -233,6 +233,42 @@
   margin-top: 16px;
 }
 
+/* No Data States */
+.no-data,
+.no-mortgage-data {
+  text-align: center;
+  padding: 32px 24px;
+  color: #666;
+}
+
+.no-data mat-icon,
+.no-mortgage-data mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: #ccc;
+  margin-bottom: 16px;
+}
+
+.no-data p,
+.no-mortgage-data p {
+  margin: 0 0 20px 0;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.no-data-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.no-data button,
+.no-data-actions button {
+  min-width: 200px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .budget-final-container {

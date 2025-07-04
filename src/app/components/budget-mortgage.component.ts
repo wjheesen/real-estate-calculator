@@ -303,7 +303,7 @@ export class BudgetMortgageComponent implements OnInit, OnDestroy {
         }
       } else {
         // No budget data, redirect to budget summary
-        this.router.navigate(['/budget-summary']);
+        this.router.navigate(['/budget']);
       }
     });
   }
@@ -356,16 +356,16 @@ export class BudgetMortgageComponent implements OnInit, OnDestroy {
     if (confirm('Are you sure you want to clear all budget data? This cannot be undone.')) {
       this.budgetService.clearBudget();
       this.snackBar.open('Budget data cleared.', 'Close', { duration: 3000 });
-      this.router.navigate(['/budget-summary']);
+      this.router.navigate(['/budget']);
     }
   }
 
   backToSummary(): void {
-    this.router.navigate(['/budget-summary']);
+    this.router.navigate(['/budget']);
   }
 
   viewFinalSummary(): void {
-    this.router.navigate(['/budget-final']);
+    this.router.navigate(['/budget']);
   }
 
   // Helper methods for template

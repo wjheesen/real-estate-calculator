@@ -39,24 +39,7 @@ export class AppComponent {
   }
 
   navigateToBudget(): void {
-    this.budgetService.getBudget().pipe(take(1)).subscribe(budget => {
-      if (budget) {
-        // Check if we have expense data to determine which page to show
-        const hasExpenses = (budget.annualExpenses && budget.annualExpenses.length > 0) || 
-                           (budget.monthlyExpenses && budget.monthlyExpenses.length > 0);
-        
-        if (hasExpenses) {
-          // Has both income and expenses - go to final summary
-          this.router.navigate(['/budget-final']);
-        } else {
-          // Has income but no expenses - go to expense entry
-          this.router.navigate(['/budget-summary']);
-        }
-      } else {
-        // No budget data - go to income entry
-        this.router.navigate(['/budget']);
-      }
-    });
+    this.router.navigate(['/budget']);
   }
 
   isBudgetActive(): boolean {

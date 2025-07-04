@@ -39,7 +39,7 @@ import { BudgetWithCalculations } from '../models/budget.interface';
         </mat-card-header>
         
         <mat-card-content>
-          <div class="summary-grid" *ngIf="budget">
+          <div class="summary-grid" *ngIf="budget?.calculations; else noIncomeData">
             <div class="summary-row">
               <span class="label">Gross Income (Annual):</span>
               <span class="value">{{ budget?.calculations?.grossIncomeAnnual | currency }}</span>
@@ -57,6 +57,17 @@ import { BudgetWithCalculations } from '../models/budget.interface';
               <span class="value"><strong>{{ budget?.calculations?.netIncomeMonthly | currency }}</strong></span>
             </div>
           </div>
+          
+          <ng-template #noIncomeData>
+            <div class="no-data">
+              <mat-icon>info</mat-icon>
+              <p>Start by adding your income information to see budget calculations</p>
+              <button mat-raised-button color="primary" (click)="editIncome()">
+                <mat-icon>add</mat-icon>
+                Add Income Information
+              </button>
+            </div>
+          </ng-template>
         </mat-card-content>
       </mat-card>
 
@@ -76,7 +87,7 @@ import { BudgetWithCalculations } from '../models/budget.interface';
         </mat-card-header>
         
         <mat-card-content>
-          <div class="summary-grid" *ngIf="budget">
+          <div class="summary-grid" *ngIf="budget?.calculations; else noExpenseData">
             <div class="summary-row">
               <span class="label">Annual Expenses:</span>
               <span class="value">{{ budget?.calculations?.totalAnnualExpenses | currency }}</span>
@@ -94,11 +105,22 @@ import { BudgetWithCalculations } from '../models/budget.interface';
               <span class="value"><strong>{{ (budget?.calculations?.totalExpensesAnnual || 0) / 12 | currency }}</strong></span>
             </div>
           </div>
+          
+          <ng-template #noExpenseData>
+            <div class="no-data">
+              <mat-icon>info</mat-icon>
+              <p>Add your expense information to see complete budget analysis</p>
+              <button mat-raised-button color="primary" (click)="editExpenses()">
+                <mat-icon>add</mat-icon>
+                Add Expense Information
+              </button>
+            </div>
+          </ng-template>
         </mat-card-content>
       </mat-card>
 
       <!-- Mortgage Affordability Card -->
-      <mat-card class="mortgage-card" *ngIf="budget">
+      <mat-card class="mortgage-card">
         <mat-card-header>
           <mat-card-title>
             <mat-icon>calculate</mat-icon>
@@ -113,7 +135,7 @@ import { BudgetWithCalculations } from '../models/budget.interface';
         </mat-card-header>
         
         <mat-card-content>
-          <div class="mortgage-summary" *ngIf="hasMortgageSettings(); else noMortgageSettings">
+          <div class="mortgage-summary" *ngIf="budget?.calculations && hasMortgageSettings(); else noMortgageData">
             <div class="mortgage-params">
               <p><strong>Mortgage Parameters:</strong> {{ budget?.anticipatedMortgageRate }}% interest rate for {{ budget?.anticipatedMortgageTermYears }} years</p>
             </div>
@@ -160,13 +182,21 @@ import { BudgetWithCalculations } from '../models/budget.interface';
             </div>
           </div>
           
-          <ng-template #noMortgageSettings>
-            <div class="no-mortgage-settings">
-              <p>Set your anticipated mortgage rate and term to see affordability calculations.</p>
-              <button mat-raised-button color="accent" (click)="editMortgageSettings()">
-                <mat-icon>settings</mat-icon>
-                Set Mortgage Parameters
-              </button>
+          <ng-template #noMortgageData>
+            <div class="no-mortgage-data">
+              <mat-icon>info</mat-icon>
+              <p *ngIf="!budget?.calculations">Complete your income and expense information first to see mortgage affordability calculations.</p>
+              <p *ngIf="budget?.calculations && !hasMortgageSettings()">Set your anticipated mortgage rate and term to see affordability calculations.</p>
+              <div class="no-data-actions">
+                <button mat-raised-button color="primary" (click)="editIncome()" *ngIf="!budget?.calculations">
+                  <mat-icon>add</mat-icon>
+                  Add Income & Expenses
+                </button>
+                <button mat-raised-button color="accent" (click)="editMortgageSettings()" *ngIf="budget?.calculations && !hasMortgageSettings()">
+                  <mat-icon>settings</mat-icon>
+                  Set Mortgage Parameters
+                </button>
+              </div>
             </div>
           </ng-template>
         </mat-card-content>
@@ -201,12 +231,7 @@ export class BudgetFinalComponent implements OnInit, OnDestroy {
 
   private loadBudget(): void {
     this.subscription = this.budgetService.getBudget().subscribe(budget => {
-      if (budget) {
-        this.budget = budget;
-      } else {
-        // No budget data, redirect to budget summary
-        this.router.navigate(['/budget-summary']);
-      }
+      this.budget = budget; // Always set budget, even if null
     });
   }
 
@@ -226,7 +251,7 @@ export class BudgetFinalComponent implements OnInit, OnDestroy {
     if (confirm('Are you sure you want to clear all budget data? This cannot be undone.')) {
       this.budgetService.clearBudget();
       this.snackBar.open('Budget data cleared.', 'Close', { duration: 3000 });
-      this.router.navigate(['/budget-summary']);
+      this.router.navigate(['/budget']);
     }
   }
 
