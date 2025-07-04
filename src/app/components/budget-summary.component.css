@@ -1,0 +1,189 @@
+.budget-summary-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.income-summary-card,
+.expenses-card,
+.housing-summary-card {
+  width: 100%;
+}
+
+.income-summary-card mat-card-header,
+.expenses-card mat-card-header,
+.housing-summary-card mat-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-actions {
+  margin-left: auto;
+}
+
+.income-summary,
+.housing-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.summary-row.highlight {
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin: 8px 0;
+}
+
+.summary-row.large {
+  font-size: 1.1em;
+}
+
+.label {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.value {
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.9);
+}
+
+.expense-form {
+  margin-bottom: 24px;
+}
+
+.expense-input-row {
+  display: flex;
+  gap: 16px;
+  align-items: end;
+}
+
+.expense-name {
+  flex: 2;
+}
+
+.expense-amount {
+  flex: 1;
+}
+
+.expense-list {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.expense-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.expense-item:last-of-type {
+  border-bottom: none;
+}
+
+.expense-item:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.expense-item .expense-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.expense-item .expense-amount {
+  margin-right: 16px;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.expense-total {
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 16px;
+  text-align: center;
+  border-top: 1px solid rgba(25, 118, 210, 0.2);
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .budget-summary-container {
+    padding: 16px;
+    gap: 16px;
+  }
+  
+  .expense-input-row {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .expense-name,
+  .expense-amount {
+    flex: 1;
+  }
+  
+  .summary-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .summary-row .label,
+  .summary-row .value {
+    width: 100%;
+  }
+  
+  .expense-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .expense-item .expense-amount {
+    margin-right: 0;
+  }
+  
+  .header-actions {
+    margin-left: 0;
+    margin-top: 8px;
+  }
+  
+  .income-summary-card mat-card-header,
+  .expenses-card mat-card-header,
+  .housing-summary-card mat-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .budget-summary-container {
+    padding: 12px;
+  }
+  
+  .expense-item {
+    padding: 8px 12px;
+  }
+  
+  .summary-row.highlight {
+    padding: 8px 12px;
+  }
+}

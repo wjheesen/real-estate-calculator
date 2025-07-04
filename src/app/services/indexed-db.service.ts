@@ -1,15 +1,17 @@
 import { Injectable } from '@angular/core';
 import { Observable, from, throwError } from 'rxjs';
 import { SavedCalculation, Portfolio } from '../models/real-estate.interface';
+import { BudgetData } from '../models/budget.interface';
 
 @Injectable({
   providedIn: 'root'
 })
 export class IndexedDbService {
   private dbName = 'RealEstateCalculatorDB';
-  private version = 3; // Updated version for portfolios (renamed from scenarios)
+  private version = 4; // Updated version for budget data
   private calculationsStoreName = 'calculations';
   private portfoliosStoreName = 'portfolios';
+  private budgetStoreName = 'budget';
 
   constructor() {}
 
@@ -42,6 +44,15 @@ export class IndexedDbService {
           });
           portfoliosStore.createIndex('name', 'name', { unique: false });
           portfoliosStore.createIndex('createdAt', 'createdAt', { unique: false });
+        }
+        
+        // Create budget store
+        if (!db.objectStoreNames.contains(this.budgetStoreName)) {
+          const budgetStore = db.createObjectStore(this.budgetStoreName, { 
+            keyPath: 'id', 
+            autoIncrement: true 
+          });
+          budgetStore.createIndex('createdAt', 'createdAt', { unique: false });
         }
         
         // Initialize default scenario if this is a fresh install
@@ -244,6 +255,91 @@ export class IndexedDbService {
     return new Promise((resolve, reject) => {
       const request = index.getAll(portfolioId);
       request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // Budget methods
+  saveBudget(budget: BudgetData): Observable<BudgetData> {
+    return from(this.performSaveBudget(budget));
+  }
+
+  private async performSaveBudget(budget: BudgetData): Promise<BudgetData> {
+    const db = await this.openDatabase();
+    const transaction = db.transaction([this.budgetStoreName], 'readwrite');
+    const store = transaction.objectStore(this.budgetStoreName);
+
+    const budgetToSave = {
+      ...budget,
+      updatedAt: new Date()
+    };
+
+    return new Promise((resolve, reject) => {
+      const request = budget.id ? store.put(budgetToSave) : store.add(budgetToSave);
+      request.onsuccess = () => {
+        const savedBudget = { ...budgetToSave, id: request.result as number };
+        resolve(savedBudget);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  getBudget(): Observable<BudgetData | null> {
+    return from(this.performGetBudget());
+  }
+
+  private async performGetBudget(): Promise<BudgetData | null> {
+    const db = await this.openDatabase();
+    const transaction = db.transaction([this.budgetStoreName], 'readonly');
+    const store = transaction.objectStore(this.budgetStoreName);
+
+    return new Promise((resolve, reject) => {
+      // Get the most recent budget (we'll only store one budget record)
+      const request = store.getAll();
+      request.onsuccess = () => {
+        const budgets = request.result || [];
+        if (budgets.length > 0) {
+          // Return the most recent budget
+          const sortedBudgets = budgets.sort((a, b) => 
+            new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
+          );
+          resolve(sortedBudgets[0]);
+        } else {
+          resolve(null);
+        }
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  deleteBudget(id: number): Observable<void> {
+    return from(this.performDeleteBudget(id));
+  }
+
+  private async performDeleteBudget(id: number): Promise<void> {
+    const db = await this.openDatabase();
+    const transaction = db.transaction([this.budgetStoreName], 'readwrite');
+    const store = transaction.objectStore(this.budgetStoreName);
+
+    return new Promise((resolve, reject) => {
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  clearAllBudgets(): Observable<void> {
+    return from(this.performClearAllBudgets());
+  }
+
+  private async performClearAllBudgets(): Promise<void> {
+    const db = await this.openDatabase();
+    const transaction = db.transaction([this.budgetStoreName], 'readwrite');
+    const store = transaction.objectStore(this.budgetStoreName);
+
+    return new Promise((resolve, reject) => {
+      const request = store.clear();
+      request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
     });
   }

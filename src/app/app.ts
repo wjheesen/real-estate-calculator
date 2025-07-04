@@ -1,11 +1,13 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { DataExportService } from './services/data-export.service';
+import { BudgetService } from './services/budget.service';
+import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -26,12 +28,28 @@ export class AppComponent {
   title = 'Real Estate Investment Calculator';
   
   private dataExportService = inject(DataExportService);
+  private budgetService = inject(BudgetService);
+  private router = inject(Router);
   private snackBar = inject(MatSnackBar);
   
   exportImportInProgress = false;
 
   get isDataExportAvailable(): boolean {
     return this.dataExportService.isFileOperationAvailable();
+  }
+
+  navigateToBudget(): void {
+    this.budgetService.getBudget().pipe(take(1)).subscribe(budget => {
+      if (budget) {
+        this.router.navigate(['/budget-summary']);
+      } else {
+        this.router.navigate(['/budget']);
+      }
+    });
+  }
+
+  isBudgetActive(): boolean {
+    return this.router.url.includes('/budget');
   }
 
   /**
