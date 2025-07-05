@@ -33,69 +33,6 @@ import { BudgetWithCalculations, Expense } from '../models/budget.interface';
   ],
   template: `
     <div class="budget-mortgage-container">
-      <!-- Income Summary Card -->
-      <mat-card class="income-summary-card">
-        <mat-card-header>
-          <mat-card-title>
-            <mat-icon>attach_money</mat-icon>
-            Available for Housing
-          </mat-card-title>
-          <div class="header-actions">
-            <button mat-raised-button color="primary" (click)="editIncome()">
-              <mat-icon>edit</mat-icon>
-              Edit Income & Expenses
-            </button>
-          </div>
-        </mat-card-header>
-        
-        <mat-card-content>
-          <div class="income-summary" *ngIf="budget">
-            <div class="summary-row">
-              <span class="label">Net Income (Monthly):</span>
-              <span class="value">{{ budget?.calculations?.netIncomeMonthly | currency }}</span>
-            </div>
-            <div class="summary-row">
-              <span class="label">Non-Housing Expenses (Monthly):</span>
-              <span class="value">-{{ budget?.calculations?.totalMonthlyExpenses | currency }}</span>
-            </div>
-            <div class="summary-row highlight">
-              <span class="label"><strong>Available for Housing (Monthly):</strong></span>
-              <span class="value"><strong>{{ budget?.calculations?.availableForHousingMonthly | currency }}</strong></span>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Mortgage Parameters Card -->
-      <mat-card class="mortgage-params-card">
-        <mat-card-header>
-          <mat-card-title>
-            <mat-icon>home</mat-icon>
-            Mortgage Parameters
-          </mat-card-title>
-        </mat-card-header>
-        
-        <mat-card-content>
-          <form [formGroup]="mortgageForm" class="mortgage-form">
-            <div class="mortgage-input-row">
-              <mat-form-field appearance="outline" class="mortgage-rate">
-                <mat-label>Anticipated Interest Rate (%)</mat-label>
-                <input matInput type="number" formControlName="rate" placeholder="6.5" step="0.01">
-              </mat-form-field>
-              
-              <mat-form-field appearance="outline" class="mortgage-term">
-                <mat-label>Term (Years)</mat-label>
-                <input matInput type="number" formControlName="termYears" placeholder="30">
-              </mat-form-field>
-              
-              <button mat-raised-button color="primary" (click)="updateMortgageParams()" [disabled]="!mortgageForm.valid">
-                <mat-icon>calculate</mat-icon>
-                Update
-              </button>
-            </div>
-          </form>
-        </mat-card-content>
-      </mat-card>
 
       <!-- Annual Housing Expenses Card -->
       <mat-card class="housing-expenses-card">
@@ -210,6 +147,37 @@ import { BudgetWithCalculations, Expense } from '../models/budget.interface';
               <strong>Total Monthly Housing Expenses: {{ budget?.calculations?.totalMonthlyHousingExpenses | currency }}/month</strong>
             </div>
           </div>
+        </mat-card-content>
+      </mat-card>
+
+    <!-- Mortgage Parameters Card -->
+      <mat-card class="mortgage-params-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>home</mat-icon>
+            Mortgage Parameters
+          </mat-card-title>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <form [formGroup]="mortgageForm" class="mortgage-form">
+            <div class="mortgage-input-row">
+              <mat-form-field appearance="outline" class="mortgage-rate">
+                <mat-label>Anticipated Interest Rate (%)</mat-label>
+                <input matInput type="number" formControlName="rate" placeholder="6.5" step="0.01">
+              </mat-form-field>
+              
+              <mat-form-field appearance="outline" class="mortgage-term">
+                <mat-label>Term (Years)</mat-label>
+                <input matInput type="number" formControlName="termYears" placeholder="30">
+              </mat-form-field>
+              
+              <button mat-raised-button color="primary" (click)="updateMortgageParams()" [disabled]="!mortgageForm.valid">
+                <mat-icon>calculate</mat-icon>
+                Update
+              </button>
+            </div>
+          </form>
         </mat-card-content>
       </mat-card>
 
