@@ -50,19 +50,19 @@ import { BudgetWithCalculations, Expense } from '../models/budget.interface';
           <div class="income-summary" *ngIf="budget">
             <div class="summary-row">
               <span class="label">Gross Income (Annual):</span>
-              <span class="value">{{ budget?.calculations?.grossIncomeAnnual | currency }}</span>
+              <span class="value">{{ budget.calculations.grossIncomeAnnual | currency }}</span>
             </div>
             <div class="summary-row">
               <span class="label">Total Deductions (Annual):</span>
-              <span class="value">{{ budget?.calculations?.totalDeductionsAnnual | currency }}</span>
+              <span class="value">{{ budget.calculations.totalDeductionsAnnual | currency }}</span>
             </div>
             <div class="summary-row highlight">
               <span class="label"><strong>Net Income (Annual):</strong></span>
-              <span class="value"><strong>{{ budget?.calculations?.netIncomeAnnual | currency }}</strong></span>
+              <span class="value"><strong>{{ budget.calculations.netIncomeAnnual | currency }}</strong></span>
             </div>
             <div class="summary-row highlight">
               <span class="label"><strong>Net Income (Monthly):</strong></span>
-              <span class="value"><strong>{{ budget?.calculations?.netIncomeMonthly | currency }}</strong></span>
+              <span class="value"><strong>{{ budget.calculations.netIncomeMonthly | currency }}</strong></span>
             </div>
           </div>
         </mat-card-content>

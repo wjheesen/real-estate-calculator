@@ -362,7 +362,7 @@ import { ConfirmationDialogComponent } from './confirmation-dialog.component';
                     <!-- Summary Table (always in comparison format) -->
                     <div class="summary-results" *ngIf="getCalculationsForPortfolio(selectedPortfolioId).length > 0; else emptyPortfolio">
                       <div class="comparison-table-wrapper">
-                        <table class="comparison-table">
+                        <table class="comparison-table" [class.single-portfolio]="!comparisonPortfolioId" [class.comparison-mode]="comparisonPortfolioId">
                           <thead>
                             <tr>
                               <th class="metric-header">Metric</th>
@@ -444,10 +444,8 @@ export class PortfoliosComponent implements OnInit {
     { key: 'totalProperties', label: 'Total Properties', format: 'number' },
     { key: 'totalCashInvested', label: 'Total Cash Invested', format: 'currency' },
     { key: 'monthlyCashFlow', label: 'Monthly Cash Flow', format: 'currency' },
-    { key: 'annualCashFlow', label: 'Annual Cash Flow', format: 'currency' },
     { key: 'monthlyEquityGain', label: 'Monthly Equity Gain', format: 'currency' },
     { key: 'monthlyTotalReturn', label: 'Monthly Total Return', format: 'currency' },
-    { key: 'yearlyTotalReturn', label: 'Yearly Total Return', format: 'currency' },
     { key: 'cashOnCashReturn', label: 'Cash-on-Cash Return', format: 'percentage' },
     { key: 'taxableIncome', label: 'Annual Taxable Income', format: 'currency' },
     { key: 'annualDepreciation', label: 'Annual Depreciation', format: 'currency' }
