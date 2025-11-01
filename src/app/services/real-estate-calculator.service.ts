@@ -32,21 +32,39 @@ export class RealEstateCalculatorService {
       rentalUsePercentage
     } = calculation;
 
+    // Ensure all values are numbers, defaulting to 0 for null/undefined
+    const purchasePriceNum = purchasePrice ?? 0;
+    const rehabCostsNum = rehabCosts ?? 0;
+    const closingCostsNum = closingCosts ?? 0;
+    const downPaymentNum = downPayment ?? 0;
+    const interestRateNum = interestRate ?? 0;
+    const termYearsNum = termYears ?? 1;
+    const paymentsPerYearNum = paymentsPerYear ?? 12;
+    const insuranceCostNum = insuranceCost ?? 0;
+    const mortgageInsuranceNum = mortgageInsurance ?? 0;
+    const propertyTaxesNum = propertyTaxes ?? 0;
+    const expectedRentalIncomeNum = expectedRentalIncome ?? 0;
+    const operatingExpensesNum = operatingExpenses ?? 0;
+    const capitalExpendituresNum = capitalExpenditures ?? 0;
+    const appreciationRateNum = appreciationRate ?? 0;
+    const scheduleEDeductibleAmountNum = scheduleEDeductibleAmount ?? 0;
+    const rentalUsePercentageNum = rentalUsePercentage ?? 100;
+
     // Calculate total acquisition cost
-    const totalAcquisitionCost = purchasePrice + rehabCosts + closingCosts;
+    const totalAcquisitionCost = purchasePriceNum + rehabCostsNum + closingCostsNum;
     
     // Calculate down payment amount
-    let downPaymentAmount = downPayment;
+    let downPaymentAmount = downPaymentNum;
     if (usePercentageForDownPayment) {
-      downPaymentAmount = (downPayment / 100) * purchasePrice;
+      downPaymentAmount = (downPaymentNum / 100) * purchasePriceNum;
     }
     
     // For fully-owned properties (purchase price = 0), there's no loan
-    const loanAmount = purchasePrice > 0 ? Math.max(0, totalAcquisitionCost - downPaymentAmount) : 0;
+    const loanAmount = purchasePriceNum > 0 ? Math.max(0, totalAcquisitionCost - downPaymentAmount) : 0;
     
     // Calculate monthly mortgage payment using PMT formula
-    const monthlyInterestRate = interestRate / 100 / paymentsPerYear;
-    const totalPayments = termYears * paymentsPerYear;
+    const monthlyInterestRate = interestRateNum / 100 / paymentsPerYearNum;
+    const totalPayments = termYearsNum * paymentsPerYearNum;
     
     let monthlyMortgagePayment = 0;
     if (loanAmount > 0 && monthlyInterestRate > 0) {
@@ -59,30 +77,30 @@ export class RealEstateCalculatorService {
     }
     
     // Calculate monthly operating expenses
-    let monthlyOperatingExpenses = operatingExpenses;
+    let monthlyOperatingExpenses = operatingExpensesNum;
     if (usePercentageForOpex) {
-      monthlyOperatingExpenses = (operatingExpenses / 100) * expectedRentalIncome;
+      monthlyOperatingExpenses = (operatingExpensesNum / 100) * expectedRentalIncomeNum;
     }
     
     // Calculate monthly capital expenditures
-    let monthlyCapitalExpenditures = capitalExpenditures;
+    let monthlyCapitalExpenditures = capitalExpendituresNum;
     if (usePercentageForCapex) {
-      monthlyCapitalExpenditures = (capitalExpenditures / 100) * expectedRentalIncome;
+      monthlyCapitalExpenditures = (capitalExpendituresNum / 100) * expectedRentalIncomeNum;
     }
     
     // Calculate monthly insurance and taxes
-    const monthlyInsurance = insuranceCost / 12;
+    const monthlyInsurance = insuranceCostNum / 12;
     
     // Calculate monthly mortgage insurance (only if there's a loan)
     let monthlyMortgageInsurance = 0;
     if (loanAmount > 0) {
-      monthlyMortgageInsurance = mortgageInsurance / 12;
+      monthlyMortgageInsurance = mortgageInsuranceNum / 12;
       if (usePercentageForMortgageInsurance) {
-        monthlyMortgageInsurance = (mortgageInsurance / 100) * loanAmount / 12;
+        monthlyMortgageInsurance = (mortgageInsuranceNum / 100) * loanAmount / 12;
       }
     }
     
-    const monthlyPropertyTaxes = propertyTaxes / 12;
+    const monthlyPropertyTaxes = propertyTaxesNum / 12;
     
     // Calculate total monthly expenses
     const totalMonthlyExpenses = monthlyMortgagePayment + monthlyOperatingExpenses + 
@@ -99,11 +117,11 @@ export class RealEstateCalculatorService {
     // Calculate Return on Investment (ROI)
     // For fully-owned properties, total cash invested includes any rehab/closing costs
     // If no costs, then ROI calculations may not be meaningful
-    const totalCashInvested = downPaymentAmount + rehabCosts + closingCosts;
+    const totalCashInvested = downPaymentAmount + rehabCostsNum + closingCostsNum;
     const cashOnCashReturn = totalCashInvested > 0 ? (annualCashFlow / totalCashInvested) * 100 : 0;
     
     // Calculate future value of property
-    const futurePropertyValue = purchasePrice * Math.pow(1 + (appreciationRate / 100), termYears);
+    const futurePropertyValue = purchasePriceNum * Math.pow(1 + (appreciationRateNum / 100), termYearsNum);
     
     // Calculate average monthly equity gain (property appreciation / months)
     const monthlyEquityGain = (futurePropertyValue - purchasePrice) / (termYears * 12);
@@ -140,18 +158,18 @@ export class RealEstateCalculatorService {
 
     // Calculate tax-related values
     // Annual depreciation = (Schedule E deductible amount / 27.5 years) * rental use percentage
-    const annualDepreciation = scheduleEDeductibleAmount > 0 ? 
-      (scheduleEDeductibleAmount / 27.5) * (rentalUsePercentage / 100) : 0;
+    const annualDepreciation = scheduleEDeductibleAmountNum > 0 ? 
+      (scheduleEDeductibleAmountNum / 27.5) * (rentalUsePercentageNum / 100) : 0;
     
     // Calculate deductible expenses for Schedule E
     // This includes operating expenses, capital expenditures, insurance, mortgage insurance, and property taxes
     // adjusted by rental use percentage
     const totalAnnualExpenses = (monthlyOperatingExpenses + monthlyCapitalExpenditures + 
                                monthlyInsurance + monthlyMortgageInsurance + monthlyPropertyTaxes) * 12;
-    const deductibleExpenses = totalAnnualExpenses * (rentalUsePercentage / 100);
+    const deductibleExpenses = totalAnnualExpenses * (rentalUsePercentageNum / 100);
     
     // Pre-tax income = annual rental income - deductible expenses
-    const annualRentalIncome = expectedRentalIncome * 12;
+    const annualRentalIncome = expectedRentalIncomeNum * 12;
     const pretaxIncome = annualRentalIncome - deductibleExpenses;
     
     // Taxable income = pre-tax income - depreciation

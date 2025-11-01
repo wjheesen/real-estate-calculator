@@ -230,25 +230,25 @@ export class CalculatorComponent implements OnInit, OnDestroy {
   private createForm(): FormGroup {
     return this.fb.group({
       purchasePrice: [null, [Validators.required, Validators.min(0)]],
-      rehabCosts: [null, [Validators.min(0)]],
-      closingCosts: [null, [Validators.min(0)]],
+      rehabCosts: [0, [Validators.min(0)]],
+      closingCosts: [0, [Validators.min(0)]],
       downPayment: [null, [Validators.min(0)]],
       usePercentageForDownPayment: [false],
       interestRate: [4.5, [Validators.required, Validators.min(0)]],
       termYears: [30, [Validators.required, Validators.min(1)]],
       paymentsPerYear: [12, [Validators.required, Validators.min(1)]],
-      insuranceCost: [null, [Validators.min(0)]],
-      mortgageInsurance: [null, [Validators.min(0)]],
+      insuranceCost: [0, [Validators.min(0)]],
+      mortgageInsurance: [0, [Validators.min(0)]],
       usePercentageForMortgageInsurance: [false],
-      propertyTaxes: [null, [Validators.min(0)]],
-      expectedRentalIncome: [null, [Validators.min(0)]],
-      operatingExpenses: [null, [Validators.min(0)]],
+      propertyTaxes: [0, [Validators.min(0)]],
+      expectedRentalIncome: [0, [Validators.min(0)]],
+      operatingExpenses: [0, [Validators.min(0)]],
       usePercentageForOpex: [false],
-      capitalExpenditures: [null, [Validators.min(0)]],
+      capitalExpenditures: [0, [Validators.min(0)]],
       usePercentageForCapex: [false],
-      appreciationRate: [null, [Validators.min(0)]],
+      appreciationRate: [0, [Validators.min(0)]],
       // Tax-related fields
-      scheduleEDeductibleAmount: [null, [Validators.min(0)]],
+      scheduleEDeductibleAmount: [0, [Validators.min(0)]],
       rentalUsePercentage: [100, [Validators.min(0), Validators.max(100)]]
     });
   }
