@@ -107,11 +107,11 @@ export class RealEstateCalculatorService {
                                monthlyCapitalExpenditures + monthlyInsurance + monthlyMortgageInsurance + monthlyPropertyTaxes;
     
     // Calculate monthly income after expenses
-    const monthlyIncomeAfterExpenses = expectedRentalIncome - monthlyOperatingExpenses - 
-                                     monthlyCapitalExpenditures - monthlyInsurance - monthlyMortgageInsurance - monthlyPropertyTaxes;
+    const monthlyIncomeAfterExpenses = expectedRentalIncomeNum - monthlyOperatingExpenses - 
+                     monthlyCapitalExpenditures - monthlyInsurance - monthlyMortgageInsurance - monthlyPropertyTaxes;
     
     // Calculate cash flow
-    const monthlyCashFlow = expectedRentalIncome - totalMonthlyExpenses;
+    const monthlyCashFlow = expectedRentalIncomeNum - totalMonthlyExpenses;
     const annualCashFlow = monthlyCashFlow * 12;
     
     // Calculate Return on Investment (ROI)
@@ -123,8 +123,9 @@ export class RealEstateCalculatorService {
     // Calculate future value of property
     const futurePropertyValue = purchasePriceNum * Math.pow(1 + (appreciationRateNum / 100), termYearsNum);
     
-    // Calculate average monthly equity gain (property appreciation / months)
-    const monthlyEquityGain = (futurePropertyValue - purchasePrice) / (termYears * 12);
+    // Calculate average projected equity gain (future value - acquisition cost spread over the loan term)
+    const termMonths = Math.max(1, termYearsNum * 12);
+    const monthlyEquityGain = termMonths > 0 ? (futurePropertyValue - totalAcquisitionCost) / termMonths : 0;
     
     // Calculate monthly total return (cash flow + equity gain)
     const monthlyTotalReturn = monthlyCashFlow + monthlyEquityGain;
@@ -146,7 +147,7 @@ export class RealEstateCalculatorService {
     const totalMortgagePayments = monthlyMortgagePayment * totalPayments;
     const totalOperatingExpenses = (monthlyOperatingExpenses + monthlyCapitalExpenditures + 
                                   monthlyInsurance + monthlyMortgageInsurance + monthlyPropertyTaxes) * totalPayments;
-    const totalRentalIncome = expectedRentalIncome * totalPayments;
+    const totalRentalIncome = expectedRentalIncomeNum * totalPayments;
     const netRentalProfit = totalRentalIncome - totalOperatingExpenses - totalMortgagePayments;
     
     // Assuming 6% selling costs (agent fees, etc.)
