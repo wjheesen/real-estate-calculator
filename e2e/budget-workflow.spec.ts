@@ -21,6 +21,9 @@ test('updates the benchmark and restores all five ordered lists on reload', asyn
   await addItem(page, 'Pay deductions', 'Zero item', 0);
   await expect(page.locator('app-doughnut-chart canvas')).toBeVisible();
   const deductions = page.getByRole('region', { name: 'Pay deductions' });
+  await deductions.getByRole('button', { name: 'Edit Zero item' }).click();
+  await deductions.getByRole('textbox', { name: 'Name' }).fill('Edited zero item');
+  await deductions.getByRole('button', { name: 'Update', exact: true }).click();
   await deductions.getByRole('button', { name: 'Move Income taxes down' }).click();
 
   await tab('Non-housing living expenses').click();
@@ -42,7 +45,7 @@ test('updates the benchmark and restores all five ordered lists on reload', asyn
   await confirm.getByRole('button', { name: 'Cancel' }).click();
   await expect(summary.getByText('$420,000.00')).toBeVisible();
   await page.reload();
-  await expect(deductions.getByRole('listitem').nth(0)).toContainText('Zero item');
+  await expect(deductions.getByRole('listitem').nth(0)).toContainText('Edited zero item');
   await expect(deductions.getByRole('listitem').nth(1)).toContainText('Income taxes');
   await tab('Non-housing living expenses').click();
   await expect(page.getByText('Groceries', { exact: true })).toBeVisible();

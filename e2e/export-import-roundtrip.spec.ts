@@ -146,3 +146,79 @@ test('releases controls after canceling confirmation, canceling the picker, or c
   expect(await allStores(page)).toEqual(before);
   await expect(page.getByRole('link', { name: 'My Portfolio', exact: true })).toBeVisible();
 });
+
+async function completeBackup(): Promise<Buffer> {
+  const zip = await JSZip.loadAsync(await fixtureBackup('A'));
+  const owned: Record<string, string | number | boolean> = {
+    id: 9, portfolioId: 7, name: 'Owned rental', createdAt: now, updatedAt: now,
+    ownershipStatus: 'already_owned', purchasePrice: 300000, existingLoanBalance: 120000,
+    sellingCostsPercentage: 6, rehabCosts: 0, interestRate: 6, termYears: 30, existingMonthlyPI: 600.01,
+    insuranceCost: 0, propertyTaxes: 0, mortgageInsurance: 0, monthlyHOA: 0, monthlyUtilities: 75,
+    rentalIncomeMode: 'long_term', expectedRentalIncome: 1000, operatingExpenses: 0,
+    usePercentageForOpex: false, capitalExpenditures: 0, usePercentageForCapex: true,
+    appreciationRate: -2, plannedHoldPeriodYears: 10, scheduleEDeductibleAmount: 110000, rentalUsePercentage: 50,
+  };
+  const propertyCsv = await zip.file('properties.csv')!.async('string');
+  const ownedRow = propertyHeader.split(',').map((field) => owned[field] ?? '').join(',');
+  zip.file('properties.csv', propertyCsv + ownedRow + '\r\n');
+  const budgetCsv = await zip.file('budget.csv')!.async('string');
+  zip.file('budget.csv', budgetCsv + [
+    'PAY_DEDUCTIONS,0,5,Withholding,,500,,,,,,',
+    'MONTHLY_EXPENSES,0,6,Groceries,,100,,,,,,',
+    'ANNUAL_EXPENSES,0,7,Car insurance,,1200,,,,,,',
+    '',
+  ].join('\r\n'));
+  return Buffer.from(await zip.generateAsync({ type: 'uint8array' }));
+}
+
+test('restores actual downloaded bytes into the current editor and recovers all ordered inputs', async ({ page }) => {
+  await page.goto('/budget');
+  await importBytes(page, await completeBackup());
+  await expect(page.getByText('Backup restored.', { exact: true })).toBeVisible();
+  const original = await allStores(page);
+  const bytes = await downloadBackup(page);
+  await page.getByRole('tab', { name: 'Single-home benchmark' }).click();
+  const monthly = page.getByRole('region', { name: 'Monthly benchmark costs' });
+  const annual = page.getByRole('region', { name: 'Annual benchmark costs' });
+  for (const [list, name, amount] of [[monthly, 'Utilities', '200'], [annual, 'Tax', '9999']] as const) {
+    await list.getByRole('button', { name: `Edit ${name}` }).click();
+    await list.getByRole('spinbutton', { name: 'Amount' }).fill(amount);
+    await list.getByRole('button', { name: 'Update' }).click();
+  }
+  await expect(page.getByText('Budget saved.')).toBeVisible();
+
+  await page.goto('/calculator?id=9');
+  const payment = page.getByRole('spinbutton', { name: 'Monthly P&I (excluding escrow)' });
+  await expect(payment).toHaveValue('600.01');
+  await payment.fill('750');
+  await page.getByRole('region', { name: 'Save to portfolio' }).getByRole('button', { name: 'Save property' }).click();
+  await expect(page.getByText('Property saved.', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  const settings = page.getByRole('dialog', { name: 'Settings' });
+  await settings.getByRole('spinbutton', { name: 'Interest rate', exact: true }).fill('7');
+  await settings.getByRole('combobox', { name: 'Appearance' }).click();
+  await page.getByRole('option', { name: 'Light', exact: true }).click();
+  await settings.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.locator('html')).toHaveCSS('color-scheme', 'light');
+  expect(await allStores(page)).not.toEqual(original);
+
+  await page.evaluate(() => { document.documentElement.dataset['roundtrip'] = 'same-document'; });
+  await importBytes(page, bytes);
+  await expect(page.getByText('Backup restored.', { exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/calculator\?id=9$/);
+  await expect(page.locator('html')).toHaveAttribute('data-roundtrip', 'same-document');
+  await expect(page.locator('html')).toHaveCSS('color-scheme', 'dark');
+  await expect(payment).toHaveValue('600.01');
+  await expect(page.locator('app-kpi-strip').getByText('+$324.99', { exact: true }).or(
+    page.locator('app-kpi-strip').getByText('$324.99', { exact: true }),
+  )).toBeVisible();
+  expect(await allStores(page)).toEqual(original);
+
+  await page.getByRole('navigation').getByRole('link', { name: 'Budget' }).click();
+  await page.getByRole('tab', { name: 'Single-home benchmark' }).click();
+  await expect(monthly.getByRole('listitem')).toContainText('75 $/month');
+  await expect(annual.getByRole('listitem')).toContainText('1,234 $/year');
+  await importBytes(page, Buffer.from('corrupt'));
+  await expect(page.getByRole('alert')).toContainText('Invalid or corrupt archive');
+  expect(await allStores(page)).toEqual(original);
+});
