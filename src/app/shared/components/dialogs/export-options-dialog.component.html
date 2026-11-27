@@ -1,0 +1,13 @@
+<h2 mat-dialog-title>Export options</h2>
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <mat-dialog-content>
+    <mat-checkbox formControlName="includeCalculatedFigures">
+      Include calculated figures
+    </mat-checkbox>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" [mat-dialog-close]="undefined">Cancel</button>
+    <button mat-flat-button type="submit" cdkFocusInitial>Export</button>
+  </mat-dialog-actions>
+</form>

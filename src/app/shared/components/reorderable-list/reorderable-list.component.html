@@ -1,0 +1,68 @@
+<section class="panel" [attr.aria-label]="title()">
+  <h2>{{ title() }}</h2>
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <mat-form-field appearance="outline">
+      <mat-label>Name</mat-label>
+      <input matInput #nameInput formControlName="name" [placeholder]="namePlaceholder()" required>
+      @if (form.controls.name.hasError('required')) {
+        <mat-error>Enter a name.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Amount</mat-label>
+      <input matInput type="number" inputmode="decimal" step="any" formControlName="amount" required>
+      <span matTextSuffix>{{ amountSuffix() }}</span>
+      @if (form.controls.amount.invalid) {
+        <mat-error>Enter a non-negative amount.</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="form-actions">
+      <button mat-flat-button type="submit">{{ editingId() === null ? 'Add' : 'Update' }}</button>
+      @if (editingId() !== null) {
+        <button mat-button type="button" (click)="cancelEdit()">Cancel</button>
+      }
+    </div>
+  </form>
+
+  @if (items().length) {
+    <ul role="list" cdkDropList [cdkDropListData]="items()" (cdkDropListDropped)="drop($event)">
+      @for (item of items(); track item.id; let index = $index; let first = $first; let last = $last) {
+        <li cdkDrag [cdkDragData]="item.id" [cdkDragDisabled]="first && last">
+          @if (items().length > 1) {
+            <span class="drag-handle" cdkDragHandle aria-hidden="true">⠿</span>
+          }
+
+          <div class="item-details">
+            <strong>{{ item.name }}</strong>
+            @if (item.description) {
+              <span class="description">{{ item.description }}</span>
+            }
+          </div>
+          <span class="amount">{{ item.amount | number: '1.0-2' }} {{ amountSuffix() }}</span>
+
+          <div class="item-actions">
+            @if (items().length > 1) {
+              <button mat-button type="button" [attr.aria-label]="'Move ' + item.name + ' up'"
+                [disabled]="first" (click)="move(item.id, index - 1)">Up</button>
+              <button mat-button type="button" [attr.aria-label]="'Move ' + item.name + ' down'"
+                [disabled]="last" (click)="move(item.id, index + 1)">Down</button>
+            }
+            <button mat-button type="button" [attr.aria-label]="'Edit ' + item.name"
+              (click)="edit(item)">Edit</button>
+            <button mat-button type="button" [attr.aria-label]="'Delete ' + item.name"
+              (click)="delete(item)">Delete</button>
+          </div>
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="empty">{{ emptyMessage() }}</p>
+  }
+
+  <footer>
+    <span>Total</span>
+    <strong>{{ total() | number: '1.0-2' }} {{ amountSuffix() }}</strong>
+  </footer>
+</section>
