@@ -1,11 +1,10 @@
 import type { BudgetData } from './budget.interface';
 import type { Portfolio, RealEstateCalculation } from './real-estate.interface';
-import type { Settings } from './settings.interface';
+import type { PlannerPreferences, ThemePreference } from './planner-settings';
 
-export type ThemePreference = 'light' | 'dark';
-
-export interface PlannerSettings extends Partial<Settings> {
+export interface PlannerSettings extends Partial<PlannerPreferences> {
   key: 'app-settings';
+  /** Theme field written by T-01. Upgraded to themeMode on load. */
   theme?: ThemePreference;
 }
 

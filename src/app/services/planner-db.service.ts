@@ -3,7 +3,6 @@ import type {
   PlannerBudget,
   PlannerPortfolio,
   PlannerSettings,
-  ThemePreference,
 } from '../models/planner-records';
 
 export const PLANNER_DB_NAME = 'RealEstatePlannerDB';
@@ -97,14 +96,19 @@ export class PlannerDbService {
     return this.transaction('settings', 'readonly', (store) => store.get(SETTINGS_KEY));
   }
 
-  async setTheme(theme: ThemePreference): Promise<void> {
+  async updateSettings(
+    update: (current: PlannerSettings | undefined) => PlannerSettings,
+  ): Promise<PlannerSettings> {
+    let next!: PlannerSettings;
     await this.transaction('settings', 'readwrite', (store) => {
       const read: IDBRequest<PlannerSettings | undefined> = store.get(SETTINGS_KEY);
       read.onsuccess = () => {
-        store.put({ ...read.result, key: SETTINGS_KEY, theme } satisfies PlannerSettings);
+        next = update(read.result);
+        if (next !== read.result) store.put(next);
       };
       return read;
     });
+    return next;
   }
 
   getBudget(): Promise<PlannerBudget | undefined> {

@@ -12,7 +12,8 @@
       >
         Dark mode
       </button>
-      <button mat-button type="button" disabled>Settings</button>
+      <button mat-button type="button" [disabled]="settingsLoading()"
+        (click)="openSettings()">Settings</button>
       <button mat-button type="button" disabled>Import</button>
       <button mat-button type="button" disabled>Export</button>
     </div>
@@ -32,8 +33,8 @@
 </header>
 
 <main class="shell app-main">
-  @if (themeError()) {
-    <p class="app-error" role="alert">{{ themeError() }}</p>
+  @if (settingsError()) {
+    <p class="app-error" role="alert">{{ settingsError() }}</p>
   }
   <router-outlet />
 </main>
