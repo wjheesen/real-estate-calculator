@@ -10,7 +10,14 @@ export const PLANNER_DB_NAME = 'RealEstatePlannerDB';
 const SETTINGS_KEY = 'app-settings';
 const BUDGET_KEY = 'user-budget';
 
-type StoreName = 'settings' | 'budget' | 'portfolios' | 'properties';
+export type StoreName = 'settings' | 'budget' | 'portfolios' | 'properties';
+
+export function requestResult<T>(request: IDBRequest<T>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    request.addEventListener('success', () => resolve(request.result), { once: true });
+    request.addEventListener('error', () => reject(request.error), { once: true });
+  });
+}
 
 @Injectable({ providedIn: 'root' })
 export class PlannerDbService {
@@ -62,31 +69,46 @@ export class PlannerDbService {
    * Queue requests in one transaction. The result comes from the returned request
    * after all queued work commits.
    */
-  async transaction<T>(
+  transaction<T>(
     storeName: StoreName,
     mode: IDBTransactionMode,
     run: (store: IDBObjectStore) => IDBRequest<T>,
   ): Promise<T> {
-    const db = await this.ready();
+    return this.transact(storeName, mode, async (transaction) =>
+      requestResult(run(transaction.objectStore(storeName))));
+  }
 
+  /** Await only IndexedDB requests inside run so the transaction remains active. */
+  async transact<T>(
+    stores: StoreName | StoreName[],
+    mode: IDBTransactionMode,
+    run: (transaction: IDBTransaction) => Promise<T>,
+  ): Promise<T> {
+    const db = await this.ready();
     try {
-      return await new Promise<T>((resolve, reject) => {
-        const transaction = db.transaction(storeName, mode);
+      const transaction = db.transaction(stores, mode);
+      const completion = new Promise<void>((resolve, reject) => {
+        transaction.oncomplete = () => resolve();
         transaction.onabort = () => {
           reject(transaction.error ?? new DOMException('Transaction aborted.', 'AbortError'));
         };
         transaction.onerror = (event) => {
           reject((event.target as IDBRequest).error ?? transaction.error);
         };
-
-        try {
-          const request = run(transaction.objectStore(storeName));
-          transaction.oncomplete = () => resolve(request.result);
-        } catch (error) {
-          reject(error);
-          transaction.abort();
-        }
       });
+
+      try {
+        const [result] = await Promise.all([run(transaction), completion]);
+        return result;
+      } catch (error) {
+        try {
+          transaction.abort();
+        } catch {
+          // The database may already have aborted or closed the transaction.
+        }
+        await completion.catch(() => undefined);
+        throw error;
+      }
     } finally {
       db.close();
     }

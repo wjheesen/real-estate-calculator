@@ -1,5 +1,5 @@
 import type { LineItem } from '../shared/utils/list-helpers';
-import type { Portfolio, RealEstateCalculation } from './real-estate.interface';
+import type { PropertyDetails } from './property-inputs';
 import type { PlannerPreferences, ThemePreference } from './planner-settings';
 
 export interface PlannerSettings extends Partial<PlannerPreferences> {
@@ -29,14 +29,10 @@ export interface PlannerBudget extends BudgetInputs, Timestamps {
   key: 'user-budget';
 }
 
-export interface PlannerPortfolio extends Omit<Portfolio, 'id' | keyof Timestamps>, Timestamps {
-  id: number;
+export interface PlannerPortfolio extends Timestamps {
+  readonly id: number;
+  readonly name: string;
+  readonly description?: string;
 }
 
-export interface PlannerProperty
-  extends Omit<RealEstateCalculation, 'id' | keyof Timestamps>, Timestamps {
-  id: number;
-  portfolioId: number;
-  name: string;
-  description?: string;
-}
+export type PlannerProperty = PropertyDetails & Timestamps & { readonly id: number };
