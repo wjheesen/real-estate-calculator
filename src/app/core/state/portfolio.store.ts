@@ -6,6 +6,7 @@ import type { PropertyDetails, PropertyDraft } from '../../models/property-input
 import { propertyRecordInputs } from '../../models/property-record-shape';
 import { PlannerDbService, requestResult, type StoreName } from '../../services/planner-db.service';
 import { BudgetStore } from './budget.store';
+import { PlannerOperations } from './planner-operations';
 
 interface PortfolioRecords {
   readonly portfolios: readonly PlannerPortfolio[];
@@ -75,7 +76,7 @@ export class PortfolioStore {
   private readonly db = inject(PlannerDbService);
   private readonly budget = inject(BudgetStore);
   private readonly state = signal<PortfolioRecords>({ portfolios: [], properties: [] });
-  private pending = Promise.resolve();
+  private readonly operations = inject(PlannerOperations);
 
   readonly portfolios = computed(() => this.state().portfolios);
   readonly properties = computed(() => this.state().properties);
@@ -86,7 +87,7 @@ export class PortfolioStore {
   });
 
   load(): Promise<PortfolioRecords> {
-    return this.enqueue(async () => {
+    return this.operations.read(async () => {
       const snapshot = await this.db.transact(stores, 'readonly', (tx) =>
         readSnapshot(tx.objectStore('portfolios'), tx.objectStore('properties')));
       this.state.set(snapshot);
@@ -142,7 +143,7 @@ export class PortfolioStore {
   }
 
   getDeleteDestination(id: number): Promise<PlannerPortfolio> {
-    return this.enqueue(() => this.db.transact('portfolios', 'readonly', async (tx) =>
+    return this.operations.read(() => this.db.transact('portfolios', 'readonly', async (tx) =>
       deletionDestination(await allPortfolios(tx.objectStore('portfolios')), id)));
   }
 
@@ -228,7 +229,7 @@ export class PortfolioStore {
   }
 
   private write<T>(run: (portfolios: IDBObjectStore, properties: IDBObjectStore) => Promise<T>): Promise<T> {
-    return this.enqueue(async () => {
+    return this.operations.write(async () => {
       const { result, snapshot } = await this.db.transact(stores, 'readwrite', async (tx) => {
         const portfolios = tx.objectStore('portfolios');
         const properties = tx.objectStore('properties');
@@ -241,9 +242,7 @@ export class PortfolioStore {
     });
   }
 
-  private enqueue<T>(operation: () => Promise<T>): Promise<T> {
-    const next = this.pending.then(operation);
-    this.pending = next.then(() => undefined, () => undefined);
-    return next;
+  publishCommitted(portfolios: readonly PlannerPortfolio[], properties: readonly PlannerProperty[]): void {
+    this.state.set({ portfolios, properties });
   }
 }

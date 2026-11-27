@@ -25,8 +25,10 @@ describe('AppComponent', () => {
     }).compileComponents();
   });
 
-  it('renders the brand, primary navigation and disabled actions', () => {
+  it('renders the brand, primary navigation and backup actions', fakeAsync(() => {
     const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    flushMicrotasks();
     fixture.detectChanges();
     const app: HTMLElement = fixture.nativeElement;
     expect(app.querySelector('.app-title')?.textContent).toBe('Real Estate Calculator');
@@ -38,11 +40,11 @@ describe('AppComponent', () => {
       ['Portfolios', '/portfolios'],
     ]);
 
-    const disabled = Array.from(app.querySelectorAll('.app-actions button:disabled'));
-    expect(app.textContent).toContain('Settings');
-    expect(disabled.map((button) => button.textContent?.trim())).toContain('Import');
-    expect(disabled.map((button) => button.textContent?.trim())).toContain('Export');
-  });
+    const actions = Array.from(app.querySelectorAll('.app-actions button:not(:disabled)'));
+    expect(actions.map((button) => button.textContent?.trim())).toEqual([
+      'Dark mode', 'Settings', 'Import', 'Export',
+    ]);
+  }));
 
   it('keeps the committed theme during a failed save and announces the error', fakeAsync(() => {
     const fixture = TestBed.createComponent(AppComponent);

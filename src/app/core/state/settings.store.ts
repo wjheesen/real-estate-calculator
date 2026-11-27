@@ -8,17 +8,18 @@ import {
   type PlannerPreferences,
 } from '../../models/planner-settings';
 import { PlannerDbService } from '../../services/planner-db.service';
+import { PlannerOperations } from './planner-operations';
 
 @Injectable({ providedIn: 'root' })
 export class SettingsStore {
   private readonly db = inject(PlannerDbService);
   private readonly current = signal<Readonly<PlannerPreferences>>(DEFAULT_PLANNER_SETTINGS);
-  private pending: Promise<void> = Promise.resolve();
+  private readonly operations = inject(PlannerOperations);
 
   readonly settings = this.current.asReadonly();
 
   load(): Promise<void> {
-    return this.commit({});
+    return this.operations.read(() => this.commit({}));
   }
 
   save(partial: Readonly<Partial<PlannerPreferences>>): Promise<void> {
@@ -33,38 +34,41 @@ export class SettingsStore {
       if (!isThemeMode(partial.themeMode)) return Promise.reject(new RangeError('Invalid theme mode.'));
       patch.themeMode = partial.themeMode;
     }
-    return this.commit(patch);
+    return this.operations.write(() => this.commit(patch));
   }
 
   resetToDefaults(): Promise<void> {
     return this.save(DEFAULT_PLANNER_SETTINGS);
   }
 
-  private commit(patch: Readonly<Partial<PlannerPreferences>>): Promise<void> {
-    const result = this.pending.then(async () => {
-      const saved = await this.db.updateSettings((record) => {
-        const { theme, ...fields } = record ?? { key: 'app-settings' };
-        const previousMode = isThemeMode(fields.themeMode) ? fields.themeMode : theme;
-        const next: PlannerSettings & PlannerPreferences = {
-          ...DEFAULT_PLANNER_SETTINGS,
-          ...fields,
-          key: 'app-settings',
-          themeMode: isThemeMode(previousMode) ? previousMode : 'system',
-          ...patch,
-        };
-        for (const key of calculationSettings) {
-          next[key] = patch[key] ?? fields[key] ?? DEFAULT_PLANNER_SETTINGS[key];
-        }
-
-        if (record && theme === undefined && record.themeMode === next.themeMode
-          && calculationSettings.every((key) => record[key] === next[key])) {
-          return record;
-        }
-        return next;
-      });
-      this.current.set(Object.freeze({ ...DEFAULT_PLANNER_SETTINGS, ...saved }));
-    });
-    this.pending = result.catch(() => undefined);
-    return result;
+  publishCommitted(settings: Readonly<PlannerPreferences>): void {
+    this.current.set(Object.freeze({ ...settings }));
   }
+
+  private async commit(patch: Readonly<Partial<PlannerPreferences>>): Promise<void> {
+    const saved = await this.db.updateSettings((record) => {
+      const { theme, ...fields } = record ?? { key: 'app-settings' };
+      const next: PlannerSettings & PlannerPreferences = {
+        ...fields,
+        ...effectiveSettings(record),
+        ...patch,
+        key: 'app-settings',
+      };
+
+      if (record && theme === undefined && record.themeMode === next.themeMode
+        && calculationSettings.every((key) => record[key] === next[key])) {
+        return record;
+      }
+      return next;
+    });
+    this.publishCommitted(effectiveSettings(saved));
+  }
+}
+
+export function effectiveSettings(record: PlannerSettings | undefined): PlannerPreferences {
+  const settings = { ...DEFAULT_PLANNER_SETTINGS };
+  for (const key of calculationSettings) settings[key] = record?.[key] ?? settings[key];
+  const mode = isThemeMode(record?.themeMode) ? record.themeMode : record?.theme;
+  if (isThemeMode(mode)) settings.themeMode = mode;
+  return settings;
 }

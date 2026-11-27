@@ -12,10 +12,10 @@
       >
         Dark mode
       </button>
-      <button mat-button type="button" [disabled]="settingsLoading()"
+      <button mat-button type="button" [disabled]="backupBlocked()"
         (click)="openSettings()">Settings</button>
-      <button mat-button type="button" disabled>Import</button>
-      <button mat-button type="button" disabled>Export</button>
+      <button mat-button type="button" [disabled]="backupBlocked()" (click)="importBackup()">Import</button>
+      <button mat-button type="button" [disabled]="backupBlocked()" (click)="exportBackup()">Export</button>
     </div>
 
     <nav class="app-nav" aria-label="Main navigation">
@@ -35,6 +35,14 @@
 <main class="shell app-main">
   @if (settingsError()) {
     <p class="app-error" role="alert">{{ settingsError() }}</p>
+  }
+  @if (backupError()) {
+    <p class="app-error" role="alert">{{ backupError() }}</p>
+  }
+  @if (refreshRequired()) {
+    <button mat-stroked-button type="button" [disabled]="backupBusy()" (click)="refreshBackup()">
+      Refresh imported data
+    </button>
   }
   <router-outlet />
 </main>

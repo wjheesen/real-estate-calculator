@@ -1,0 +1,10 @@
+<h2 mat-dialog-title>Replace saved planner data?</h2>
+<mat-dialog-content>
+  <p>Import replaces all saved portfolios, properties, the budget, and settings on this device.
+    A successful import also discards any unsaved calculator draft.</p>
+  @if (error()) { <p role="alert">{{ error() }}</p> }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" [disabled]="choosing()" [mat-dialog-close]="undefined" cdkFocusInitial>Cancel</button>
+  <button mat-flat-button type="button" [disabled]="choosing()" (click)="choose()">Choose ZIP file</button>
+</mat-dialog-actions>

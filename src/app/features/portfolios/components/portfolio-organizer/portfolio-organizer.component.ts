@@ -7,6 +7,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { fromEvent } from 'rxjs';
 import { BudgetStore } from '../../../../core/state/budget.store';
+import { PlannerOperations } from '../../../../core/state/planner-operations';
 import { PortfolioStore } from '../../../../core/state/portfolio.store';
 import type { PlannerProperty } from '../../../../models/planner-records';
 import { parsePositiveId } from '../../../../shared/utils/record-id';
@@ -60,6 +61,12 @@ export class PortfolioOrganizerComponent {
   protected readonly dragDelay = { mouse: 0, touch: 150 };
 
   constructor() {
+    inject(PlannerOperations).replaced$.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.notice.set('');
+      this.error.set('');
+      this.state.set('ready');
+      this.failed.set(null);
+    });
     const window = inject(DOCUMENT).defaultView;
     if (window) {
       fromEvent(window, 'focus').pipe(takeUntilDestroyed()).subscribe(() => {

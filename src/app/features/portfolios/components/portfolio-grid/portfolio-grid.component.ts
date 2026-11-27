@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { BudgetStore } from '../../../../core/state/budget.store';
+import { PlannerOperations } from '../../../../core/state/planner-operations';
 import { PortfolioStore } from '../../../../core/state/portfolio.store';
 import type { PlannerPortfolio } from '../../../../models/planner-records';
 import {
@@ -36,6 +38,11 @@ export class PortfolioGridComponent {
   protected readonly fitLabel = budgetFitLabel;
 
   constructor() {
+    inject(PlannerOperations).replaced$.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.notice.set('');
+      this.error.set('');
+      this.state.set('ready');
+    });
     void this.load();
   }
 

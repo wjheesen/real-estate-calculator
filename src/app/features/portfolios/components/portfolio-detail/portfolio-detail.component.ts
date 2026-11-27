@@ -9,6 +9,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom, fromEvent, map } from 'rxjs';
 import { BudgetStore } from '../../../../core/state/budget.store';
+import { PlannerOperations } from '../../../../core/state/planner-operations';
 import { PortfolioStore } from '../../../../core/state/portfolio.store';
 import type { PlannerProperty } from '../../../../models/planner-records';
 import {
@@ -58,6 +59,11 @@ export class PortfolioDetailComponent {
   });
 
   constructor() {
+    inject(PlannerOperations).replaced$.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.notice.set('');
+      this.error.set('');
+      this.state.set('ready');
+    });
     effect(() => {
       if (this.state() !== 'ready') return;
       if (!this.portfolio()) {

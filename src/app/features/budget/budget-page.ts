@@ -10,8 +10,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatTabsModule } from '@angular/material/tabs';
 import { firstValueFrom } from 'rxjs';
 import { BudgetStore } from '../../core/state/budget.store';
+import { PlannerOperations } from '../../core/state/planner-operations';
 import { SettingsStore } from '../../core/state/settings.store';
-import type { BudgetInputs } from '../../models/planner-records';
+import type { BudgetInputs, PlannerBudget } from '../../models/planner-records';
 import { isValidSetting } from '../../models/planner-settings';
 import {
   DoughnutChartComponent, type DoughnutSlice,
@@ -97,6 +98,12 @@ export class BudgetPage {
   });
 
   constructor() {
+    inject(PlannerOperations).replaced$.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.setSavedDraft(this.saved());
+      this.editorVersion.update((version) => version + 1);
+      this.error.set('');
+      this.loadState.set('ready');
+    });
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       const values = this.form.getRawValue();
       this.invalid.set(this.form.invalid);
@@ -119,12 +126,7 @@ export class BudgetPage {
     this.loadState.set('loading');
     try {
       const [record] = await Promise.all([this.store.load(), this.settingsStore.load()]);
-      if (record) {
-        const { key, createdAt, updatedAt, ...inputs } = record;
-        this.setDraft(inputs);
-      } else {
-        this.setDraft(emptyBudget(this.settingsStore.settings()));
-      }
+      this.setSavedDraft(record);
       this.loadState.set('ready');
     } catch {
       this.loadState.set('error');
@@ -193,6 +195,15 @@ export class BudgetPage {
       this.error.set('Could not clear the budget. Your entries are still here.');
     } finally {
       this.clearing.set(false);
+    }
+  }
+
+  private setSavedDraft(record: PlannerBudget | null): void {
+    if (record) {
+      const { key, createdAt, updatedAt, ...inputs } = record;
+      this.setDraft(inputs);
+    } else {
+      this.setDraft(emptyBudget(this.settingsStore.settings()));
     }
   }
 

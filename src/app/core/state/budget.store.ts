@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { calculateBudget, isValidBudget } from '../../features/budget/budget-calculator';
 import type { BudgetInputs, PlannerBudget } from '../../models/planner-records';
 import { PlannerDbService } from '../../services/planner-db.service';
+import { PlannerOperations } from './planner-operations';
 
 const BUDGET_KEY = 'user-budget';
 
@@ -9,7 +10,7 @@ const BUDGET_KEY = 'user-budget';
 export class BudgetStore {
   private readonly db = inject(PlannerDbService);
   private readonly record = signal<PlannerBudget | null>(null);
-  private pending = Promise.resolve();
+  private readonly operations = inject(PlannerOperations);
 
   readonly saved = this.record.asReadonly();
   readonly monthlyHousingBaseline = computed(() => {
@@ -18,7 +19,7 @@ export class BudgetStore {
   });
 
   load(): Promise<PlannerBudget | null> {
-    return this.enqueue(async () => {
+    return this.operations.read(async () => {
       const saved = (await this.db.getBudget()) ?? null;
       this.record.set(saved);
       return saved;
@@ -29,7 +30,7 @@ export class BudgetStore {
     if (!isValidBudget(inputs)) return Promise.reject(new RangeError('Invalid budget inputs.'));
 
     const draft = structuredClone(inputs);
-    return this.enqueue(async () => {
+    return this.operations.write(async () => {
       let saved!: PlannerBudget;
       await this.db.transaction('budget', 'readwrite', (store) => {
         const read: IDBRequest<PlannerBudget | undefined> = store.get(BUDGET_KEY);
@@ -45,15 +46,13 @@ export class BudgetStore {
   }
 
   clear(): Promise<void> {
-    return this.enqueue(async () => {
+    return this.operations.write(async () => {
       await this.db.transaction('budget', 'readwrite', (store) => store.delete(BUDGET_KEY));
       this.record.set(null);
     });
   }
 
-  private enqueue<T>(operation: () => Promise<T>): Promise<T> {
-    const next = this.pending.then(operation);
-    this.pending = next.then(() => undefined, () => undefined);
-    return next;
+  publishCommitted(budget: PlannerBudget | null): void {
+    this.record.set(budget);
   }
 }

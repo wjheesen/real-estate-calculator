@@ -9,6 +9,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute, Router, type ParamMap } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { BudgetStore } from '../../core/state/budget.store';
+import { PlannerOperations } from '../../core/state/planner-operations';
 import { PortfolioStore } from '../../core/state/portfolio.store';
 import { SettingsStore } from '../../core/state/settings.store';
 import type { PlannerProperty } from '../../models/planner-records';
@@ -110,6 +111,22 @@ export class CalculatorPageComponent {
 
   constructor() {
     this.destroy.onDestroy(() => { this.destroyed = true; });
+    inject(PlannerOperations).replaced$.pipe(takeUntilDestroyed()).subscribe(() => {
+      const params = this.route.snapshot.queryParamMap;
+      const id = parsePositiveId(params.get('id'));
+      const record = this.portfolioStore.properties().find((property) => property.id === id);
+      const prefs = this.settingsStore.settings();
+      this.queryVersion++;
+      this.setInitial(record ? calculatorDraftFromRecord(prefs, record) : newCalculatorDraft(prefs), record);
+      this.routeMessage.set('');
+      this.error.set('');
+      this.notice.set('');
+      this.loadState.set('ready');
+      if (!record) {
+        this.tab.set(0);
+        if (params.keys.length) void this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+      }
+    });
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.notice.set('');
       this.syncDraft();
