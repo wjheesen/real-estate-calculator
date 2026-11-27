@@ -8,7 +8,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:ci": "ng test --watch=false --browsers=ChromeHeadless",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "build:gh-pages": "ng build --configuration production --base-href /real-estate-calculator/ && node scripts/copy-pages-fallback.mjs"
   },
   "prettier": {
     "overrides": [
