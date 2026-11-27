@@ -1,9 +1,11 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { PropertyValidationError, validatePropertyInputs } from '../../features/calculator/property-validation';
+import { aggregatePortfolio } from '../../features/portfolios/portfolio-aggregator';
 import type { PlannerPortfolio, PlannerProperty } from '../../models/planner-records';
 import type { PropertyDetails, PropertyDraft } from '../../models/property-inputs';
 import { propertyRecordInputs } from '../../models/property-record-shape';
 import { PlannerDbService, requestResult, type StoreName } from '../../services/planner-db.service';
+import { BudgetStore } from './budget.store';
 
 interface PortfolioRecords {
   readonly portfolios: readonly PlannerPortfolio[];
@@ -71,11 +73,17 @@ async function readSnapshot(portfolios: IDBObjectStore, properties: IDBObjectSto
 @Injectable({ providedIn: 'root' })
 export class PortfolioStore {
   private readonly db = inject(PlannerDbService);
+  private readonly budget = inject(BudgetStore);
   private readonly state = signal<PortfolioRecords>({ portfolios: [], properties: [] });
   private pending = Promise.resolve();
 
   readonly portfolios = computed(() => this.state().portfolios);
   readonly properties = computed(() => this.state().properties);
+  readonly summaries = computed(() => {
+    const { portfolios, properties } = this.state();
+    const baseline = this.budget.monthlyHousingBaseline();
+    return new Map(portfolios.map(({ id }) => [id, aggregatePortfolio(id, properties, baseline)]));
+  });
 
   load(): Promise<PortfolioRecords> {
     return this.enqueue(async () => {

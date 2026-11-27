@@ -1,0 +1,109 @@
+.grid-page {
+  max-width: none;
+}
+
+header,
+.card-head,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+header,
+.card-head {
+  justify-content: space-between;
+}
+
+.actions button {
+  min-height: 2.75rem;
+}
+
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  align-items: stretch;
+  gap: 1rem;
+  padding: 0;
+  margin: 1rem 0 0;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 1rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 1rem;
+  background: var(--mat-sys-surface-container-lowest);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.card h2 {
+  margin: 0;
+  font: var(--mat-sys-title-large);
+}
+
+.card a {
+  color: var(--mat-sys-primary);
+  text-underline-offset: 0.2em;
+}
+
+.count {
+  padding: 0.25rem 0.625rem;
+  border-radius: 1rem;
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+  font: var(--mat-sys-label-large);
+}
+
+.description {
+  white-space: pre-wrap;
+}
+
+.figures {
+  display: grid;
+  gap: 0.625rem;
+  margin: 0;
+  padding-block: 0.75rem;
+  border-block: 1px solid var(--mat-sys-outline-variant);
+}
+
+.figures div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
+}
+
+dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.positive {
+  color: var(--color-surplus);
+}
+
+.negative {
+  color: var(--color-deficit);
+}
+
+.card-actions {
+  margin-top: auto;
+}
+
+.message {
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  background: var(--mat-sys-surface-container);
+}
+
+.grid-page .error {
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+}
