@@ -1,4 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { PropertyValidationError, validatePropertyInputs } from '../../features/calculator/property-validation';
 import type { PlannerPortfolio, PlannerProperty } from '../../models/planner-records';
 import type { PropertyDetails, PropertyDraft } from '../../models/property-inputs';
 import { propertyRecordInputs } from '../../models/property-record-shape';
@@ -156,6 +157,8 @@ export class PortfolioStore {
   saveProperty(draft: PropertyDraft): Promise<PlannerProperty> {
     const { id, portfolioId, name, description } = draft;
     const inputs = { ...draft };
+    const { errors } = validatePropertyInputs(inputs);
+    if (Object.keys(errors).length) return Promise.reject(new PropertyValidationError(errors));
     return this.write(async (portfolios, properties) => {
       const details: PropertyDetails = {
         ...propertyRecordInputs(inputs), portfolioId, name: requireName(name), ...descriptionField(description),
