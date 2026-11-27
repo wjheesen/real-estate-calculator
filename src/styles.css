@@ -1,66 +1,41 @@
-/* You can add global styles to this file, and also import other style files */
-
-/* Import Angular Material theme */
-@import '@angular/material/prebuilt-themes/indigo-pink.css';
-
-/* Reset and base styles */
 * {
   box-sizing: border-box;
 }
 
-html, body { 
-  height: 100%; 
+body {
   margin: 0;
-  padding: 0;
+  font: var(--mat-sys-body-large);
 }
 
-body { 
-  font-family: Roboto, "Helvetica Neue", sans-serif; 
-  background-color: #fafafa;
-  color: rgba(0,0,0,.87);
-  line-height: 1.5;
+.page {
+  max-width: 48rem;
 }
 
-/* Material Form Field improvements */
-.mat-mdc-form-field {
-  margin-bottom: 16px;
-  width: 100%;
+.page h1 {
+  margin: 0 0 0.5rem;
+  font-size: clamp(2rem, 6vw, 3rem);
+  line-height: 1.15;
+  letter-spacing: -0.045em;
 }
 
-.mat-mdc-form-field .mat-mdc-text-field-wrapper {
-  background-color: #fff;
+.page p {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
 }
 
-.mat-mdc-form-field-subscript-wrapper {
-  margin-top: 8px;
+.page-surface {
+  margin-top: 1.5rem;
+  padding: clamp(1rem, 4vw, 1.5rem);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 1rem;
+  background: var(--mat-sys-surface-container-lowest);
 }
 
-/* Material Card improvements */
-.mat-mdc-card {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.page-surface h2 {
+  margin: 0 0 0.35rem;
+  font: var(--mat-sys-title-medium);
 }
 
-/* Tab improvements */
-.mat-mdc-tab-group {
-  background: #fff;
-}
-
-.mat-mdc-tab-header {
-  border-bottom: 1px solid #e0e0e0;
-}
-
-/* Button improvements */
-.mat-mdc-raised-button {
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-/* Ensure consistent spacing */
-.mat-mdc-card-header {
-  padding: 16px 16px 0;
-}
-
-.mat-mdc-card-content {
-  padding: 0 16px 16px;
+.page p.deficit {
+  color: var(--color-deficit);
 }

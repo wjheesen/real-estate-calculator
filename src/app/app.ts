@@ -1,92 +1,73 @@
-import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon';
+import { DOCUMENT } from '@angular/common';
+import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { DataExportService } from './services/data-export.service';
-import { BudgetService } from './services/budget.service';
-import { take } from 'rxjs/operators';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import type { ThemePreference } from './models/planner-records';
+import { PlannerDbService } from './services/planner-db.service';
 
 @Component({
   selector: 'app-root',
-  imports: [
-    CommonModule,
-    RouterOutlet, 
-    RouterLink, 
-    RouterLinkActive,
-    MatIconModule,
-    MatButtonModule,
-    MatTooltipModule,
-    MatSnackBarModule
-  ],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatButtonModule],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrl: './app.css',
 })
 export class AppComponent {
-  title = 'Real Estate Investment Calculator';
-  
-  private dataExportService = inject(DataExportService);
-  private budgetService = inject(BudgetService);
-  private router = inject(Router);
-  private snackBar = inject(MatSnackBar);
-  
-  exportImportInProgress = false;
+  private readonly db = inject(PlannerDbService);
+  private readonly document = inject(DOCUMENT);
+  private readonly system = window.matchMedia('(prefers-color-scheme: dark)');
+  private readonly systemTheme = signal<ThemePreference>(this.system.matches ? 'dark' : 'light');
+  private readonly storedTheme = signal<ThemePreference | undefined>(undefined);
+  private readonly pendingTheme = signal<ThemePreference | undefined>(undefined);
+  private readonly loading = signal(true);
 
-  get isDataExportAvailable(): boolean {
-    return this.dataExportService.isFileOperationAvailable();
-  }
+  protected readonly theme = computed(
+    () => this.pendingTheme() ?? this.storedTheme() ?? this.systemTheme(),
+  );
+  protected readonly themeBusy = computed(() => this.loading() || !!this.pendingTheme());
+  protected readonly themeError = signal('');
 
-  navigateToBudget(): void {
-    this.router.navigate(['/budget']);
-  }
+  constructor() {
+    const updateSystemTheme = (event: MediaQueryListEvent) => {
+      this.systemTheme.set(event.matches ? 'dark' : 'light');
+    };
+    this.system.addEventListener('change', updateSystemTheme);
 
-  isBudgetActive(): boolean {
-    return this.router.url.includes('/budget');
-  }
-
-  /**
-   * Export portfolio data and settings as ZIP file
-   */
-  exportData(): void {
-    if (this.exportImportInProgress) return;
-    
-    this.exportImportInProgress = true;
-    this.dataExportService.exportData().subscribe({
-      next: () => {
-        this.snackBar.open('All application data and settings exported as ZIP file successfully!', 'Close', { duration: 3000 });
-        this.exportImportInProgress = false;
-      },
-      error: (error: any) => {
-        this.snackBar.open(`Export failed: ${error.message}`, 'Close', { duration: 5000 });
-        this.exportImportInProgress = false;
-      }
+    inject(DestroyRef).onDestroy(() => {
+      this.system.removeEventListener('change', updateSystemTheme);
+      this.document.documentElement.removeAttribute('data-theme');
     });
+    effect(() => this.document.documentElement.setAttribute('data-theme', this.theme()));
+
+    void this.restoreTheme();
   }
 
-  /**
-   * Import portfolio data and settings from ZIP file
-   */
-  importData(): void {
-    if (this.exportImportInProgress) return;
-    
-    if (!confirm('This will replace all current portfolio data and settings. Are you sure you want to continue?')) {
-      return;
+  protected async toggleTheme(): Promise<void> {
+    if (this.themeBusy()) return;
+
+    const choice = this.theme() === 'dark' ? 'light' : 'dark';
+    this.themeError.set('');
+    this.pendingTheme.set(choice);
+
+    try {
+      await this.db.setTheme(choice);
+      this.storedTheme.set(choice);
+    } catch {
+      this.themeError.set('Could not save the theme. Please try again.');
+    } finally {
+      this.pendingTheme.set(undefined);
     }
-    
-    this.exportImportInProgress = true;
-    this.dataExportService.importData().subscribe({
-      next: () => {
-        this.snackBar.open('All application data and settings imported from ZIP file successfully!', 'Close', { duration: 3000 });
-        this.exportImportInProgress = false;
-        // Reload the page to reflect imported data
-        window.location.reload();
-      },
-      error: (error: any) => {
-        this.snackBar.open(`Import failed: ${error.message}`, 'Close', { duration: 5000 });
-        this.exportImportInProgress = false;
+  }
+
+  private async restoreTheme(): Promise<void> {
+    try {
+      const settings = await this.db.getSettings();
+      if (settings?.theme === 'light' || settings?.theme === 'dark') {
+        this.storedTheme.set(settings.theme);
       }
-    });
+    } catch {
+      this.themeError.set('Could not load the saved theme.');
+    } finally {
+      this.loading.set(false);
+    }
   }
 }

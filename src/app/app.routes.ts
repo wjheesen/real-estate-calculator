@@ -1,18 +1,24 @@
-import { Routes } from '@angular/router';
-import { CalculatorComponent } from './components/calculator.component';
-import { PortfoliosComponent } from './components/portfolios.component';
-import { BudgetComponent } from './components/budget.component';
-import { BudgetExpensesComponent } from './components/budget-expenses.component';
-import { BudgetMortgageComponent } from './components/budget-mortgage.component';
-import { BudgetFinalComponent } from './components/budget-final.component';
+import type { Routes } from '@angular/router';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/calculator', pathMatch: 'full' },
-  { path: 'calculator', component: CalculatorComponent },
-  { path: 'portfolios', component: PortfoliosComponent },
-  { path: 'portfolio/:id', component: PortfoliosComponent },
-  { path: 'budget', component: BudgetFinalComponent },
-  { path: 'budget-income', component: BudgetComponent },
-  { path: 'budget-expenses', component: BudgetExpensesComponent },
-  { path: 'budget-mortgage', component: BudgetMortgageComponent }
+  { path: '', redirectTo: 'calculator', pathMatch: 'full' },
+  {
+    path: 'budget',
+    loadComponent: () => import('./pages/budget-page').then((m) => m.BudgetPage),
+  },
+  {
+    path: 'calculator',
+    loadComponent: () => import('./pages/calculator-page').then((m) => m.CalculatorPage),
+  },
+  {
+    path: 'portfolios',
+    loadComponent: () => import('./pages/portfolios-page').then((m) => m.PortfoliosPage),
+  },
+  {
+    path: 'portfolio/:id',
+    loadComponent: () => import('./pages/portfolio-page').then((m) => m.PortfolioPage),
+  },
+  { path: 'budget-income', redirectTo: 'budget', pathMatch: 'full' },
+  { path: 'budget-expenses', redirectTo: 'budget', pathMatch: 'full' },
+  { path: 'budget-mortgage', redirectTo: 'budget', pathMatch: 'full' },
 ];
