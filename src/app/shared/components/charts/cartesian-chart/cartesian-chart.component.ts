@@ -9,7 +9,7 @@ Chart.register(BarController, BarElement, CategoryScale, Legend, LinearScale, Li
 
 export interface ChartSeries {
   readonly label: string;
-  readonly values: readonly number[];
+  readonly values: readonly (number | null)[];
 }
 
 const colors = {
@@ -43,16 +43,18 @@ export class CartesianChartComponent {
       const palette = colors[theme()];
       const style = getComputedStyle(canvas);
       const kind = this.kind();
+      const seriesData = this.series();
+      const singleBar = kind === 'bar' && seriesData.length === 1;
       const chart = new Chart<'bar' | 'line'>(canvas, {
         type: kind,
         data: {
           labels: [...this.labels()],
-          datasets: this.series().map((series, index) => ({
+          datasets: seriesData.map((series, index) => ({
             label: series.label,
             data: [...series.values],
             borderColor: index === 0 ? palette.primary : palette.secondary,
-            backgroundColor: kind === 'bar'
-              ? series.values.map((value) => value < 0 ? palette.negative : palette.positive)
+            backgroundColor: singleBar
+              ? series.values.map((value) => value !== null && value < 0 ? palette.negative : palette.positive)
               : index === 0 ? palette.primary : palette.secondary,
             pointRadius: 2,
           })),
@@ -67,7 +69,7 @@ export class CartesianChartComponent {
             x: { ticks: { color: style.color }, grid: { color: style.borderTopColor } },
             y: { ticks: { color: style.color }, grid: { color: style.borderTopColor } },
           },
-          plugins: { legend: { display: kind === 'line', labels: { color: style.color } } },
+          plugins: { legend: { display: !singleBar, labels: { color: style.color } } },
         },
       });
       onCleanup(() => chart.destroy());

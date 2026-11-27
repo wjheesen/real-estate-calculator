@@ -1,7 +1,7 @@
 <h2 mat-dialog-title>Copy property</h2>
 <form [formGroup]="form" (ngSubmit)="submit()">
   <mat-dialog-content>
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" floatLabel="always">
       <mat-label>Target portfolio</mat-label>
       <mat-select formControlName="portfolioId" required>
         @for (portfolio of data.portfolios; track portfolio.id) {

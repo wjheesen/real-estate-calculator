@@ -21,6 +21,7 @@ import {
   InputDialogComponent, type InputDialogData, type InputDialogResult,
 } from '../../shared/components/dialogs/input-dialog.component';
 import { KpiStripComponent } from '../../shared/components/kpi-strip/kpi-strip.component';
+import { parsePositiveId } from '../../shared/utils/record-id';
 import {
   activeCalculatorInputs, calculatorDraftForm, calculatorDraftFromRecord, newCalculatorDraft,
   purchasePmiDisabled, type CalculatorDraftValues, type OwnershipStatus,
@@ -33,12 +34,6 @@ import { calculateDraftPortfolioImpact } from './draft-portfolio-impact';
 import { PropertyInputsFormComponent } from './components/property-inputs-form/property-inputs-form.component';
 import { calculatePropertyResults } from './real-estate-calculator';
 import type { PropertyField } from './property-validation';
-
-function parseId(value: string | null): number | undefined {
-  if (value === null || !/^[1-9]\d*$/.test(value)) return undefined;
-  const id = Number(value);
-  return Number.isSafeInteger(id) ? id : undefined;
-}
 
 @Component({
   imports: [
@@ -141,7 +136,7 @@ export class CalculatorPageComponent {
         this.routeMessage.set('Choose either a saved property or a property to duplicate.');
       } else if (params.has('id') || params.has('duplicate')) {
         const duplicate = params.has('duplicate');
-        const id = parseId(params.get(duplicate ? 'duplicate' : 'id'));
+        const id = parsePositiveId(params.get(duplicate ? 'duplicate' : 'id'));
         const from = records.properties.find((property) => property.id === id);
         if (from) {
           initial = calculatorDraftFromRecord(settings, from);
@@ -154,7 +149,7 @@ export class CalculatorPageComponent {
           this.routeMessage.set('That property could not be found. A new calculation is open.');
         }
       } else if (params.has('portfolioId')) {
-        const id = parseId(params.get('portfolioId'));
+        const id = parsePositiveId(params.get('portfolioId'));
         if (id !== undefined && records.portfolios.some((portfolio) => portfolio.id === id)) {
           initial.portfolioId = id;
         } else {

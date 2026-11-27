@@ -17,7 +17,8 @@ export const routes: Routes = [
   },
   {
     path: 'portfolio/:id',
-    loadComponent: () => import('./pages/portfolio-page').then((m) => m.PortfolioPage),
+    loadComponent: () => import('./features/portfolios/components/portfolio-detail/portfolio-detail.component')
+      .then((m) => m.PortfolioDetailComponent),
   },
   { path: 'budget-income', redirectTo: 'budget', pathMatch: 'full' },
   { path: 'budget-expenses', redirectTo: 'budget', pathMatch: 'full' },

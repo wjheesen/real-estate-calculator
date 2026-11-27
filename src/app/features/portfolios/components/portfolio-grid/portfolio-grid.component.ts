@@ -9,9 +9,7 @@ import type { PlannerPortfolio } from '../../../../models/planner-records';
 import {
   ConfirmDialogComponent, type ConfirmDialogData,
 } from '../../../../shared/components/dialogs/confirm-dialog.component';
-import {
-  InputDialogComponent, type InputDialogData, type InputDialogResult,
-} from '../../../../shared/components/dialogs/input-dialog.component';
+import { openPortfolioNameDialog } from '../../portfolio-name-dialog';
 import { budgetFitLabel, signedUsd } from '../../portfolio-formatting';
 
 @Component({
@@ -53,21 +51,7 @@ export class PortfolioGridComponent {
 
   protected edit(portfolio?: PlannerPortfolio): Promise<void> {
     return this.action(async () => {
-      const editing = portfolio !== undefined;
-      const dialog = this.dialog.open<InputDialogComponent, InputDialogData, InputDialogResult>(
-        InputDialogComponent, {
-          data: {
-            title: editing ? 'Rename portfolio' : 'New portfolio',
-            submitLabel: editing ? 'Save name' : 'Create portfolio',
-            initialName: portfolio?.name,
-            initialDescription: portfolio?.description,
-            existingNames: this.portfolios()
-              .filter((item) => item.id !== portfolio?.id)
-              .map((item) => item.name),
-          },
-        },
-      );
-      const input = await firstValueFrom(dialog.afterClosed());
+      const input = await openPortfolioNameDialog(this.dialog, this.portfolios(), portfolio);
       if (!input) return;
 
       if (portfolio) {
