@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - '**.md'
+      - 'e2e/**'
+      - 'playwright.config.ts'
   workflow_dispatch:
 
 permissions:
