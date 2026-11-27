@@ -16,7 +16,7 @@ function numericFields<K extends string>(
 }
 
 function optionalNumber<K extends string>(raw: Record<string, unknown>, key: K): Partial<Record<K, number>> {
-  return raw[key] === undefined ? {} : numericFields(raw, [key]);
+  return raw[key] == null || raw[key] === '' ? {} : numericFields(raw, [key]);
 }
 
 function booleanFields<K extends string>(
@@ -62,13 +62,16 @@ export function propertyRecordInputs(inputs: PropertyInputs): PropertyInputs {
   };
 
   if (status === 'already_owned') {
+    const { existingLoanBalance } = numericFields(raw, ['existingLoanBalance']);
     return {
       ...operating,
       ownershipStatus: status,
-      ...numericFields(raw, ['existingLoanBalance']),
-      ...optionalNumber(raw, 'interestRate'),
+      existingLoanBalance,
       ...optionalNumber(raw, 'termYears'),
-      ...optionalNumber(raw, 'existingMonthlyPI'),
+      ...(existingLoanBalance > 0 ? {
+        ...optionalNumber(raw, 'interestRate'),
+        ...optionalNumber(raw, 'existingMonthlyPI'),
+      } : {}),
     };
   }
   return {

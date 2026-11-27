@@ -70,6 +70,14 @@ describe('PortfolioStore', () => {
     ].sort());
   });
 
+  it('enforces the active financial validator on direct writes', async () => {
+    await expectAsync(store.saveProperty({ ...fixture, sellingCostsPercentage: 26 }))
+      .toBeRejectedWithError(/sellingCostsPercentage/);
+    await expectAsync(store.saveProperty({ ...fixture, purchasePrice: -1 }))
+      .toBeRejectedWithError(/purchasePrice/);
+    expect((await store.load()).properties).toEqual([]);
+  });
+
   it('creates independent property copies in the same and different portfolios', async () => {
     const destination = await store.createPortfolio('Rentals');
     const source = await store.saveProperty(fixture);
