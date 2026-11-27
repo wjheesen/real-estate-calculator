@@ -15,6 +15,7 @@
       <div class="actions">
         <button mat-button type="button" [attr.aria-disabled]="busy()" (click)="rename()">Rename</button>
         <button mat-button type="button" [attr.aria-disabled]="busy()" (click)="duplicatePortfolio()">Duplicate portfolio</button>
+        <a mat-button routerLink="/portfolios/organize" [queryParams]="{ from: current.id }">Organize properties</a>
         <a mat-flat-button routerLink="/calculator" [queryParams]="{ portfolioId: current.id }">Add property</a>
       </div>
     </header>

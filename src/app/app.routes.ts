@@ -11,6 +11,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/calculator/calculator-page.component').then((m) => m.CalculatorPageComponent),
   },
   {
+    path: 'portfolios/organize',
+    loadComponent: () => import('./features/portfolios/components/portfolio-organizer/portfolio-organizer.component')
+      .then((m) => m.PortfolioOrganizerComponent),
+  },
+  {
     path: 'portfolios',
     loadComponent: () => import('./features/portfolios/components/portfolio-grid/portfolio-grid.component')
       .then((m) => m.PortfolioGridComponent),
