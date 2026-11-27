@@ -1,30 +1,39 @@
 <header class="app-header">
-  <div class="container">
-    <h1 class="app-title">{{ title }}</h1>
-    <nav class="app-nav">
-      <a routerLink="/calculator" routerLinkActive="active" class="nav-link">Calculator</a>
-      <a routerLink="/portfolios" routerLinkActive="active" class="nav-link">Portfolio</a>
-      <a (click)="navigateToBudget()" class="nav-link" [class.active]="isBudgetActive()">Budget</a>
-    </nav>
-    <div class="app-actions" *ngIf="isDataExportAvailable">
-      <button mat-icon-button 
-              color="accent" 
-              (click)="importData()" 
-              [disabled]="exportImportInProgress"
-              matTooltip="Import application data and settings from ZIP file">
-        <mat-icon>upload</mat-icon>
+  <div class="shell">
+    <p class="app-title">Real Estate Calculator</p>
+
+    <div class="app-actions" role="group" aria-label="App controls">
+      <button
+        mat-stroked-button
+        type="button"
+        [attr.aria-pressed]="theme() === 'dark'"
+        [disabled]="themeBusy()"
+        (click)="toggleTheme()"
+      >
+        Dark mode
       </button>
-      <button mat-icon-button 
-              color="primary" 
-              (click)="exportData()" 
-              [disabled]="exportImportInProgress"
-              matTooltip="Export all application data and settings as ZIP file">
-        <mat-icon>download</mat-icon>
-      </button>
+      <button mat-button type="button" disabled>Settings</button>
+      <button mat-button type="button" disabled>Import</button>
+      <button mat-button type="button" disabled>Export</button>
     </div>
+
+    <nav class="app-nav" aria-label="Main navigation">
+      <a mat-button routerLink="/budget" routerLinkActive="active" ariaCurrentWhenActive="page">
+        Budget
+      </a>
+      <a mat-button routerLink="/calculator" routerLinkActive="active" ariaCurrentWhenActive="page">
+        Calculator
+      </a>
+      <a mat-button routerLink="/portfolios" routerLinkActive="active" ariaCurrentWhenActive="page">
+        Portfolios
+      </a>
+    </nav>
   </div>
 </header>
 
-<main class="app-main">
-  <router-outlet></router-outlet>
+<main class="shell app-main">
+  @if (themeError()) {
+    <p class="app-error" role="alert">{{ themeError() }}</p>
+  }
+  <router-outlet />
 </main>
