@@ -8,7 +8,7 @@ export const routes: Routes = [
   },
   {
     path: 'calculator',
-    loadComponent: () => import('./pages/calculator-page').then((m) => m.CalculatorPage),
+    loadComponent: () => import('./features/calculator/calculator-page.component').then((m) => m.CalculatorPageComponent),
   },
   {
     path: 'portfolios',
