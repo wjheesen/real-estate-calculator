@@ -60,11 +60,11 @@ describe('PlannerDbService', () => {
     await service.transaction('settings', 'readwrite', (store) =>
       store.put({ key: 'app-settings', interestRate: 5, nested: { preserved: true } }),
     );
-    await service.setTheme('dark');
+    await service.updateSettings((record) => ({ ...record, key: 'app-settings', themeMode: 'dark' }));
     const reopened = new PlannerDbService();
     expect(await reopened.getSettings()).toEqual(jasmine.objectContaining({
       key: 'app-settings',
-      theme: 'dark',
+      themeMode: 'dark',
       interestRate: 5,
       nested: { preserved: true },
     }));
@@ -81,10 +81,10 @@ describe('PlannerDbService', () => {
   });
 
   it('rejects on abort even if the write request already succeeded', async () => {
-    await service.setTheme('light');
+    await service.updateSettings(() => ({ key: 'app-settings', themeMode: 'light' }));
     const requestSucceeded = jasmine.createSpy();
     const write = service.transaction('settings', 'readwrite', (store) => {
-      const request = store.put({ key: 'app-settings', theme: 'dark' });
+      const request = store.put({ key: 'app-settings', themeMode: 'dark' });
       request.onsuccess = () => {
         requestSucceeded();
         store.transaction.abort();
@@ -94,6 +94,6 @@ describe('PlannerDbService', () => {
 
     await expectAsync(write).toBeRejectedWith(jasmine.objectContaining({ name: 'AbortError' }));
     expect(requestSucceeded).toHaveBeenCalledTimes(1);
-    expect(await service.getSettings()).toEqual({ key: 'app-settings', theme: 'light' });
+    expect(await service.getSettings()).toEqual({ key: 'app-settings', themeMode: 'light' });
   });
 });

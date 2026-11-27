@@ -1,0 +1,84 @@
+:host {
+  display: block;
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+}
+
+aside {
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0.875rem;
+  background: var(--mat-sys-surface-container-high);
+  box-shadow: var(--mat-sys-level2);
+}
+
+.heading,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
+}
+
+.heading h2 {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font: var(--mat-sys-title-medium);
+}
+
+.heading a {
+  color: var(--mat-sys-primary);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--mat-sys-body-small);
+  font-variant-numeric: tabular-nums;
+}
+
+td, th {
+  padding: 0.25rem 0.125rem;
+  text-align: end;
+  overflow-wrap: anywhere;
+}
+
+th[scope='row'] {
+  text-align: start;
+}
+
+td {
+  width: 23%;
+}
+
+.actions {
+  justify-content: flex-end;
+}
+
+.actions button {
+  min-height: 2.75rem;
+}
+
+.positive {
+  color: var(--color-surplus);
+}
+
+.negative {
+  color: var(--color-deficit);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+@media (max-height: 460px) {
+  :host {
+    position: static;
+  }
+}

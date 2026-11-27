@@ -43,9 +43,11 @@ test('navigates the shell and restores the theme and seed after reload', async (
 
   for (const width of [375, 768]) {
     await page.setViewportSize({ width, height: 812 });
-    for (const label of ['Settings', 'Import', 'Export']) {
+    await expect(page.getByRole('button', { name: 'Settings' })).toBeInViewport();
+    await expect(page.getByRole('button', { name: 'Settings' })).toBeEnabled();
+    for (const label of ['Import', 'Export']) {
       const control = page.getByRole('button', { name: label });
-      await expect(control).toBeDisabled();
+      await expect(control).toBeEnabled();
       await expect(control).toBeInViewport();
     }
     await expect(toggle).toBeInViewport();

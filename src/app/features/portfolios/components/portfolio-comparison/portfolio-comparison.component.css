@@ -1,0 +1,75 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.surface {
+  padding: 1rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 1rem;
+  background: var(--mat-sys-surface-container-lowest);
+}
+
+h2 {
+  margin: 0 0 0.75rem;
+  font: var(--mat-sys-title-medium);
+}
+
+.note {
+  margin: 0 0 0.75rem;
+}
+
+.note a {
+  color: var(--mat-sys-primary);
+}
+
+.table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.with-comparison {
+  min-width: 34rem;
+}
+
+td, th {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  text-align: end;
+  overflow-wrap: anywhere;
+}
+
+td {
+  white-space: nowrap;
+}
+
+th:first-child {
+  text-align: start;
+}
+
+th small, td small {
+  display: block;
+  font: var(--mat-sys-body-small);
+}
+
+td small {
+  text-transform: capitalize;
+}
+
+.favorable {
+  color: var(--color-surplus);
+}
+
+.unfavorable {
+  color: var(--color-deficit);
+}
+
+.chart {
+  margin-top: 1rem;
+}

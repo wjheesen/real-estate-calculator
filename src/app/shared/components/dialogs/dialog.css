@@ -1,0 +1,13 @@
+mat-dialog-content p {
+  margin: 0;
+}
+
+form mat-dialog-content {
+  display: grid;
+  gap: 0.5rem;
+  padding-block-start: 0.5rem;
+}
+
+mat-dialog-actions button {
+  min-height: 2.75rem;
+}

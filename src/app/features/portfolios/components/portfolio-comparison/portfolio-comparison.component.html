@@ -1,0 +1,44 @@
+@let current = primary();
+@let other = secondary();
+<section class="surface" aria-label="Portfolio summary and comparison">
+  <h2>{{ other ? 'Portfolio comparison' : 'Portfolio summary' }}</h2>
+  @if (current.summary.invalidPropertyIds.length || other?.summary?.invalidPropertyIds?.length) {
+    <p role="alert">Some property inputs could not be calculated.</p>
+  } @else {
+    @if (!current.summary.hasBudgetBaseline) { <p class="note"><a routerLink="/budget">Set Budget</a> to see Budget Fit.</p> }
+    @if (current.summary.mixedHorizons || other?.summary?.mixedHorizons) {
+      <p class="note">Equity gains and total returns include properties with different hold periods.</p>
+    }
+    <div class="table-scroll" tabindex="0" role="region" aria-label="Portfolio figures">
+      <table [class.with-comparison]="other">
+        <thead><tr>
+          <th scope="col">Metric</th>
+          <th scope="col">{{ other ? current.name : 'Value' }}</th>
+          @if (other) { <th scope="col">{{ other.name }}</th><th scope="col">Difference (B − A)</th> }
+        </tr></thead>
+        <tbody>
+          @for (row of rows(); track row.key) {
+            <tr>
+              <th scope="row">{{ row.label }} @if (row.unit !== 'count') { <small>({{ row.unit }})</small> }</th>
+              <td>{{ row.current }}</td>
+              @if (other) {
+                <td>{{ row.comparison }}</td>
+                <td [class.favorable]="row.direction === 'favorable'" [class.unfavorable]="row.direction === 'unfavorable'">
+                  {{ row.delta }}
+                  @if (row.direction !== 'neutral') { <small>{{ row.direction }}</small> }
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (other) {
+      <div class="chart">
+        <app-cartesian-chart kind="bar" title="Cash and return comparison" [labels]="chartLabels" [series]="series()" />
+        <p class="note">Yearly total return ($/year) · {{ current.name }} {{ signed(current.summary.yearlyTotalReturnUSD) }}
+          · {{ other.name }} {{ signed(other.summary.yearlyTotalReturnUSD) }}</p>
+      </div>
+    }
+  }
+</section>

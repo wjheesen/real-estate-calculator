@@ -4,19 +4,26 @@ export const routes: Routes = [
   { path: '', redirectTo: 'calculator', pathMatch: 'full' },
   {
     path: 'budget',
-    loadComponent: () => import('./pages/budget-page').then((m) => m.BudgetPage),
+    loadComponent: () => import('./features/budget/budget-page').then((m) => m.BudgetPage),
   },
   {
     path: 'calculator',
-    loadComponent: () => import('./pages/calculator-page').then((m) => m.CalculatorPage),
+    loadComponent: () => import('./features/calculator/calculator-page.component').then((m) => m.CalculatorPageComponent),
+  },
+  {
+    path: 'portfolios/organize',
+    loadComponent: () => import('./features/portfolios/components/portfolio-organizer/portfolio-organizer.component')
+      .then((m) => m.PortfolioOrganizerComponent),
   },
   {
     path: 'portfolios',
-    loadComponent: () => import('./pages/portfolios-page').then((m) => m.PortfoliosPage),
+    loadComponent: () => import('./features/portfolios/components/portfolio-grid/portfolio-grid.component')
+      .then((m) => m.PortfolioGridComponent),
   },
   {
     path: 'portfolio/:id',
-    loadComponent: () => import('./pages/portfolio-page').then((m) => m.PortfolioPage),
+    loadComponent: () => import('./features/portfolios/components/portfolio-detail/portfolio-detail.component')
+      .then((m) => m.PortfolioDetailComponent),
   },
   { path: 'budget-income', redirectTo: 'budget', pathMatch: 'full' },
   { path: 'budget-expenses', redirectTo: 'budget', pathMatch: 'full' },

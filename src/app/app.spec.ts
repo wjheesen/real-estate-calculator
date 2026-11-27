@@ -2,24 +2,33 @@ import { fakeAsync, flushMicrotasks, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { AppComponent } from './app';
 import { routes } from './app.routes';
-import { PlannerDbService } from './services/planner-db.service';
+import { signal } from '@angular/core';
+import { SettingsStore } from './core/state/settings.store';
+import { DEFAULT_PLANNER_SETTINGS, type PlannerPreferences } from './models/planner-settings';
 
 describe('AppComponent', () => {
-  let db: jasmine.SpyObj<PlannerDbService>;
+  let settingsStore: jasmine.SpyObj<SettingsStore>;
 
   beforeEach(async () => {
-    db = jasmine.createSpyObj<PlannerDbService>('PlannerDbService', ['getSettings', 'setTheme']);
-    db.getSettings.and.resolveTo({ key: 'app-settings', theme: 'dark' });
-    db.setTheme.and.resolveTo();
+    const settings = signal<Readonly<PlannerPreferences>>({
+      ...DEFAULT_PLANNER_SETTINGS, themeMode: 'dark',
+    });
+    settingsStore = jasmine.createSpyObj<SettingsStore>('SettingsStore', ['load', 'save'], {
+      settings: settings.asReadonly(),
+    });
+    settingsStore.load.and.resolveTo();
+    settingsStore.save.and.resolveTo();
 
     await TestBed.configureTestingModule({
       imports: [AppComponent],
-      providers: [provideRouter(routes), { provide: PlannerDbService, useValue: db }],
+      providers: [provideRouter(routes), { provide: SettingsStore, useValue: settingsStore }],
     }).compileComponents();
   });
 
-  it('renders the brand, primary navigation and disabled actions', () => {
+  it('renders the brand, primary navigation and backup actions', fakeAsync(() => {
     const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    flushMicrotasks();
     fixture.detectChanges();
     const app: HTMLElement = fixture.nativeElement;
     expect(app.querySelector('.app-title')?.textContent).toBe('Real Estate Calculator');
@@ -31,13 +40,13 @@ describe('AppComponent', () => {
       ['Portfolios', '/portfolios'],
     ]);
 
-    const disabled = Array.from(app.querySelectorAll('.app-actions button:disabled'));
-    expect(disabled.map((button) => button.textContent?.trim())).toContain('Settings');
-    expect(disabled.map((button) => button.textContent?.trim())).toContain('Import');
-    expect(disabled.map((button) => button.textContent?.trim())).toContain('Export');
-  });
+    const actions = Array.from(app.querySelectorAll('.app-actions button:not(:disabled)'));
+    expect(actions.map((button) => button.textContent?.trim())).toEqual([
+      'Dark mode', 'Settings', 'Import', 'Export',
+    ]);
+  }));
 
-  it('rolls back an unsuccessful theme change and announces the error', fakeAsync(() => {
+  it('keeps the committed theme during a failed save and announces the error', fakeAsync(() => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     flushMicrotasks();
@@ -47,11 +56,11 @@ describe('AppComponent', () => {
     expect(toggle.getAttribute('aria-pressed')).toBe('true');
 
     let rejectSave!: (error: Error) => void;
-    db.setTheme.and.callFake(() => new Promise((_, reject) => { rejectSave = reject; }));
+    settingsStore.save.and.callFake(() => new Promise((_, reject) => { rejectSave = reject; }));
     toggle.click();
     fixture.detectChanges();
-    expect(db.setTheme).toHaveBeenCalledOnceWith('light');
-    expect(toggle.getAttribute('aria-pressed')).toBe('false');
+    expect(settingsStore.save).toHaveBeenCalledOnceWith({ themeMode: 'light' });
+    expect(toggle.getAttribute('aria-pressed')).toBe('true');
 
     rejectSave(new Error('Write failed'));
     flushMicrotasks();

@@ -1,0 +1,23 @@
+figure {
+  margin: 0;
+  min-width: 0;
+}
+
+figcaption {
+  margin-bottom: 0.75rem;
+  font: var(--mat-sys-title-medium);
+}
+
+.chart {
+  height: 15rem;
+  position: relative;
+}
+
+.chart.bars {
+  height: 19rem;
+}
+
+canvas {
+  color: var(--mat-sys-on-surface-variant);
+  border-color: var(--mat-sys-outline-variant);
+}

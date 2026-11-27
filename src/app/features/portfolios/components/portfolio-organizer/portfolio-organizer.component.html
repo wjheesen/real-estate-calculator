@@ -1,0 +1,68 @@
+<section class="page organizer">
+  <a class="back" mat-button [routerLink]="backTo()">Back to portfolios</a>
+  <h1>Organize properties</h1>
+  @if (notice()) { <p class="message" role="status">{{ notice() }}</p> }
+  @if (error()) { <p class="message error" role="alert">{{ error() }}</p> }
+  @if (failed(); as command) {
+    <button mat-button type="button" [disabled]="moving()" (click)="move(command)">Retry move</button>
+  }
+
+  @switch (state()) {
+    @case ('loading') { <p role="status">Loading portfolios…</p> }
+    @case ('error') {
+      <p role="alert">Could not load the organizer.</p>
+      <button mat-button type="button" (click)="load()">Reload organizer</button>
+    }
+    @case ('ready') {
+      <div class="board" role="region" aria-label="Portfolio organizer board" tabindex="0" cdkDropListGroup>
+        @for (column of columns(); track column.portfolio.id) {
+          @let portfolio = column.portfolio;
+          <section class="column" [attr.aria-label]="portfolio.name">
+            <div class="column-header">
+              <h2><a [routerLink]="['/portfolio', portfolio.id]">{{ portfolio.name }}</a></h2>
+              <p>{{ column.summary.propertyCount }} {{ column.summary.propertyCount === 1 ? 'property' : 'properties' }}</p>
+              @if (column.summary.invalidPropertyIds.length) {
+                <p>Some figures are unavailable.</p>
+              } @else {
+                <p>Cash flow {{ signed(column.summary.monthlyCashFlowUSD) }} / month</p>
+                @if (column.summary.monthlyBudgetFitUSD === null) {
+                  <a routerLink="/budget">Set Budget</a>
+                } @else {
+                  <p>Budget Fit {{ signed(column.summary.monthlyBudgetFitUSD) }} / month · {{ fit(column.summary.monthlyBudgetFitUSD) }}</p>
+                }
+              }
+            </div>
+            <div class="column-items" role="list" [attr.aria-label]="'Properties in ' + portfolio.name"
+              cdkDropList [cdkDropListData]="portfolio.id" [cdkDropListSortingDisabled]="true"
+              [cdkDropListDisabled]="moving()" (cdkDropListDropped)="drop($event)">
+              @for (card of column.properties; track card.record.id) {
+                <div class="card" role="listitem" cdkDrag [cdkDragData]="card.record.id"
+                  [cdkDragDisabled]="moving() || portfolios().length < 2" [cdkDragStartDelay]="dragDelay">
+                  <span cdkDragHandle class="handle" aria-hidden="true">⠿</span>
+                  <div class="card-text">
+                    <a routerLink="/calculator" [queryParams]="{ id: card.record.id }">{{ card.record.name }}</a>
+                    <p>{{ card.status }}</p>
+                    <p>{{ card.figure }}</p>
+                  </div>
+                  <button mat-button type="button" [matMenuTriggerFor]="targets" [disabled]="moving() || portfolios().length < 2"
+                    [attr.aria-label]="'Move ' + card.record.name">Move</button>
+                  <mat-menu #targets="matMenu">
+                    @for (target of portfolios(); track target.id) {
+                      @if (target.id !== portfolio.id) {
+                        <button mat-menu-item type="button" (click)="move({ propertyId: card.record.id, targetId: target.id })">
+                          {{ target.name }}
+                        </button>
+                      }
+                    }
+                  </mat-menu>
+                </div>
+              } @empty {
+                <p class="empty">Drop a property here.</p>
+              }
+            </div>
+          </section>
+        }
+      </div>
+    }
+  }
+</section>

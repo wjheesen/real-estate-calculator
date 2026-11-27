@@ -1,0 +1,13 @@
+<dl class="tiles">
+  @for (tile of tiles(); track $index) {
+    <div class="tile" [class.highlight]="tile.highlight" [attr.data-tone]="tile.tone">
+      <dt>{{ tile.label }}</dt>
+      <dd>
+        <span class="value">{{ tile.value }}</span>
+        @if (tile.subtitle) {
+          <span class="subtitle">{{ tile.subtitle }}</span>
+        }
+      </dd>
+    </div>
+  }
+</dl>

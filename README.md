@@ -1,75 +1,33 @@
-# Real Estate Investment Calculator
+# Real Estate Calculator
 
-A comprehensive client-side real estate investment calculator built with Angular and TypeScript.
+Compare buying, keeping and renting, or selling property against your household budget. The app stores its working data in IndexedDB on the current device. Use **Export** to download a ZIP backup and **Import** to restore one. A successful import replaces the current planner data.
 
-## Features
+## Run locally
 
-- **Investment Analysis**: Calculate ROI, cash flow, appreciation, and other key metrics
-- **Portfolio Management**: Organize properties into different portfolios
-- **Local Storage**: All data stored locally using IndexedDB
-- **Data Export/Import**: Export and import portfolio data and settings as ZIP files containing CSV data
-- **Responsive Design**: Works on desktop and mobile devices
-- **Tax Calculations**: Include tax implications in your analysis
+Use Node.js 24 and npm.
 
-## Getting Started
+```sh
+npm ci
+npm start
+```
 
-1. **Prerequisites**:
-   - Node.js (v16 or higher)
-   - npm or yarn
+The Angular dev server opens on port 4200 by default.
 
-2. **Installation**:
-   ```bash
-   npm install
-   ```
+## Verify changes
 
-3. **Development**:
-   ```bash
-   npm start
-   ```
+Install Chrome or Chromium for Karma. Set `CHROME_BIN` to the browser executable if Karma cannot find it.
 
-4. **Build**:
-   ```bash
-   npm run build
-   ```
+```sh
+npm run test:ci
+npm run build
+npx playwright install chromium
+npm run e2e -- --retries=0
+```
 
-## Usage
+Use `npm run e2e -- --retries=0 --repeat-each=2` to check the browser journeys twice with fresh browser contexts.
 
-### Calculator
-- Enter property details (purchase price, rental income, expenses)
-- View detailed analysis including cash flow, ROI, and appreciation
-- Save calculations to your portfolio
+## GitHub Pages
 
-### Portfolio Management
-- Create multiple portfolios to organize investments
-- Compare different portfolios side by side
-- Drag and drop properties between portfolios
+Run `npm run build:gh-pages` to build for `/real-estate-calculator/`. The browser output is in `dist/real-estate-calculator/browser/`. The command copies `index.html` to `404.html` so Pages can serve Angular deep links such as `/real-estate-calculator/portfolio/1`.
 
-### Data Export/Import
-- Export all application data and settings as a ZIP file from the top navigation
-- Import application data and settings from ZIP files via the top navigation
-- Includes README with export information
-- Cross-browser compatible
-
-## Technology Stack
-
-- **Frontend**: Angular 18+ with TypeScript
-- **UI**: Angular Material
-- **Storage**: IndexedDB for local data
-- **Export/Import**: ZIP file handling with JSZip library
-- **Styling**: CSS with Material Design
-
-## Browser Support
-
-- **All modern browsers**: Full support including data export/import
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License.
+In the GitHub repository, select **Settings → Pages → Build and deployment → Source → GitHub Actions**. Once the workflow is on `main`, pushes to `main` and manual runs of **Deploy GitHub Pages** build the project, run Karma, and publish the browser output. The workflow run shows the deployment URL.

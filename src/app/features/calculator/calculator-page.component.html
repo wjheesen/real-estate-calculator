@@ -1,0 +1,95 @@
+<section class="page calculator-page">
+  <header>
+    <div>
+      <h1>Calculator</h1>
+      @if (savedProperty(); as property) {
+        <p>Editing {{ property.name }}</p>
+      } @else {
+        <p>Compare a purchase, a home you own, or a sale.</p>
+      }
+    </div>
+    @if (loadState() === 'ready') {
+      <button mat-stroked-button type="button" [disabled]="saving() || creatingPortfolio()" (click)="startNew()">
+        New calculation
+      </button>
+    }
+  </header>
+
+  @switch (loadState()) {
+    @case ('loading') { <p role="status">Loading calculator…</p> }
+    @case ('error') {
+      <p role="alert">Could not load the calculator.</p>
+      <button mat-button type="button" (click)="load()">Retry</button>
+    }
+    @case ('ready') {
+      @if (routeMessage()) { <p class="message" role="status">{{ routeMessage() }}</p> }
+      @if (notice()) { <p class="message" role="status">{{ notice() }}</p> }
+      @if (error()) { <p class="message error" role="alert">{{ error() }}</p> }
+      <div class="summary">
+        @if (tiles().length) {
+          <app-kpi-strip [tiles]="tiles()" />
+        } @else {
+          @let result = preview();
+          <p class="message" role="status">{{ result.kind === 'invalid' && result.incomplete
+            ? 'Complete the required inputs to see the preview.'
+            : 'Check the highlighted inputs to see the preview.' }}</p>
+        }
+      </div>
+
+      <mat-tab-group [selectedIndex]="tab()" (selectedIndexChange)="tab.set($event)">
+        <mat-tab label="Inputs">
+          <form class="tab-content" [formGroup]="form" (ngSubmit)="save()">
+            <div [attr.inert]="saving() || creatingPortfolio() ? '' : null">
+              <app-property-inputs-form [form]="form" [draft]="draft()" [operating]="operating()"
+                (ownershipChanged)="changeOwnership($event)" />
+            </div>
+
+            <section class="save-panel" aria-label="Save to portfolio">
+              <h2>Save to portfolio</h2>
+              <div class="save-controls">
+                <mat-form-field appearance="outline" [attr.inert]="saving() || creatingPortfolio() ? '' : null">
+                  <mat-label>Portfolio</mat-label>
+                  <mat-select formControlName="portfolioId">
+                    @for (portfolio of portfolios(); track portfolio.id) {
+                      <mat-option [value]="portfolio.id">{{ portfolio.name }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <button mat-button type="button" [disabled]="saving() || creatingPortfolio()" (click)="createPortfolio()">
+                  New portfolio
+                </button>
+                <button mat-button type="button" [disabled]="!dirty() || saving() || creatingPortfolio()" (click)="discard()">
+                  Discard
+                </button>
+                <button mat-flat-button type="submit" [disabled]="!canSave()">{{ saving() ? 'Saving…' : 'Save property' }}</button>
+              </div>
+            </section>
+          </form>
+        </mat-tab>
+        <mat-tab label="Results">
+          <div class="tab-content">
+            @if (validResult(); as result) {
+              <app-calculator-results-tab [result]="result" />
+            } @else {
+              <p>Complete the inputs to see results.</p>
+            }
+          </div>
+        </mat-tab>
+        <mat-tab label="Tax">
+          <div class="tab-content">
+            @if (validResult(); as result) {
+              <app-schedule-e-tax-tab [result]="result" />
+            } @else {
+              <p>Complete the inputs to see the Schedule E estimate.</p>
+            }
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+      @if (impact(); as detail) {
+        <app-draft-portfolio-impact-bar
+          [portfolioName]="detail.name" [impact]="detail.figures" [dirty]="dirty()"
+          [saving]="saving()" [canSave]="canSave()" (save)="save()" (discard)="discard()" />
+      }
+    }
+  }
+</section>

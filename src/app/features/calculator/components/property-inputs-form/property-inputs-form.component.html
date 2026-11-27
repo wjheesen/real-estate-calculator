@@ -1,0 +1,178 @@
+<mat-button-toggle-group aria-label="Ownership status" [value]="draft().ownershipStatus"
+  (change)="ownershipChanged.emit($event.value)">
+  <mat-button-toggle value="to_be_purchased">To be purchased</mat-button-toggle>
+  <mat-button-toggle value="already_owned">Already owned</mat-button-toggle>
+  <mat-button-toggle value="selling">Selling</mat-button-toggle>
+</mat-button-toggle-group>
+
+<ng-template #numberField let-key="key" let-label="label" let-unit="unit" let-integer="integer">
+  @let control = numberControl(key);
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label>{{ label }}</mat-label>
+    <input matInput type="number" [inputMode]="integer ? 'numeric' : 'decimal'"
+      [step]="integer ? '1' : 'any'" [formControl]="control">
+    @if (unit) { <span matTextSuffix>{{ unit }}</span> }
+    @if (control.getError('propertyInput'); as error) { <mat-error>{{ error }}</mat-error> }
+  </mat-form-field>
+</ng-template>
+<ng-template #unitChoice let-key="key" let-flag="flag" let-label="label">
+  <mat-button-toggle-group [attr.aria-label]="label + ' unit'" [value]="unitValue(flag)"
+    [disabled]="key === 'mortgageInsurance' && pmiDisabled()"
+    (change)="changeUnit(key, flag, $event.value)">
+    <mat-button-toggle [value]="false" aria-label="Dollars">$</mat-button-toggle>
+    <mat-button-toggle [value]="true" aria-label="Percent">%</mat-button-toggle>
+  </mat-button-toggle-group>
+</ng-template>
+
+<fieldset>
+  <legend>{{ isSale() ? 'Sale details' : 'Property details' }}</legend>
+  <div class="fields">
+    <mat-form-field appearance="outline">
+      <mat-label>Property name</mat-label>
+      <input matInput [formControl]="form().controls.name">
+    </mat-form-field>
+    <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="{
+      key: 'purchasePrice', label: valueLabel(), unit: '$'
+    }" />
+    @if (isSale()) {
+      <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="{
+        key: 'sellingCostsPercentage', label: 'Selling costs', unit: '%'
+      }" />
+      <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="{
+        key: 'existingLoanBalance', label: 'Loan payoff', unit: '$'
+      }" />
+    } @else {
+      <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="{
+        key: 'rehabCosts', label: isPurchase() ? 'Rehab costs' : 'Upfront rehab or setup', unit: '$'
+      }" />
+      @if (isPurchase()) {
+        <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="{
+          key: 'closingCosts', label: 'Closing costs', unit: '$'
+        }" />
+      }
+    }
+  </div>
+</fieldset>
+
+@if (!isSale()) {
+  <fieldset>
+    <legend>Financing</legend>
+    @if (isPurchase()) {
+      <mat-checkbox [formControl]="form().controls.financeRehabAndClosing">Finance rehab and closing costs</mat-checkbox>
+      <div class="fields">
+        <div class="with-units">
+          <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="{
+            key: 'downPayment', label: 'Down payment', unit: draft().usePercentageForDownPayment ? '%' : '$'
+          }" />
+          <ng-container [ngTemplateOutlet]="unitChoice" [ngTemplateOutletContext]="{
+            key: 'downPayment', flag: 'usePercentageForDownPayment', label: 'Down payment'
+          }" />
+        </div>
+        <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="{
+          key: 'interestRate', label: 'Annual interest rate', unit: '%'
+        }" />
+        <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="{
+          key: 'termYears', label: 'Loan term', unit: 'years', integer: true
+        }" />
+        <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="{
+          key: 'paymentsPerYear', label: 'Payments per year', integer: true
+        }" />
+        <div class="with-units">
+          <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="{
+            key: 'mortgageInsurance', label: 'Mortgage insurance',
+            unit: draft().usePercentageForMortgageInsurance ? '%/year' : '$/year'
+          }" />
+          <ng-container [ngTemplateOutlet]="unitChoice" [ngTemplateOutletContext]="{
+            key: 'mortgageInsurance', flag: 'usePercentageForMortgageInsurance', label: 'Mortgage insurance'
+          }" />
+        </div>
+      </div>
+      @if (pmiDisabled()) { <p class="hint">Effective mortgage insurance is $0 at this down payment.</p> }
+    } @else {
+      <div class="fields">
+        <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="{
+          key: 'existingLoanBalance', label: 'Existing loan balance', unit: '$'
+        }" />
+        @if (hasOwnedDebt()) {
+          <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="{
+            key: 'existingMonthlyPI', label: 'Monthly P&I (excluding escrow)', unit: '$/month'
+          }" />
+          <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="{
+            key: 'interestRate', label: 'Annual interest rate', unit: '%'
+          }" />
+          <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="{
+            key: 'termYears', label: 'Remaining term', unit: 'years', integer: true
+          }" />
+          <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="{
+            key: 'mortgageInsurance', label: 'Actual mortgage insurance', unit: '$/year'
+          }" />
+        }
+      </div>
+      @if (hasOwnedDebt() ? operating() : undefined; as result) {
+        <p class="hint">{{ draft().existingMonthlyPI === null ? 'Estimated' : 'Statement' }} monthly P&I
+          {{ result.monthlyPrincipalAndInterestUSD | currency }}.</p>
+      }
+    }
+  </fieldset>
+
+  <fieldset>
+    <legend>Housing expenses</legend>
+    <div class="fields">
+      @for (field of expenses; track field.key) {
+        <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="field" />
+      }
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Rental income and operations</legend>
+    <mat-button-toggle-group aria-label="Rental income mode" [formControl]="form().controls.rentalIncomeMode">
+      <mat-button-toggle value="long_term">Long-term</mat-button-toggle>
+      <mat-button-toggle value="short_term">Short-term</mat-button-toggle>
+    </mat-button-toggle-group>
+    <div class="fields">
+      @if (draft().rentalIncomeMode === 'long_term') {
+        <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="{
+          key: 'expectedRentalIncome', label: 'Monthly rent', unit: '$/month'
+        }" />
+      } @else {
+        <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="{
+          key: 'nightlyRate', label: 'Nightly rate', unit: '$/night'
+        }" />
+        <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="{
+          key: 'occupancyRatePercentage', label: 'Occupancy', unit: '%'
+        }" />
+        @if (operating(); as result) {
+          <p class="hint">Estimated monthly rent {{ result.monthlyRentalIncomeUSD | currency }}.</p>
+        }
+      }
+      <div class="with-units">
+        <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="{
+          key: 'operatingExpenses', label: 'Operating expenses (excluding HOA and owner-paid utilities)',
+          unit: draft().usePercentageForOpex ? '% of rent' : '$/month'
+        }" />
+        <ng-container [ngTemplateOutlet]="unitChoice" [ngTemplateOutletContext]="{
+          key: 'operatingExpenses', flag: 'usePercentageForOpex', label: 'Operating expenses'
+        }" />
+      </div>
+      <div class="with-units">
+        <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="{
+          key: 'capitalExpenditures', label: 'Capital expenditures',
+          unit: draft().usePercentageForCapex ? '% of rent' : '$/month'
+        }" />
+        <ng-container [ngTemplateOutlet]="unitChoice" [ngTemplateOutletContext]="{
+          key: 'capitalExpenditures', flag: 'usePercentageForCapex', label: 'Capital expenditures'
+        }" />
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Growth, sale, and tax</legend>
+    <div class="fields">
+      @for (field of growthAndTax; track field.key) {
+        <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="field" />
+      }
+    </div>
+  </fieldset>
+}

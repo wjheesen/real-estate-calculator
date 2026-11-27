@@ -1,0 +1,78 @@
+<section class="page grid-page">
+  <header>
+    <h1>Portfolios</h1>
+    @if (state() === 'ready') {
+      <div class="actions">
+        <a mat-button routerLink="/portfolios/organize">Organize properties</a>
+        <button mat-flat-button type="button" [attr.aria-disabled]="busy()" (click)="edit()">New portfolio</button>
+      </div>
+    }
+  </header>
+
+  @if (notice()) { <p class="message" role="status">{{ notice() }}</p> }
+  @if (error()) { <p class="message error" role="alert">{{ error() }}</p> }
+
+  @switch (state()) {
+    @case ('loading') { <p role="status">Loading portfolios…</p> }
+    @case ('error') {
+      <p role="alert">Could not load your portfolio summaries.</p>
+      <button mat-button type="button" (click)="load()">Retry</button>
+    }
+    @case ('ready') {
+      <ul class="portfolio-grid" role="list" aria-label="Saved portfolios">
+        @for (card of cards(); track card.portfolio.id) {
+          @let portfolio = card.portfolio;
+          @let summary = card.summary;
+          <li class="card">
+            <div class="card-head">
+              <h2><a [routerLink]="['/portfolio', portfolio.id]">{{ portfolio.name }}</a></h2>
+              <span class="count">{{ summary.propertyCount }} {{ summary.propertyCount === 1 ? 'property' : 'properties' }}</span>
+            </div>
+            @if (portfolio.description) { <p class="description">{{ portfolio.description }}</p> }
+            @if (summary.invalidPropertyIds.length) {
+              <p role="alert">Some property inputs could not be calculated.</p>
+            } @else {
+              <dl class="figures">
+                <div>
+                  <dt>Monthly cash flow</dt>
+                  <dd [class.positive]="summary.monthlyCashFlowUSD > 0"
+                    [class.negative]="summary.monthlyCashFlowUSD < 0">{{ signed(summary.monthlyCashFlowUSD) }}</dd>
+                </div>
+                <div>
+                  <dt>Budget Fit</dt>
+                  @if (summary.monthlyBudgetFitUSD !== null) {
+                    <dd [class.positive]="summary.monthlyBudgetFitUSD > 0"
+                      [class.negative]="summary.monthlyBudgetFitUSD < 0">
+                      {{ signed(summary.monthlyBudgetFitUSD) }} / month · {{ fitLabel(summary.monthlyBudgetFitUSD) }}
+                    </dd>
+                  } @else {
+                    <dd><a routerLink="/budget">Set Budget</a></dd>
+                  }
+                </div>
+                <div>
+                  <dt>Net Cash Required</dt>
+                  <dd>{{ signed(summary.netCashRequiredUSD) }}{{ summary.netCashRequiredUSD < 0 ? ' · Surplus cash' : '' }}</dd>
+                </div>
+                @if (summary.counts.selling) {
+                  <div>
+                    <dt>{{ summary.signedSaleProceedsUSD < 0 ? 'Sale shortfall' : 'Sale proceeds' }}</dt>
+                    <dd>{{ signed(summary.signedSaleProceedsUSD) }}</dd>
+                  </div>
+                }
+              </dl>
+            }
+            <div class="actions card-actions" [attr.aria-label]="'Manage ' + portfolio.name">
+              <button mat-button type="button" [attr.aria-disabled]="busy()"
+                (click)="edit(portfolio)" [attr.aria-label]="'Rename ' + portfolio.name">Rename</button>
+              <button mat-button type="button" [attr.aria-disabled]="busy()"
+                (click)="duplicate(portfolio)" [attr.aria-label]="'Duplicate ' + portfolio.name">Duplicate</button>
+              <button mat-button type="button" [disabled]="portfolios().length === 1"
+                [attr.aria-disabled]="busy() || portfolios().length === 1"
+                (click)="remove(portfolio)" [attr.aria-label]="'Delete ' + portfolio.name">Delete</button>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  }
+</section>

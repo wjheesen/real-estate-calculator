@@ -1,0 +1,107 @@
+.organizer {
+  max-width: none;
+}
+
+.back {
+  min-height: 2.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.board {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(min(100%, 18rem), 1fr);
+  align-items: stretch;
+  gap: 0.875rem;
+  max-width: 100%;
+  margin-top: 1rem;
+  padding-bottom: 0.5rem;
+  overflow-x: auto;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0.875rem;
+  background: var(--mat-sys-surface-container-low);
+}
+
+.column-header {
+  display: grid;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+h2 {
+  margin: 0;
+  font: var(--mat-sys-title-medium);
+  overflow-wrap: anywhere;
+}
+
+.column a {
+  color: var(--mat-sys-primary);
+}
+
+.column-items {
+  flex: 1;
+  min-height: 9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.25rem;
+  border: 1px dashed var(--mat-sys-outline-variant);
+  border-radius: 0.75rem;
+}
+
+.column-items.cdk-drop-list-receiving {
+  border-color: var(--mat-sys-primary);
+}
+
+.card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border-radius: 0.75rem;
+  background: var(--mat-sys-surface-container-highest);
+  overflow-wrap: anywhere;
+}
+
+.card button {
+  min-width: 0;
+  min-height: 2.75rem;
+  padding-inline: 0.5rem;
+}
+
+.handle {
+  display: grid;
+  place-items: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  cursor: grab;
+  touch-action: none;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.3;
+}
+
+.cdk-drag-preview {
+  box-shadow: var(--mat-sys-level3);
+}
+
+.empty,
+.message {
+  padding: 0.75rem;
+}
+
+.organizer .error {
+  border-radius: 0.75rem;
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+}

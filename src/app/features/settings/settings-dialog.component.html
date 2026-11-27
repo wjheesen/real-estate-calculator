@@ -1,0 +1,53 @@
+<h2 mat-dialog-title>Settings</h2>
+
+<form [formGroup]="form" (ngSubmit)="save()">
+  <mat-dialog-content>
+    <p class="description">Calculation defaults apply to new properties.</p>
+
+    @for (group of groups; track group.title) {
+      <fieldset>
+        <legend>{{ group.title }}</legend>
+        <div class="fields">
+          @for (field of group.fields; track field.key) {
+            @let rule = bounds[field.key];
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ field.label }}</mat-label>
+              <input matInput type="number" [min]="rule.min" [max]="rule.max"
+                [step]="rule.integer ? '1' : 'any'" [inputMode]="rule.integer ? 'numeric' : 'decimal'"
+                [formControlName]="field.key" required>
+              @if (field.unit) { <span matTextSuffix>{{ field.unit }}</span> }
+              @if (form.controls[field.key].hasError('required')) {
+                <mat-error>Enter a value.</mat-error>
+              } @else {
+                <mat-error>Enter {{ rule.integer ? 'a whole number' : 'a number' }} from
+                  {{ rule.min }} to {{ rule.max }}.</mat-error>
+              }
+            </mat-form-field>
+          }
+        </div>
+      </fieldset>
+    }
+
+    <fieldset>
+      <legend>Theme</legend>
+      <mat-form-field appearance="outline">
+        <mat-label>Appearance</mat-label>
+        <mat-select formControlName="themeMode">
+          <mat-option value="system">System</mat-option>
+          <mat-option value="light">Light</mat-option>
+          <mat-option value="dark">Dark</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </fieldset>
+
+    @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" [disabled]="saving()" (click)="reset()">
+      Reset to defaults
+    </button>
+    <button mat-button type="button" [disabled]="saving()" [mat-dialog-close]="undefined">Cancel</button>
+    <button mat-flat-button type="submit" [disabled]="saving() || form.invalid">Save</button>
+  </mat-dialog-actions>
+</form>

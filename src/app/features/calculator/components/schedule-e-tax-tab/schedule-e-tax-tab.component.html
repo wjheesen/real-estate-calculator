@@ -1,0 +1,14 @@
+<section>
+  <h2>Schedule E estimate</h2>
+  @if (figures().length) {
+    <dl>
+      @for (figure of figures(); track figure.label) {
+        <div><dt>{{ figure.label }}</dt><dd>{{ figure.value }}</dd></div>
+      }
+    </dl>
+    <p>Planning estimate for a representative first year. Deductions exclude loan principal and the capital reserve.
+      Sale taxes, depreciation recapture, and individual tax rates are outside this estimate.</p>
+  } @else {
+    <p>Schedule E estimates apply to operating properties. See Results for the immediate sale breakdown.</p>
+  }
+</section>
