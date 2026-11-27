@@ -45,6 +45,10 @@ td, th {
   overflow-wrap: anywhere;
 }
 
+td {
+  white-space: nowrap;
+}
+
 th:first-child {
   text-align: start;
 }
