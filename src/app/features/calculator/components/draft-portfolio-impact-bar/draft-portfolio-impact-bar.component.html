@@ -1,0 +1,28 @@
+<aside aria-label="Portfolio impact">
+  <div class="heading">
+    <h2>Portfolio impact for {{ portfolioName() }}</h2>
+    @if (!impact().hasBudget) { <a routerLink="/budget">Set Budget</a> }
+  </div>
+  @if (impact().incomplete) { <p role="status">Preview incomplete</p> }
+  <table>
+    <thead><tr><th scope="col"><span class="sr-only">Measure</span></th>
+      <th scope="col">Saved</th><th scope="col">Draft</th><th scope="col">Change</th></tr></thead>
+    <tbody>
+      @for (metric of metrics(); track metric.label) {
+        <tr>
+          <th scope="row">{{ metric.label }}</th>
+          <td>{{ display(metric.saved) }}</td><td>{{ display(metric.draft) }}</td>
+          <td [class.positive]="(metric.delta ?? 0) > 0"
+            [class.negative]="(metric.delta ?? 0) < 0">{{ display(metric.delta) }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+  @if (dirty()) {
+    <div class="actions">
+      <button mat-button type="button" [disabled]="saving()" (click)="discard.emit()">Discard</button>
+      <button mat-flat-button type="button" [disabled]="!canSave()"
+        (click)="save.emit()">{{ saving() ? 'Saving…' : 'Save property' }}</button>
+    </div>
+  }
+</aside>

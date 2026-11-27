@@ -1,0 +1,54 @@
+<ng-template #figures let-rows>
+  <dl class="figures">
+    @for (figure of rows; track figure.label) {
+      <div><dt>{{ figure.label }}</dt><dd>{{ figure.value }}</dd></div>
+    }
+  </dl>
+</ng-template>
+
+@let result = operating();
+@if (sale(); as rows) {
+  <section class="card">
+    <h2>Sale breakdown</h2>
+    <ng-container [ngTemplateOutlet]="figures" [ngTemplateOutletContext]="{ $implicit: rows }" />
+  </section>
+} @else if (result) {
+  <div class="cards">
+    @for (section of sections(); track section.title) {
+      <section class="card">
+        <h2>{{ section.title }}</h2>
+        <ng-container [ngTemplateOutlet]="figures" [ngTemplateOutletContext]="{ $implicit: section.figures }" />
+        @if (section.title === 'Cash flow and returns' && result.totalCashInvestedUSD === 0) {
+          <p class="note">Cash-based return percentages display 0% when new cash invested is $0.</p>
+        }
+      </section>
+    }
+  </div>
+
+  <section class="card chart-card">
+    <app-cartesian-chart kind="bar" title="Monthly cash flow breakdown" [labels]="cashLabels()" [series]="cashSeries()" />
+    <dl class="figures">
+      @for (row of cashFlow(); track row[0]) {
+        <div><dt>{{ row[0] }}</dt><dd>{{ money(row[1]) }} / month</dd></div>
+      }
+    </dl>
+  </section>
+  <section class="card">
+    <app-cartesian-chart kind="line" title="Cumulative equity gains by year" [labels]="equityLabels()" [series]="equitySeries()" />
+    <details>
+      <summary>Yearly equity values</summary>
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Yearly equity values">
+        <table>
+          <thead><tr><th scope="col">Year</th><th scope="col">Principal paydown</th>
+            <th scope="col">Appreciation</th><th scope="col">Total equity</th></tr></thead>
+          <tbody>
+            @for (year of result.equity; track year.year) {
+              <tr><th scope="row">{{ year.year }}</th><td>{{ money(year.principalEquityGainUSD) }}</td>
+                <td>{{ money(year.appreciationEquityGainUSD) }}</td><td>{{ money(year.totalEquityUSD) }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+}

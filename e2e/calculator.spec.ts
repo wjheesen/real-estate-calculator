@@ -23,7 +23,7 @@ async function persistedProperties(page: Page) {
 test('saves, reloads, discards, updates, and duplicates a property only on explicit save', async ({ page }) => {
   await page.goto('/calculator?portfolioId=1');
   const name = page.getByRole('textbox', { name: 'Property name' });
-  const save = page.getByRole('button', { name: 'Save property' });
+  const save = page.getByRole('region', { name: 'Save to portfolio' }).getByRole('button', { name: 'Save property' });
   const price = field(page, 'Purchase price');
 
   await expect(price).toHaveValue('');
@@ -46,7 +46,7 @@ test('saves, reloads, discards, updates, and duplicates a property only on expli
 
   await price.fill('210000');
   expect((await persistedProperties(page))[0].purchasePrice).toBe(200000);
-  await page.getByRole('button', { name: 'Discard', exact: true }).click();
+  await page.getByRole('region', { name: 'Save to portfolio' }).getByRole('button', { name: 'Discard', exact: true }).click();
   await expect(price).toHaveValue('200000');
   await price.fill('215000');
   await save.click();
@@ -90,7 +90,7 @@ test('validates owned payment, retries an aborted save, and stores only the acti
   await field(page, 'Annual interest rate').fill('6');
   await field(page, 'Remaining term').fill('30');
   await payment.fill('600');
-  const save = page.getByRole('button', { name: 'Save property' });
+  const save = page.getByRole('region', { name: 'Save to portfolio' }).getByRole('button', { name: 'Save property' });
   await expect(save).toBeDisabled();
   await expect(page.getByText('Enter a monthly P&I payment above the first month’s interest, or leave it blank to estimate.'))
     .toBeVisible();
