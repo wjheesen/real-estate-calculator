@@ -1,0 +1,117 @@
+<section class="page budget-page">
+  <header>
+    <div>
+      <h1>Budget</h1>
+      <p>Estimate what you can spend on housing each month.</p>
+    </div>
+    @if (loadState() === 'ready') {
+      <button mat-stroked-button type="button" [disabled]="clearing()" (click)="clear()">
+        Clear budget
+      </button>
+    }
+  </header>
+
+  @switch (loadState()) {
+    @case ('loading') { <p role="status">Loading budget…</p> }
+    @case ('error') {
+      <p role="alert">Could not load the budget.</p>
+      <button mat-button type="button" (click)="load()">Retry</button>
+    }
+    @case ('ready') {
+      <div class="save-status">
+        @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+        @if (invalid()) {
+          <p role="status">Fix the highlighted inputs to save.</p>
+        } @else if (clearing()) {
+          <p role="status">Clearing budget…</p>
+        } @else if (saving()) {
+          <p role="status">Saving budget…</p>
+        } @else if (!saved()) {
+          <p role="status">No budget has been set up.</p>
+        } @else if (!error()) {
+          <p role="status">Budget saved.</p>
+        }
+        @if (!invalid() && !saving() && !clearing() && (!saved() || error())) {
+          <button mat-button type="button" (click)="save()">Save budget</button>
+        }
+      </div>
+
+      <div class="summary">
+        <app-kpi-strip [tiles]="tiles()" />
+      </div>
+
+      <ng-template #list let-key="key" let-title="title" let-suffix="suffix" let-placeholder="placeholder">
+        <app-reorderable-list
+          [items]="listItems(key)" [title]="title" [amountSuffix]="suffix" [namePlaceholder]="placeholder"
+          [confirmDelete]="true" (itemAdded)="add(key, $event)" (itemUpdated)="update(key, $event)"
+          (itemDeleted)="remove(key, $event)" (itemsReordered)="setList(key, $event)" />
+      </ng-template>
+
+      <div [attr.inert]="clearing() ? '' : null">
+        @for (version of [editorVersion()]; track version) {
+          <mat-tab-group>
+            <mat-tab label="Income & deductions">
+              <div class="tab-content">
+                <div class="inputs">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Gross income</mat-label>
+                    <input matInput type="number" inputmode="decimal" step="any" min="0" required
+                      [formControl]="form.controls.grossIncome">
+                    <span matTextSuffix>{{ draft().useTwoWeekPayStub ? '$/check' : '$/year' }}</span>
+                    <mat-error>Enter a non-negative income.</mat-error>
+                  </mat-form-field>
+                  <mat-button-toggle-group [formControl]="form.controls.useTwoWeekPayStub" aria-label="Pay period">
+                    <mat-button-toggle [value]="false">Annual</mat-button-toggle>
+                    <mat-button-toggle [value]="true">Biweekly</mat-button-toggle>
+                  </mat-button-toggle-group>
+                </div>
+                <ng-container [ngTemplateOutlet]="list" [ngTemplateOutletContext]="{
+                  key: 'payDeductions', title: 'Pay deductions',
+                  suffix: draft().useTwoWeekPayStub ? '$/check' : '$/year', placeholder: 'e.g. Income tax'
+                }" />
+                <app-doughnut-chart [slices]="chart()" label="Monthly income breakdown" />
+                @if (results().monthlyAvailable < 0) {
+                  <p class="error">Monthly deficit before housing {{ results().monthlyAvailable | currency }}</p>
+                }
+              </div>
+            </mat-tab>
+            <mat-tab label="Non-housing living expenses">
+              <div class="tab-content">
+                @for (section of livingLists; track section.key) {
+                  <ng-container [ngTemplateOutlet]="list" [ngTemplateOutletContext]="section" />
+                }
+              </div>
+            </mat-tab>
+            <mat-tab label="Single-home benchmark">
+              <div class="tab-content">
+                <p>Estimate principal and interest for one home after its other housing costs.</p>
+                @if (results().monthlyBenchmarkCosts > results().monthlyAvailable) {
+                  <p class="error" role="status">Monthly benchmark housing costs exceed available housing funds.</p>
+                }
+                <div class="inputs">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Mortgage rate</mat-label>
+                    <input matInput type="number" inputmode="decimal" step="any" min="0" max="100" required
+                      [formControl]="form.controls.anticipatedMortgageRate">
+                    <span matTextSuffix>%</span>
+                    <mat-error>Enter a rate from 0 to 100%.</mat-error>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Mortgage term</mat-label>
+                    <input matInput type="number" inputmode="numeric" step="1" min="1" max="50" required
+                      [formControl]="form.controls.anticipatedMortgageTermYears">
+                    <span matTextSuffix>years</span>
+                    <mat-error>Enter 1 to 50 whole years.</mat-error>
+                  </mat-form-field>
+                </div>
+                @for (section of housingLists; track section.key) {
+                  <ng-container [ngTemplateOutlet]="list" [ngTemplateOutletContext]="section" />
+                }
+              </div>
+            </mat-tab>
+          </mat-tab-group>
+        }
+      </div>
+    }
+  }
+</section>

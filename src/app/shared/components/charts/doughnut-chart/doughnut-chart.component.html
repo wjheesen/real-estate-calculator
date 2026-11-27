@@ -1,0 +1,19 @@
+<figure>
+  <figcaption>{{ label() }}</figcaption>
+  <div class="chart-content">
+    @if (hasData()) {
+      <div class="plot">
+        <canvas #canvas aria-hidden="true"></canvas>
+      </div>
+    }
+    <ul role="list">
+      @for (slice of slices(); track slice.label) {
+        <li>
+          <span class="swatch" [style.background-color]="slice.color" aria-hidden="true"></span>
+          <span>{{ slice.label }}</span>
+          <strong>{{ slice.amount | currency }}</strong>
+        </li>
+      }
+    </ul>
+  </div>
+</figure>

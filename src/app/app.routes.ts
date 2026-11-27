@@ -4,7 +4,7 @@ export const routes: Routes = [
   { path: '', redirectTo: 'calculator', pathMatch: 'full' },
   {
     path: 'budget',
-    loadComponent: () => import('./pages/budget-page').then((m) => m.BudgetPage),
+    loadComponent: () => import('./features/budget/budget-page').then((m) => m.BudgetPage),
   },
   {
     path: 'calculator',

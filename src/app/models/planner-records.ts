@@ -1,4 +1,4 @@
-import type { BudgetData } from './budget.interface';
+import type { LineItem } from '../shared/utils/list-helpers';
 import type { Portfolio, RealEstateCalculation } from './real-estate.interface';
 import type { PlannerPreferences, ThemePreference } from './planner-settings';
 
@@ -13,7 +13,19 @@ interface Timestamps {
   updatedAt: string;
 }
 
-export interface PlannerBudget extends Omit<BudgetData, 'id' | keyof Timestamps>, Timestamps {
+export interface BudgetInputs {
+  readonly grossIncome: number;
+  readonly useTwoWeekPayStub: boolean;
+  readonly payDeductions: readonly LineItem[];
+  readonly annualExpenses: readonly LineItem[];
+  readonly monthlyExpenses: readonly LineItem[];
+  readonly anticipatedMortgageRate: number;
+  readonly anticipatedMortgageTermYears: number;
+  readonly annualHousingExpenses: readonly LineItem[];
+  readonly monthlyHousingExpenses: readonly LineItem[];
+}
+
+export interface PlannerBudget extends BudgetInputs, Timestamps {
   key: 'user-budget';
 }
 
