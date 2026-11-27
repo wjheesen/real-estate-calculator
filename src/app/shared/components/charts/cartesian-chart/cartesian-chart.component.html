@@ -1,0 +1,6 @@
+<figure>
+  <figcaption>{{ title() }}</figcaption>
+  <div class="chart" [class.bars]="kind() === 'bar'">
+    <canvas #canvas aria-hidden="true"></canvas>
+  </div>
+</figure>

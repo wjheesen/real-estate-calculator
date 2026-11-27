@@ -67,12 +67,29 @@
           </form>
         </mat-tab>
         <mat-tab label="Results">
-          <p class="tab-content">Detailed results will appear here in a later update.</p>
+          <div class="tab-content">
+            @if (validResult(); as result) {
+              <app-calculator-results-tab [result]="result" />
+            } @else {
+              <p>Complete the inputs to see results.</p>
+            }
+          </div>
         </mat-tab>
         <mat-tab label="Tax">
-          <p class="tab-content">The Schedule E estimate will appear here in a later update.</p>
+          <div class="tab-content">
+            @if (validResult(); as result) {
+              <app-schedule-e-tax-tab [result]="result" />
+            } @else {
+              <p>Complete the inputs to see the Schedule E estimate.</p>
+            }
+          </div>
         </mat-tab>
       </mat-tab-group>
+      @if (impact(); as detail) {
+        <app-draft-portfolio-impact-bar
+          [portfolioName]="detail.name" [impact]="detail.figures" [dirty]="dirty()"
+          [saving]="saving()" [canSave]="canSave()" (save)="save()" (discard)="discard()" />
+      }
     }
   }
 </section>

@@ -8,10 +8,12 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute, Router, type ParamMap } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { BudgetStore } from '../../core/state/budget.store';
 import { PortfolioStore } from '../../core/state/portfolio.store';
 import { SettingsStore } from '../../core/state/settings.store';
 import type { PlannerProperty } from '../../models/planner-records';
 import type { PropertyInputs } from '../../models/property-inputs';
+import { propertyRecordInputs } from '../../models/property-record-shape';
 import {
   ConfirmDialogComponent, type ConfirmDialogData,
 } from '../../shared/components/dialogs/confirm-dialog.component';
@@ -24,6 +26,10 @@ import {
   purchasePmiDisabled, type CalculatorDraftValues, type OwnershipStatus,
 } from './calculator-draft';
 import { calculatorTiles } from './calculator-formatting';
+import { CalculatorResultsTabComponent } from './components/calculator-results-tab/calculator-results-tab.component';
+import { DraftPortfolioImpactBarComponent } from './components/draft-portfolio-impact-bar/draft-portfolio-impact-bar.component';
+import { ScheduleETaxTabComponent } from './components/schedule-e-tax-tab/schedule-e-tax-tab.component';
+import { calculateDraftPortfolioImpact } from './draft-portfolio-impact';
 import { PropertyInputsFormComponent } from './components/property-inputs-form/property-inputs-form.component';
 import { calculatePropertyResults } from './real-estate-calculator';
 import type { PropertyField } from './property-validation';
@@ -37,7 +43,8 @@ function parseId(value: string | null): number | undefined {
 @Component({
   imports: [
     KpiStripComponent, MatButtonModule, MatFormFieldModule, MatSelectModule, MatTabsModule,
-    PropertyInputsFormComponent, ReactiveFormsModule,
+    PropertyInputsFormComponent, ReactiveFormsModule, CalculatorResultsTabComponent,
+    DraftPortfolioImpactBarComponent, ScheduleETaxTabComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './calculator-page.component.html',
@@ -46,6 +53,7 @@ function parseId(value: string | null): number | undefined {
 export class CalculatorPageComponent {
   private readonly portfolioStore = inject(PortfolioStore);
   private readonly settingsStore = inject(SettingsStore);
+  private readonly budgetStore = inject(BudgetStore);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
@@ -67,6 +75,28 @@ export class CalculatorPageComponent {
   protected readonly notice = signal('');
   protected readonly tab = signal(0);
   protected readonly preview = computed(() => calculatePropertyResults(activeCalculatorInputs(this.draft())));
+  protected readonly validResult = computed(() => {
+    const result = this.preview();
+    return result.kind === 'invalid' ? undefined : result;
+  });
+  protected readonly impact = computed(() => {
+    const saved = this.savedProperty();
+    if (!saved) return;
+    const properties = this.portfolioStore.properties();
+    const portfolio = this.portfolios().find(({ id }) => id === saved.portfolioId);
+    if (!portfolio || !properties.some(({ id, portfolioId }) => id === saved.id && portfolioId === saved.portfolioId)) return;
+
+    const result = this.preview();
+    const draft = result.kind === 'invalid' ? undefined : {
+      ...propertyRecordInputs(activeCalculatorInputs(this.draft()) as PropertyInputs),
+      id: saved.id, portfolioId: saved.portfolioId, name: saved.name,
+      createdAt: saved.createdAt, updatedAt: saved.updatedAt,
+    };
+    return {
+      name: portfolio.name,
+      figures: calculateDraftPortfolioImpact(saved, properties, this.budgetStore.monthlyHousingBaseline(), draft),
+    };
+  });
   protected readonly operating = computed(() => {
     const preview = this.preview();
     return preview.kind === 'operating' ? preview : undefined;
@@ -99,7 +129,9 @@ export class CalculatorPageComponent {
     this.error.set('');
     this.notice.set('');
     try {
-      const [records] = await Promise.all([this.portfolioStore.load(), this.settingsStore.load()]);
+      const [records] = await Promise.all([
+        this.portfolioStore.load(), this.settingsStore.load(), this.budgetStore.load(),
+      ]);
       if (version !== this.queryVersion || this.destroyed) return;
 
       const settings = this.settingsStore.settings();
