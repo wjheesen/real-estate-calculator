@@ -20,9 +20,6 @@ header button,
 }
 
 .summary {
-  position: sticky;
-  top: 0;
-  z-index: 2;
   padding-block: 0.75rem;
   background: var(--mat-sys-surface);
 }
@@ -61,8 +58,21 @@ header button,
   min-width: min(100%, 14rem);
 }
 
-@media (max-width: 768px), (max-height: 540px) {
+/* On phones the live summary follows the form so its height cannot move the active field. */
+@media (width > 768px) and (height > 540px) {
   .summary {
-    position: static;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  .calculator-page {
+    display: flex;
+    flex-direction: column;
+  }
+
+  mat-tab-group,
+  app-draft-portfolio-impact-bar {
+    order: 1;
   }
 }

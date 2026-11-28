@@ -108,9 +108,9 @@
           }" />
         }
       </div>
-      @if (hasOwnedDebt() ? operating() : undefined; as result) {
+      @if (hasOwnedDebt()) {
         <p class="hint">{{ draft().existingMonthlyPI === null ? 'Estimated' : 'Statement' }} monthly P&I
-          {{ result.monthlyPrincipalAndInterestUSD | currency }}.</p>
+          {{ (operating()?.monthlyPrincipalAndInterestUSD | currency) ?? '—' }}.</p>
       }
     }
   </fieldset>
@@ -142,9 +142,7 @@
         <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="{
           key: 'occupancyRatePercentage', label: 'Occupancy', unit: '%'
         }" />
-        @if (operating(); as result) {
-          <p class="hint">Estimated monthly rent {{ result.monthlyRentalIncomeUSD | currency }}.</p>
-        }
+        <p class="hint">Estimated monthly rent {{ (operating()?.monthlyRentalIncomeUSD | currency) ?? '—' }}.</p>
       }
       <div class="with-units">
         <ng-container [ngTemplateOutlet]="numberField" [ngTemplateOutletContext]="{
