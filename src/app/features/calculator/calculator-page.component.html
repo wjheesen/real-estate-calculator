@@ -23,19 +23,6 @@
     }
     @case ('ready') {
       @if (routeMessage()) { <p class="message" role="status">{{ routeMessage() }}</p> }
-      @if (notice()) { <p class="message" role="status">{{ notice() }}</p> }
-      @if (error()) { <p class="message error" role="alert">{{ error() }}</p> }
-      <div class="summary">
-        @if (tiles().length) {
-          <app-kpi-strip [tiles]="tiles()" />
-        } @else {
-          @let result = preview();
-          <p class="message" role="status">{{ result.kind === 'invalid' && result.incomplete
-            ? 'Complete the required inputs to see the preview.'
-            : 'Check the highlighted inputs to see the preview.' }}</p>
-        }
-      </div>
-
       <mat-tab-group [selectedIndex]="tab()" (selectedIndexChange)="tab.set($event)">
         <mat-tab label="Inputs">
           <form class="tab-content" [formGroup]="form" (ngSubmit)="save()">
@@ -85,6 +72,19 @@
           </div>
         </mat-tab>
       </mat-tab-group>
+      @if (notice()) { <p class="message" role="status">{{ notice() }}</p> }
+      @if (error()) { <p class="message error" role="alert">{{ error() }}</p> }
+      <div class="summary">
+        @if (tiles().length) {
+          <app-kpi-strip [tiles]="tiles()" />
+        } @else {
+          @let result = preview();
+          <p class="message" role="status">{{ result.kind === 'invalid' && result.incomplete
+            ? 'Complete the required inputs to see the preview.'
+            : 'Check the highlighted inputs to see the preview.' }}</p>
+        }
+      </div>
+
       @if (impact(); as detail) {
         <app-draft-portfolio-impact-bar
           [portfolioName]="detail.name" [impact]="detail.figures" [dirty]="dirty()"

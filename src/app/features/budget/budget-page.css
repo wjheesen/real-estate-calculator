@@ -15,9 +15,6 @@ header button {
 }
 
 .summary {
-  position: sticky;
-  top: 0;
-  z-index: 2;
   padding-block: 0.75rem;
   background: var(--mat-sys-surface);
 }
@@ -55,8 +52,19 @@ header button {
   color: var(--mat-sys-on-error-container);
 }
 
-@media (max-width: 768px), (max-height: 540px) {
+@media (width > 768px) and (height > 540px) {
   .summary {
-    position: static;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  .budget-page {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .budget-editor {
+    order: 1;
   }
 }
